@@ -1,0 +1,3 @@
+[submodule "modules/digbuild"]
+	path = modules/digbuild
+	url = https://github.com/DigBuild/Premake5Module.git
