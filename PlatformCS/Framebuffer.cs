@@ -29,7 +29,7 @@ namespace DigBuildPlatformCS
         public uint Height => throw new NotImplementedException();
 
         public FramebufferAttachment[] Attachments => throw new NotImplementedException();
-        public Texture GetTexture(FramebufferAttachment attachment) => throw new NotImplementedException();
+        public Texture Get(FramebufferAttachment attachment) => throw new NotImplementedException();
 
         public void SetDrawCommands(params object[] commands) => throw new NotImplementedException();
 
@@ -43,6 +43,10 @@ namespace DigBuildPlatformCS
     public readonly ref struct FramebufferBuilder
     {
         public FramebufferBuilder WithColorAttachment(
+            TextureFormat format, out FramebufferAttachment attachment
+        ) => throw new NotImplementedException();
+
+        public FramebufferBuilder WithDepthStencilAttachment(
             TextureFormat format, out FramebufferAttachment attachment
         ) => throw new NotImplementedException();
 

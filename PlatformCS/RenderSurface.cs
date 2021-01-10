@@ -33,6 +33,8 @@ namespace DigBuildPlatformCS
         public bool Fullscreen => throw new NotImplementedException();
 
         public FramebufferContext Framebuffer { get; }
+        //public FramebufferAttachment ColorAttachment { get; }
+        //public FramebufferAttachment DepthStencilAttachment { get; }
     }
 
 }
