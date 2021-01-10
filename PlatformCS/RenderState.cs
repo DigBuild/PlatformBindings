@@ -1,4 +1,6 @@
-﻿namespace DigBuildPlatformCS
+﻿using System;
+
+namespace DigBuildPlatformCS
 {
     public readonly struct RenderState
     {
@@ -122,5 +124,34 @@
         DecrementAndClamp,
         IncrementAndWrap,
         DecrementAndWrap
+    }
+    
+    public enum BlendFactor : byte
+    {
+        Zero, One,
+        SrcColor, OneMinusSrcColor,
+        SrcAlpha, OneMinusSrcAlpha,
+        DstColor, OneMinusDstColor,
+        DstAlpha, OneMinusDstAlpha,
+        CstColor, OneMinusCstColor,
+        CstAlpha, OneMinusCstAlpha,
+    }
+
+    public enum BlendOperation : byte
+    {
+        Add,
+        Subtract,
+        ReverseSubtract,
+        Min,
+        Max,
+    }
+
+    [Flags]
+    public enum ColorComponent : byte
+    {
+        Red = 1 << 0,
+        Green = 1 << 1,
+        Blue = 1 << 2,
+        Alpha = 1 << 3
     }
 }

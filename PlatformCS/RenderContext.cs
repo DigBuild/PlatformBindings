@@ -6,7 +6,11 @@ namespace DigBuildPlatformCS
     {
         internal bool Valid => throw new NotImplementedException();
 
+        public FramebufferFormatBuilder CreateFramebufferFormat(
+        ) => throw new NotImplementedException();
+
         public FramebufferBuilder CreateFramebuffer(
+            FramebufferFormat format,
             uint width, uint height
         ) => throw new NotImplementedException();
 
@@ -25,6 +29,7 @@ namespace DigBuildPlatformCS
         ) => throw new NotImplementedException();
 
         public RenderPipelineBuilder<TVertex> CreatePipeline<TVertex>(
+            RenderStage renderStage,
             Topology topology,
             RasterMode rasterMode = RasterMode.Fill,
             bool discardRaster = false
@@ -36,10 +41,11 @@ namespace DigBuildPlatformCS
         ) where TVertex : unmanaged
             => throw new NotImplementedException();
 
-        public DrawCommandBuilder CreateDrawCommand<TVertex>(
-            RenderPipeline<TVertex> pipeline,
-            params VertexBuffer<TVertex>[] vertexBuffers
-        ) where TVertex : unmanaged
-            => throw new NotImplementedException();
+        public DrawCommandBuilder CreateDrawCommand(
+        ) => throw new NotImplementedException();
+
+        public void Enqueue(
+            DrawCommand command
+        ) => throw new NotImplementedException();
     }
 }

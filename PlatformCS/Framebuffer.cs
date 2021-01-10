@@ -30,10 +30,6 @@ namespace DigBuildPlatformCS
 
         public FramebufferAttachment[] Attachments => throw new NotImplementedException();
         public Texture Get(FramebufferAttachment attachment) => throw new NotImplementedException();
-
-        public void SetDrawCommands(params object[] commands) => throw new NotImplementedException();
-
-        public void Update() => throw new NotImplementedException();
     }
 
     public readonly struct FramebufferAttachment
