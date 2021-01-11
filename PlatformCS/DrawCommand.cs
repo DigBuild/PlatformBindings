@@ -21,8 +21,15 @@ namespace DigBuildPlatformCS
 
         public DrawCommandBuilder With<TVertex>(
             RenderPipeline<TVertex> pipeline,
-            params VertexBuffer<TVertex>[] vertexBuffers
+            VertexBuffer<TVertex> vertexBuffer
         ) where TVertex : unmanaged
+            => throw new NotImplementedException();
+
+        public DrawCommandBuilder With<TVertex, TInstance>(
+            RenderPipeline<TVertex, TInstance> pipeline,
+            VertexBuffer<TVertex> vertexBuffer,
+            VertexBuffer<TInstance> instanceBuffer
+        ) where TVertex : unmanaged where TInstance : unmanaged
             => throw new NotImplementedException();
 
         public static implicit operator DrawCommand(DrawCommandBuilder builder) => throw new NotImplementedException();

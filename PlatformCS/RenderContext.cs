@@ -28,7 +28,7 @@ namespace DigBuildPlatformCS
             // ...
         ) => throw new NotImplementedException();
 
-        public RenderPipelineBuilder<TVertex> CreatePipeline<TVertex>(
+        public RenderPipelineBuilder<RenderPipeline<TVertex>> CreatePipeline<TVertex>(
             RenderStage renderStage,
             Topology topology,
             RasterMode rasterMode = RasterMode.Fill,
@@ -36,7 +36,21 @@ namespace DigBuildPlatformCS
         ) where TVertex : unmanaged
             => throw new NotImplementedException();
 
+        public RenderPipelineBuilder<RenderPipeline<TVertex, TInstance>> CreatePipeline<TVertex, TInstance>(
+            RenderStage renderStage,
+            Topology topology,
+            RasterMode rasterMode = RasterMode.Fill,
+            bool discardRaster = false
+        ) where TVertex : unmanaged where TInstance : unmanaged
+            => throw new NotImplementedException();
+
         public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
+            NativeBuffer<TVertex> initialData
+        ) where TVertex : unmanaged
+            => throw new NotImplementedException();
+
+        public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
+            out VertexBufferWriter<TVertex> writer,
             NativeBuffer<TVertex>? initialData = null
         ) where TVertex : unmanaged
             => throw new NotImplementedException();

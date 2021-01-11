@@ -19,9 +19,6 @@ namespace DigBuildPlatformCS
 
     public readonly ref struct VertexBufferBuilder<TVertex> where TVertex : unmanaged
     {
-        public VertexBufferBuilder<TVertex> WithWriter(out VertexBufferWriter<TVertex> writer)
-            => throw new NotImplementedException();
-
         public static implicit operator VertexBuffer<TVertex>(VertexBufferBuilder<TVertex> builder)
             => throw new NotImplementedException();
     }
