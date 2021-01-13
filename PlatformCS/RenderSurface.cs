@@ -23,8 +23,6 @@ namespace DigBuildPlatformCS
 
     public readonly ref struct RenderSurfaceContext
     {
-        private readonly NativeHandle _handle;
-
         public uint Width => throw new NotImplementedException();
         public uint Height => throw new NotImplementedException();
         public string Title => throw new NotImplementedException();

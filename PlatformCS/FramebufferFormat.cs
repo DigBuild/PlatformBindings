@@ -18,7 +18,7 @@ namespace DigBuildPlatformCS
         public FramebufferFormatBuilder WithColorAttachment(
             out FramebufferAttachment attachment,
             TextureFormat format,
-            Vector4 clearColor
+            Vector4 clearColor = default
         ) => throw new NotImplementedException();
 
         public FramebufferFormatBuilder WithDepthStencilAttachment(

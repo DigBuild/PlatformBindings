@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using System.Threading.Tasks;
 using DigBuildPlatformCS;
+using DigBuildPlatformCS.Util;
 
 namespace DigBuildPlatformTest
 {
@@ -14,11 +15,21 @@ namespace DigBuildPlatformTest
     public struct Instance
     {
         public Vector3 Offset;
+
+        public Instance(float x, float y, float z)
+        {
+            Offset = new Vector3(x, y, z);
+        }
     }
 
     public struct Vertex2
     {
         public Vector2 Position;
+
+        public Vertex2(float x, float y)
+        {
+            Position = new Vector2(x, y);
+        }
     }
 
     public interface IVertexUniforms
@@ -46,21 +57,20 @@ namespace DigBuildPlatformTest
         public readonly VertexBufferWriter<Instance> BloomInstanceBuffer;
         public readonly DrawCommand DrawCommand;
 
-        public RenderResources(RenderSurfaceContext surface, RenderContext context)
+        public RenderResources(RenderSurfaceContext surface, RenderContext context, NativeBufferPool bufferPool)
         {
             // Custom framebuffer format and render stages for preliminary rendering
             FramebufferFormat framebufferFormat = context
                 .CreateFramebufferFormat()
-                .WithColorAttachment(out var colorAttachment, default, Vector4.Zero)
-                .WithColorAttachment(out var bloomAttachment, default, Vector4.Zero)
+                .WithColorAttachment(out var colorAttachment, default)
+                .WithColorAttachment(out var bloomAttachment, default)
                 .WithDepthStencilAttachment(out var depthStencilAttachment, default)
                 .WithStage(out var mainRenderStage, colorAttachment, depthStencilAttachment)
                 .WithStage(out var bloomRenderStage, colorAttachment, bloomAttachment, depthStencilAttachment)
                 .WithDependency(bloomRenderStage, mainRenderStage);
 
             // Framebuffer for preliminary rendering
-            var frt = context.Get(surface.Framebuffer);
-            Framebuffer framebuffer = context.CreateFramebuffer(framebufferFormat, frt.Width, frt.Height);
+            Framebuffer framebuffer = context.CreateFramebuffer(framebufferFormat, surface.Framebuffer.Width, surface.Framebuffer.Height);
 
             // Main geometry pipeline
             VertexShader<IVertexUniforms> vsMain = context.CreateVertexShader<IVertexUniforms>();
@@ -89,35 +99,52 @@ namespace DigBuildPlatformTest
                 .WithShader(fsComp, out var myFragmentUniforms)
                 .WithStandardBlending(0);
             // Set fragment uniforms to the textures from the first pass
-            var fb = context.Get(framebuffer);
-            myFragmentUniforms.ColorTexture = fb.Get(colorAttachment);
-            myFragmentUniforms.BloomTexture = fb.Get(bloomAttachment);
-            myFragmentUniforms.DepthTexture = fb.Get(depthStencilAttachment);
+            myFragmentUniforms.ColorTexture = framebuffer.Get(colorAttachment);
+            myFragmentUniforms.BloomTexture = framebuffer.Get(bloomAttachment);
+            myFragmentUniforms.DepthTexture = framebuffer.Get(depthStencilAttachment);
 
             // Main vertex buffer w/ external writer
             VertexBuffer<Vertex> mainVertexBuffer = context.CreateVertexBuffer(out MainVertexBuffer);
 
             // Secondary vertex buffer, pre-filled, and secondary index buffer w/ external writer
-            VertexBuffer<Vertex> bloomVertexBuffer = context.CreateVertexBuffer<Vertex>(null!);
+            using var bloomVertexData = bufferPool.Request<Vertex>();
+            FillBloomVertexData(bloomVertexData);
+            VertexBuffer<Vertex> bloomVertexBuffer = context.CreateVertexBuffer(bloomVertexData);
             VertexBuffer<Instance> bloomInstanceBuffer = context.CreateVertexBuffer(out BloomInstanceBuffer);
 
             // Composition vertex buffer, pre-filled with screen rectangle
-            VertexBuffer<Vertex2> compVertexBuffer = context.CreateVertexBuffer<Vertex2>(null!);
+            using var compVertexData = bufferPool.Request<Vertex2>();
+            compVertexData.Add(
+                new Vertex2(0, 0),
+                new Vertex2(1, 0),
+                new Vertex2(1, 1),
+                new Vertex2(0, 1)
+            );
+            VertexBuffer<Vertex2> compVertexBuffer = context.CreateVertexBuffer(compVertexData);
 
             // Draw command for the entire render process
-            DrawCommand = context
-                .CreateDrawCommand()
-                .WithRenderTarget(framebuffer)
-                .WithClearColor(colorAttachment, Vector4.One)
-                .With(mainPipeline, mainVertexBuffer)
-                .With(bloomPipeline, bloomVertexBuffer, bloomInstanceBuffer)
-                .WithRenderTarget(surface.Framebuffer)
-                .With(compositionPipeline, compVertexBuffer);
+            DrawCommand = context.CreateDrawCommand();
+            using (var cmd = DrawCommand.BeginRecording())
+            {
+                cmd.SetAndClearRenderTarget(framebuffer)
+                    .WithColor(colorAttachment, Vector4.One);
+                cmd.Draw(mainPipeline, mainVertexBuffer);
+                cmd.Draw(bloomPipeline, bloomVertexBuffer, bloomInstanceBuffer);
+
+                cmd.SetAndClearRenderTarget(surface.Framebuffer);
+                cmd.Draw(compositionPipeline, compVertexBuffer);
+            }
+        }
+
+        private static void FillBloomVertexData(PooledNativeBuffer<Vertex> bloomVertexData)
+        {
+            throw new System.NotImplementedException();
         }
     }
 
     public static class Test
     {
+        private static readonly NativeBufferPool BufferPool = new();
         private static RenderResources? _resources;
 
         private static void Update(RenderSurfaceContext surface, RenderContext context)
@@ -125,20 +152,26 @@ namespace DigBuildPlatformTest
             // Create render resources if not already available and initialize projection matrices
             if (_resources == null)
             {
-                _resources = new RenderResources(surface, context);
+                _resources = new RenderResources(surface, context, BufferPool);
                 _resources.VertexUniforms1.ProjectionMatrix = Matrix4x4.Identity;
                 _resources.VertexUniforms2.ProjectionMatrix = Matrix4x4.Identity;
             }
             
             // Set main stage transforms and write geometry
             _resources.VertexUniforms1.ModelViewMatrix = Matrix4x4.Identity;
-            var vbMain = context.Get(_resources.MainVertexBuffer);
-            vbMain.Write(null!);
+            using var mainGeometry = BufferPool.Request<Vertex>();
+            // mainGeometry.Add(
+            //     
+            // );
+            _resources.MainVertexBuffer.Write(mainGeometry);
 
             // Set bloom stage transforms and write geometry
             _resources.VertexUniforms2.ModelViewMatrix = Matrix4x4.Identity;
-            var vbBloom = context.Get(_resources.BloomInstanceBuffer);
-            vbBloom.Write(null!);
+            using var bloomInstances = BufferPool.Request<Instance>();
+            bloomInstances.Add(
+                new Instance(1, 0, 0)
+            );
+            _resources.BloomInstanceBuffer.Write(bloomInstances);
 
             // Enqueue draw command
             context.Enqueue(_resources.DrawCommand);

@@ -1,4 +1,5 @@
 ﻿using System;
+using DigBuildPlatformCS.Util;
 
 namespace DigBuildPlatformCS
 {
@@ -54,6 +55,17 @@ namespace DigBuildPlatformCS
             NativeBuffer<TVertex>? initialData = null
         ) where TVertex : unmanaged
             => throw new NotImplementedException();
+
+        public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
+            PooledNativeBuffer<TVertex> initialData
+        ) where TVertex : unmanaged
+            => CreateVertexBuffer(initialData.Unpooled);
+
+        public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
+            out VertexBufferWriter<TVertex> writer,
+            PooledNativeBuffer<TVertex> initialData
+        ) where TVertex : unmanaged
+            => CreateVertexBuffer(out writer, initialData.Unpooled);
 
         public DrawCommandBuilder CreateDrawCommand(
         ) => throw new NotImplementedException();
