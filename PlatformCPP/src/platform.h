@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <memory>
 
-#include "render_surface.h"
+#include "render/render_surface.h"
 
 namespace digbuild::platform
 {
@@ -23,8 +23,8 @@ namespace digbuild::platform
 		RenderManager& operator=(RenderManager&& other) noexcept = delete;
 
 		[[nodiscard]] virtual bool supportsMultipleRenderSurfaces() const = 0;
-		[[nodiscard]] virtual std::shared_ptr<RenderSurface> requestRenderSurface(
-			RenderSurfaceUpdateFunction update,
+		[[nodiscard]] virtual std::shared_ptr<render::RenderSurface> requestRenderSurface(
+			render::RenderSurfaceUpdateFunction update,
 			RenderSurfaceCreationHints hints
 		) = 0;
 	};

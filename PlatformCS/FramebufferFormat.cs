@@ -3,14 +3,16 @@ using System.Numerics;
 
 namespace DigBuildPlatformCS
 {
-    public class FramebufferFormat
+    public sealed class FramebufferFormat
     {
-
     }
-    
-    public readonly struct RenderStage
-    {
 
+    public sealed class FramebufferAttachment
+    {
+    }
+
+    public sealed class RenderStage
+    {
     }
 
     public readonly ref struct FramebufferFormatBuilder

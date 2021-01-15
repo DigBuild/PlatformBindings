@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-namespace digbuild::platform
+namespace digbuild::platform::util
 {
 	struct Vector2
 	{

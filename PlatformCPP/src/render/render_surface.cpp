@@ -1,9 +1,10 @@
 ﻿#include "render_surface.h"
 
-#include "native_handle.h"
-#include "utils.h"
+#include "../util/native_handle.h"
+#include "../util/utils.h"
 
-using namespace digbuild::platform;
+using namespace digbuild::platform::util;
+using namespace digbuild::platform::render;
 extern "C" {
 	DLLEXPORT uint32_t dbp_render_surface_get_width(const native_handle instance)
 	{

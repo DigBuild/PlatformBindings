@@ -1,7 +1,8 @@
 ﻿#include "platform.h"
 
-#include "native_handle.h"
-#include "utils.h"
+#include "util/native_handle.h"
+#include "util/utils.h"
+
 
 namespace digbuild::platform
 {
@@ -17,14 +18,14 @@ extern "C" {
 		return Platform::getInstance().getRenderManager().supportsMultipleRenderSurfaces();
 	}
 	
-	DLLEXPORT native_handle dbp_platform_request_render_surface(
+	DLLEXPORT util::native_handle dbp_platform_request_render_surface(
 		void(*update)(void* renderContext),
 		const RenderSurfaceCreationHints hints
 	)
 	{
-		return make_native_handle(
+		return util::make_native_handle(
 			Platform::getInstance().getRenderManager().requestRenderSurface(
-				[update](RenderContext& ctx)
+				[update](render::RenderContext& ctx)
 				{
 					update(&ctx);
 				},

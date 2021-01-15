@@ -4,24 +4,55 @@
 
 #include "draw_command.h"
 #include "framebuffer.h"
+#include "framebuffer_format.h"
+#include "render_pipeline.h"
 #include "shader.h"
 #include "texture.h"
 #include "vertex_buffer.h"
 
-namespace digbuild::platform
+namespace digbuild::platform::render
 {
 	struct FramebufferColorAttachmentDescriptor
 	{
-		TextureFormat format;
+		const TextureFormat format;
 	};
 	struct FramebufferDepthStencilAttachmentDescriptor
 	{
-		TextureFormat format;
+		const TextureFormat format;
 	};
 	struct FramebufferRenderStageDescriptor
 	{
-		std::vector<uint32_t> attachments;
-		std::vector<uint32_t> dependencies;
+		const std::vector<uint32_t> attachments;
+		const std::vector<uint32_t> dependencies;
+	};
+	
+	enum class VertexFormatElementType : uint8_t
+	{
+		BYTE, UBYTE,
+		SHORT, USHORT,
+		INT, UINT,
+		LONG, ULONG,
+		FLOAT, DOUBLE,
+		FLOAT2, FLOAT3, FLOAT4
+	};
+	enum class VertexFormatDescriptorRate : uint8_t
+	{
+		VERTEX, INSTANCE
+	};
+	struct VertexFormatElement
+	{
+		const uint32_t offset;
+		const VertexFormatElementType type;
+	};
+	struct VertexFormatDescriptor
+	{
+		const std::vector<VertexFormatElement> elements;
+		const uint32_t size;
+		const VertexFormatDescriptorRate rate;
+	};
+	struct RenderPipelineStateDescriptor
+	{
+		
 	};
 	
 	class RenderContext
@@ -49,8 +80,15 @@ namespace digbuild::platform
 			ShaderType type,
 			uint32_t uniformSize
 		) = 0;
-
-		// TODO: Render pipeline
+		
+		[[nodiscard]] virtual std::shared_ptr<RenderPipeline> createPipeline(
+			const std::shared_ptr<FramebufferFormat>& format,
+			uint32_t stage,
+			const std::shared_ptr<Shader>& vertexShader,
+			const std::shared_ptr<Shader>& fragmentShader,
+			const std::vector<VertexFormatDescriptor>& vertexFormat,
+			RenderPipelineStateDescriptor state
+		) = 0;
 
 		[[nodiscard]] virtual std::shared_ptr<VertexBuffer> createVertexBuffer(
 			const std::vector<char>& initialData,

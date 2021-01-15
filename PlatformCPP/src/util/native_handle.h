@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-namespace digbuild::platform
+namespace digbuild::platform::util
 {
 	class Destructible
 	{

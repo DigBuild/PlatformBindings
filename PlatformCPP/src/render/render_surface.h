@@ -3,7 +3,7 @@
 
 #include "render_context.h"
 
-namespace digbuild::platform
+namespace digbuild::platform::render
 {
 	using RenderSurfaceUpdateFunction = std::function<void(RenderContext&)>;
 	

@@ -15,13 +15,8 @@ namespace DigBuildPlatformCS
 
         public uint Width => throw new NotImplementedException();
         public uint Height => throw new NotImplementedException();
-
-        public FramebufferAttachment[] Attachments => throw new NotImplementedException();
+        
         public Texture Get(FramebufferAttachment attachment) => throw new NotImplementedException();
-    }
-
-    public readonly struct FramebufferAttachment
-    {
     }
 
     public readonly ref struct FramebufferBuilder
