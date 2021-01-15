@@ -7,7 +7,7 @@ namespace DigBuildPlatformCS
     {
 
     }
-
+    
     public readonly struct RenderStage
     {
 

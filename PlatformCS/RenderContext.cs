@@ -5,8 +5,6 @@ namespace DigBuildPlatformCS
 {
     public readonly ref struct RenderContext
     {
-        internal bool Valid => throw new NotImplementedException();
-
         public FramebufferFormatBuilder CreateFramebufferFormat(
         ) => throw new NotImplementedException();
 
