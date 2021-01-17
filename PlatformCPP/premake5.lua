@@ -12,6 +12,7 @@ project "DigBuildPlatformCPP"
     includedirs {
         "vendor/glfw/include",
         "vendor/glad/include",
+        "vendor/vulkan/include",
         os.getenv("VK_SDK_PATH") .. "/include" -- TODO: Change this to something that won't be relative
     }
     libdirs {

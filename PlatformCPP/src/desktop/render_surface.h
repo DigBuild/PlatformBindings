@@ -2,6 +2,7 @@
 #include <GLFW.h>
 #include <mutex>
 #include <thread>
+#include <vulkan.h>
 
 #include "render_context.h"
 #include "../render/render_surface.h"
@@ -44,6 +45,9 @@ namespace digbuild::platform::desktop
 		{
 			return *m_context;
 		}
+
+		vk::UniqueSurfaceKHR createVulkanSurface(const vk::Instance& instance) const;
+		static std::vector<const char*> getSurfaceExtensions();
 
 	private:
 		const std::shared_ptr<RenderSurface> m_parent;

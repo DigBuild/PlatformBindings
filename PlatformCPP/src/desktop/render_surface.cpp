@@ -68,4 +68,23 @@ namespace digbuild::platform::desktop
 		if (m_updateThread.joinable())
 			m_updateThread.join();
 	}
+
+	vk::UniqueSurfaceKHR RenderSurface::createVulkanSurface(const vk::Instance& instance) const
+	{
+		VkSurfaceKHR tmpSurface;
+		if (glfwCreateWindowSurface(instance, m_window, nullptr, &tmpSurface) != VK_SUCCESS)
+			throw std::runtime_error("Failed to create window surface.");
+
+		return vk::UniqueSurfaceKHR(
+			reinterpret_cast<vk::SurfaceKHR&>(tmpSurface),
+			vk::ObjectDestroy<vk::Instance, vk::DispatchLoaderDynamic>(instance)
+		);
+	}
+
+	std::vector<const char*> RenderSurface::getSurfaceExtensions()
+	{
+		uint32_t glfwExtensionCount;
+		auto* const glfwExtensionPtr = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+		return std::vector<const char*>(glfwExtensionPtr, glfwExtensionPtr + glfwExtensionCount);
+	}
 }

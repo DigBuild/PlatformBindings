@@ -9,13 +9,16 @@ namespace digbuild::platform::desktop::vulkan
 	public:
 		explicit RenderContext(
 			const RenderSurface& surface,
-			std::shared_ptr<VulkanContext>&& context
+			std::shared_ptr<VulkanContext>&& context,
+			vk::UniqueSurfaceKHR&& vkSurface
 		);
 		~RenderContext() override = default;
 		RenderContext(const RenderContext& other) = delete;
 		RenderContext(RenderContext&& other) noexcept = delete;
 		RenderContext& operator=(const RenderContext& other) = delete;
 		RenderContext& operator=(RenderContext&& other) noexcept = delete;
+
+		void createSwapchain();
 		
 		void update() override;
 		
@@ -58,7 +61,11 @@ namespace digbuild::platform::desktop::vulkan
 		) override;
 
 	private:
+		const RenderSurface& m_surface;
 		const std::shared_ptr<VulkanContext> m_context;
+		const vk::UniqueSurfaceKHR m_vkSurface;
+		
+		vk::UniqueSwapchainKHR m_swapChain;
 
 		friend class RenderManager;
 	};

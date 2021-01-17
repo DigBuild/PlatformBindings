@@ -10,6 +10,7 @@ namespace digbuild::platform
 		uint32_t width, height;
 		char* title;
 		bool fullscreen;
+		bool fallbackOnIncompatibleParent;
 	};
 	
 	class RenderManager

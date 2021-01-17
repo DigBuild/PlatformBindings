@@ -1,13 +1,35 @@
 ﻿#include "render_context.h"
 
+#include "../render_surface.h"
+
 namespace digbuild::platform::desktop::vulkan
 {
 	RenderContext::RenderContext(
 		const RenderSurface& surface, 
-		std::shared_ptr<VulkanContext>&& context
+		std::shared_ptr<VulkanContext>&& context,
+		vk::UniqueSurfaceKHR&& vkSurface
 	) :
-		m_context(std::move(context))
+		m_surface(surface),
+		m_context(std::move(context)),
+		m_vkSurface(std::move(vkSurface))
 	{
+		createSwapchain();
+	}
+
+	void RenderContext::createSwapchain()
+	{
+		const auto swapChainDesc = m_context->getSwapChainDescriptor(*m_vkSurface);
+		m_swapChain = m_context->createSwapChain(
+			*m_vkSurface,
+			swapChainDesc.getOptimalImageCount(),
+			swapChainDesc.getOptimalFormat(),
+			swapChainDesc.getOptimalPresentMode(),
+			swapChainDesc.getOptimalExtent(m_surface.getWidth(), m_surface.getHeight()),
+			swapChainDesc.getTransform(),
+			*m_swapChain
+		);
+
+		
 	}
 
 	void RenderContext::update()
