@@ -12,12 +12,11 @@ namespace digbuild::platform::desktop::vulkan
 			nullptr,
 			[](RenderSurface& surface, RenderSurface* parent)
 			{
-				std::shared_ptr<VulkanContext> context = nullptr;
+				std::shared_ptr<VulkanContext> context;
 				if (parent != nullptr)
 					context = dynamic_cast<const RenderContext&>(parent->getContext()).m_context;
 				else
-					context = std::make_unique<VulkanContext>();
-				
+					context = std::make_shared<VulkanContext>();
 				return std::make_unique<RenderContext>(surface, std::move(context));
 			},
 			hints.width,
