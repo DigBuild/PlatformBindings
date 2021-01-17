@@ -1,13 +1,15 @@
 ﻿#include "platform.h"
 
+#include "desktop/vulkan/platform.h"
 #include "util/native_handle.h"
 #include "util/utils.h"
-
 
 namespace digbuild::platform
 {
 	Platform& Platform::getInstance()
 	{
+		static desktop::vulkan::Platform instance;
+		return instance;
 	}
 }
 

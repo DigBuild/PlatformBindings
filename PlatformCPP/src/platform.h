@@ -33,15 +33,13 @@ namespace digbuild::platform
 	{
 	public:
 		static Platform& getInstance();
-	protected:
 		Platform() = default;
-	public:
 		virtual ~Platform() = default;
 		Platform(const Platform& other) = delete;
 		Platform(Platform&& other) noexcept = delete;
 		Platform& operator=(const Platform& other) = delete;
 		Platform& operator=(Platform&& other) noexcept = delete;
 
-		[[nodiscard]] virtual RenderManager& getRenderManager() const = 0;
+		[[nodiscard]] virtual RenderManager& getRenderManager() = 0;
 	};
 }

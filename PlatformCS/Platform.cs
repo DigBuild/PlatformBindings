@@ -25,6 +25,7 @@ namespace DigBuildPlatformCS
 
         public static RenderSurfaceRequestBuilder RequestRenderSurface(
             RenderSurface.UpdateDelegate update,
+            RenderSurface? parent = null,
             uint widthHint = 800,
             uint heightHint = 600,
             string titleHint = "",
@@ -32,6 +33,7 @@ namespace DigBuildPlatformCS
         )
         {
             return new(
+                parent,
                 update,
                 new RenderSurfaceCreationHints
                 {
@@ -46,11 +48,13 @@ namespace DigBuildPlatformCS
 
     public readonly ref struct RenderSurfaceRequestBuilder
     {
+        private readonly RenderSurface _parent;
         private readonly RenderSurface.UpdateDelegate _update;
         private readonly RenderSurfaceCreationHints _hints;
 
-        internal RenderSurfaceRequestBuilder(RenderSurface.UpdateDelegate update, RenderSurfaceCreationHints hints)
+        internal RenderSurfaceRequestBuilder(RenderSurface parent, RenderSurface.UpdateDelegate update, RenderSurfaceCreationHints hints)
         {
+            _parent = parent;
             _update = update;
             _hints = hints;
         }
@@ -66,7 +70,8 @@ namespace DigBuildPlatformCS
                             _ => { },  // TODO: Implement calls to update delegate
                             hints
                         )
-                    )
+                    ),
+                    hints.Title
                 );
             }).GetAwaiter();
         }
