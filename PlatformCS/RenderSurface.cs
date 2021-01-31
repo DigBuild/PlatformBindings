@@ -8,8 +8,12 @@ namespace DigBuildPlatformCS
     [NativeSymbols("dbp_render_surface_", SymbolTransformationMethod.Underscore)]
     internal interface IRenderSurfaceBindings
     {
+        public delegate void GetTitleDelegate(string title);
+
         uint GetWidth(IntPtr handle);
         uint GetHeight(IntPtr handle);
+
+        void GetTitle(IntPtr handle, GetTitleDelegate del);
         bool IsFullscreen(IntPtr handle);
         bool IsVisible(IntPtr handle);
 
@@ -70,13 +74,15 @@ namespace DigBuildPlatformCS
         }
         public string Title
         {
-            get => "";//_ptr.Title;
-            set
+            get
             {
-                // RenderSurface.Bindings.SetTitle(_ptr.Handle, value);
-                // _ptr.Title = value;
+                string title = null!;
+                RenderSurface.Bindings.GetTitle(_ptr, s => title = s);
+                return title;
             }
+            set => RenderSurface.Bindings.SetTitle(_ptr, value);
         }
+
         public bool Fullscreen
         {
             get => RenderSurface.Bindings.IsFullscreen(_ptr);

@@ -31,6 +31,10 @@ namespace digbuild::platform::desktop
 		{
 			return m_height;
 		}
+		[[nodiscard]] std::string getTitle() const override
+		{
+			return m_title;
+		}
 		[[nodiscard]] bool isFullscreen() const override
 		{
 			return m_fullscreen;
@@ -39,6 +43,11 @@ namespace digbuild::platform::desktop
 		{
 			return m_visible;
 		}
+		
+		void setWidth(uint32_t width) override;
+		void setHeight(uint32_t height) override;
+		void setTitle(const std::string& title) override;
+		void setFullscreen(bool fullscreen) override;
 		
 		void close() override;
 		void waitClosed() override;
@@ -56,6 +65,7 @@ namespace digbuild::platform::desktop
 		const std::shared_ptr<RenderSurface> m_parent;
 		std::unique_ptr<RenderContext> m_context;
 		uint32_t m_width, m_height;
+		std::string m_title;
 		bool m_fullscreen, m_visible = false;
 
 		bool m_close = false;

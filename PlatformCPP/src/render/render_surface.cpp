@@ -16,6 +16,11 @@ extern "C" {
 		return handle_cast<RenderSurface>(instance)->getHeight();
 	}
 
+	DLLEXPORT void dbp_render_surface_get_title(const native_handle instance, void (*callback)(const char*))
+	{
+		callback(handle_cast<RenderSurface>(instance)->getTitle().c_str());
+	}
+
 	DLLEXPORT bool dbp_render_surface_is_fullscreen(const native_handle instance)
 	{
 		return handle_cast<RenderSurface>(instance)->isFullscreen();

@@ -15,6 +15,7 @@ namespace digbuild::platform::desktop
 		m_parent(std::move(parent)),
 		m_width(width),
 		m_height(height),
+		m_title(title),
 		m_fullscreen(fullscreen)
 	{
 		std::atomic_bool ready = false;
@@ -67,6 +68,29 @@ namespace digbuild::platform::desktop
 		);
 
 		while (!ready);
+	}
+
+	void RenderSurface::setWidth(const uint32_t width)
+	{
+		m_width = width;
+		glfwSetWindowSize(m_window, m_width, m_height);
+	}
+
+	void RenderSurface::setHeight(const uint32_t height)
+	{
+		m_height = height;
+		glfwSetWindowSize(m_window, m_width, m_height);
+	}
+
+	void RenderSurface::setTitle(const std::string& title)
+	{
+		m_title = title;
+		glfwSetWindowTitle(m_window, m_title.c_str());
+	}
+
+	void RenderSurface::setFullscreen(const bool fullscreen)
+	{
+		// TODO: Implement fullscreen support
 	}
 
 	void RenderSurface::close()
