@@ -15,4 +15,12 @@ namespace DigBuildPlatformCS.Util
         {
         }
     }
+
+    public sealed class ResourceLoaderMissingException : PlatformException
+    {
+        internal ResourceLoaderMissingException(Type type) :
+            base($"No resource loader provided for custom resource type {type}.")
+        {
+        }
+    }
 }
