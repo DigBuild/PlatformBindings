@@ -25,7 +25,7 @@ namespace digbuild::platform
 
 		[[nodiscard]] virtual bool supportsMultipleRenderSurfaces() const = 0;
 		[[nodiscard]] virtual std::shared_ptr<render::RenderSurface> requestRenderSurface(
-			render::RenderSurfaceUpdateFunction update,
+			const render::RenderSurfaceUpdateFunction& update,
 			RenderSurfaceCreationHints hints
 		) = 0;
 	};

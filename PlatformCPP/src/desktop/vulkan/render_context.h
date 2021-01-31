@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "context.h"
 #include "../render_context.h"
+#include "../../render/render_surface.h"
 
 namespace digbuild::platform::desktop::vulkan
 {
@@ -10,9 +11,10 @@ namespace digbuild::platform::desktop::vulkan
 		explicit RenderContext(
 			const RenderSurface& surface,
 			std::shared_ptr<VulkanContext>&& context,
-			vk::UniqueSurfaceKHR&& vkSurface
+			vk::UniqueSurfaceKHR&& vkSurface,
+			const render::RenderSurfaceUpdateFunction& update
 		);
-		~RenderContext() override = default;
+		~RenderContext() override;
 		RenderContext(const RenderContext& other) = delete;
 		RenderContext(RenderContext&& other) noexcept = delete;
 		RenderContext& operator=(const RenderContext& other) = delete;
@@ -64,8 +66,20 @@ namespace digbuild::platform::desktop::vulkan
 		const RenderSurface& m_surface;
 		const std::shared_ptr<VulkanContext> m_context;
 		const vk::UniqueSurfaceKHR m_vkSurface;
-		
+		const render::RenderSurfaceUpdateFunction m_update;
+
+		utils::StagingResource<vk::ImageView> m_imageViews;
 		vk::UniqueSwapchainKHR m_swapChain;
+		vk::UniqueRenderPass m_renderPass;
+		utils::StagingResource<vk::Framebuffer> m_framebuffer;
+		utils::StagingResource<vk::CommandBuffer> m_commandBuffer;
+
+		uint32_t m_maxFramesInFlight;
+		utils::StagingResource<vk::Semaphore> m_imageAvailableSemaphore;
+		utils::StagingResource<vk::Semaphore> m_renderFinishedSemaphore;
+		utils::StagingResource<vk::Fence> m_inFlightFence;
+		std::vector<vk::Fence> m_inFlightImages;
+		uint32_t m_currentFrame = 0;
 
 		friend class RenderManager;
 	};

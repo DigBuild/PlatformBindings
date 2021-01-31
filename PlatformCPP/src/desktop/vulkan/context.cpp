@@ -1,4 +1,4 @@
-﻿#include "context.h"
+#include "context.h"
 
 #include <iostream>
 
@@ -95,6 +95,11 @@ namespace digbuild::platform::desktop::vulkan
 #endif
 	}
 
+	VulkanContext::~VulkanContext()
+	{
+		waitIdle();
+	}
+
 	bool VulkanContext::initializeOrValidateDeviceCompatibility(const vk::SurfaceKHR& surface)
 	{
 		m_deviceInitLock.lock();
@@ -133,12 +138,22 @@ namespace digbuild::platform::desktop::vulkan
 		return utils::getPhysicalDeviceDescriptor(m_physicalDevice, surface, m_requiredDeviceExtensions).has_value();
 	}
 
-	utils::SwapChainDescriptor VulkanContext::getSwapChainDescriptor(const vk::SurfaceKHR& surface) const
+	void VulkanContext::waitIdle() const
+	{
+		if (m_presentQueue)
+			m_presentQueue.waitIdle();
+		if (m_graphicsQueue)
+			m_graphicsQueue.waitIdle();
+		if (m_device)
+			m_device->waitIdle();
+	}
+
+	[[nodiscard]] utils::SwapChainDescriptor VulkanContext::getSwapChainDescriptor(const vk::SurfaceKHR& surface) const
 	{
 		return utils::getSwapChainDescriptor(m_physicalDevice, surface);
 	}
 
-	vk::UniqueSwapchainKHR VulkanContext::createSwapChain(
+	[[nodiscard]] vk::UniqueSwapchainKHR VulkanContext::createSwapChain(
 		const vk::SurfaceKHR& surface,
 		const uint32_t imageCount,
 		const vk::SurfaceFormatKHR format,
@@ -162,5 +177,207 @@ namespace digbuild::platform::desktop::vulkan
 			swapchainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
 		}
 		return m_device->createSwapchainKHRUnique(swapchainCreateInfo);
+	}
+
+	[[nodiscard]] utils::StagingResource<vk::ImageView> VulkanContext::createSwapChainViews(
+		const vk::SwapchainKHR& swapChain,
+		const vk::Format format
+	) const
+	{
+		const auto images = m_device->getSwapchainImagesKHR(swapChain);
+		std::vector<vk::UniqueImageView> views;
+		views.reserve(images.size());
+		for (const auto& image : images)
+			views.push_back(createImageView(image, format, vk::ImageAspectFlagBits::eColor));
+		return utils::StagingResource<vk::ImageView>(std::move(views));
+	}
+
+	[[nodiscard]] vk::UniqueImageView VulkanContext::createImageView(
+		const vk::Image& image,
+		const vk::Format format,
+		const vk::ImageAspectFlags aspectFlags
+	) const
+	{
+		return m_device->createImageViewUnique({
+			{},
+			image,
+			vk::ImageViewType::e2D,
+			format,
+			{},
+			vk::ImageSubresourceRange{
+				aspectFlags,
+				0, 1, 0, 1
+			}
+		});
+	}
+
+	[[nodiscard]] vk::UniqueFramebuffer VulkanContext::createFramebuffer(
+		const vk::RenderPass& pass,
+		const vk::Extent2D& extent,
+		const std::vector<vk::ImageView>& images
+	) const
+	{
+		return m_device->createFramebufferUnique({
+			{},
+			pass,
+			static_cast<uint32_t>(images.size()), images.data(),
+			extent.width, extent.height, 1
+		});
+	}
+
+	[[nodiscard]] utils::StagingResource<vk::Framebuffer> VulkanContext::createStagedFramebuffer(
+		const vk::RenderPass& pass,
+		const vk::Extent2D& extent,
+		const utils::StagingResource<vk::ImageView>& images
+	) const
+	{
+		std::vector<vk::UniqueFramebuffer> framebuffers;
+		framebuffers.reserve(images.size());
+		for (int i = 0; i < images.size(); i++)
+			framebuffers.push_back(createFramebuffer(pass, extent, { images[i] }));
+		return utils::StagingResource<vk::Framebuffer>(std::move(framebuffers));
+	}
+
+	[[nodiscard]] vk::UniqueRenderPass VulkanContext::createSimpleRenderPass(
+		const std::vector<RenderPassAttachment>& colorAttachments
+	) const
+	{
+		std::vector<vk::AttachmentDescription> attachments;
+		std::vector<vk::AttachmentReference> references;
+		attachments.reserve(colorAttachments.size());
+		references.reserve(colorAttachments.size());
+		for (auto& attachment : colorAttachments) {
+			attachments.push_back({
+				{},
+				attachment.format,
+				vk::SampleCountFlagBits::e1,
+				vk::AttachmentLoadOp::eClear,
+				vk::AttachmentStoreOp::eStore,
+				vk::AttachmentLoadOp::eDontCare,
+				vk::AttachmentStoreOp::eDontCare,
+				vk::ImageLayout::eUndefined,
+				attachment.targetLayout
+			});
+			references.push_back({
+				static_cast<uint32_t>(references.size()),
+				vk::ImageLayout::eColorAttachmentOptimal
+			});
+		}
+		
+		vk::SubpassDescription subpass{
+			{},
+			vk::PipelineBindPoint::eGraphics,
+			0, nullptr,
+			static_cast<uint32_t>(references.size()), references.data(),
+			nullptr, nullptr,
+			0, nullptr
+		};
+		vk::SubpassDependency subpassDependency{
+			VK_SUBPASS_EXTERNAL, 0,
+			vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
+			vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
+			{},
+			vk::AccessFlagBits::eColorAttachmentWrite
+		};
+		
+		return m_device->createRenderPassUnique({
+			{},
+			static_cast<uint32_t>(attachments.size()), attachments.data(),
+			1, &subpass,
+			1, &subpassDependency
+		});
+	}
+
+	[[nodiscard]] utils::StagingResource<vk::CommandBuffer> VulkanContext::createCommandBuffer(
+		const uint32_t stages,
+		const vk::CommandBufferLevel level
+	) const
+	{
+		auto commandBuffers = m_device->allocateCommandBuffersUnique({
+			*m_commandPool,
+			level,
+			stages
+		});
+		return utils::StagingResource<vk::CommandBuffer>(std::move(commandBuffers));
+	}
+
+	[[nodiscard]] utils::StagingResource<vk::Semaphore> VulkanContext::createSemaphore(
+		const uint32_t stages
+	) const
+	{
+		std::vector<vk::UniqueSemaphore> semaphores;
+		semaphores.reserve(stages);
+		for (int i = 0; i < stages; ++i)
+			semaphores.push_back(m_device->createSemaphoreUnique({}));
+		return utils::StagingResource<vk::Semaphore>(std::move(semaphores));
+	}
+
+	[[nodiscard]] utils::StagingResource<vk::Fence> VulkanContext::createFence(
+		const uint32_t stages,
+		const bool signaled
+	) const
+	{
+		vk::FenceCreateInfo createInfo;
+		if (signaled)
+			createInfo.flags |= vk::FenceCreateFlagBits::eSignaled;
+		std::vector<vk::UniqueFence> fences;
+		fences.reserve(stages);
+		for (int i = 0; i < stages; ++i)
+			fences.push_back(m_device->createFenceUnique(createInfo));
+		return utils::StagingResource<vk::Fence>(std::move(fences));
+	}
+
+	void VulkanContext::wait(const vk::Fence& fence) const
+	{
+		const auto result = m_device->waitForFences(1, &fence, true, UINT64_MAX);
+		if (result != vk::Result::eSuccess)
+			throw std::runtime_error("Failed to wait for fence.");
+	}
+
+	void VulkanContext::reset(const vk::Fence& fence) const
+	{
+		const auto result = m_device->resetFences(1, &fence);
+		if (result != vk::Result::eSuccess)
+			throw std::runtime_error("Failed to reset fence.");
+	}
+
+	vk::ResultValue<uint32_t> VulkanContext::acquireNextImage(
+		const vk::SwapchainKHR& swapChain,
+		const vk::Semaphore& semaphore
+	) const
+	{
+		return m_device->acquireNextImageKHR(swapChain, UINT64_MAX, semaphore, nullptr);
+	}
+
+	void VulkanContext::submit(
+		const vk::CommandBuffer& commandBuffer,
+		const vk::Semaphore& waitSemaphore,
+		const vk::Semaphore& signalSemaphore,
+		const vk::Fence& fence
+	) const
+	{
+		vk::PipelineStageFlags waitFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		vk::SubmitInfo submitInfo{
+			1, &waitSemaphore, &waitFlags,
+			1, &commandBuffer,
+			1, &signalSemaphore
+		};
+		const auto result = m_graphicsQueue.submit(1, &submitInfo, fence);
+		if (result != vk::Result::eSuccess)
+			throw std::runtime_error("Failed to submit work.");
+	}
+
+	[[nodiscard]] vk::Result VulkanContext::present(
+		const vk::Semaphore& waitSemaphore,
+		const vk::SwapchainKHR& swapChain,
+		const uint32_t imageIndex
+	) const
+	{
+		vk::PresentInfoKHR presentInfo{
+			1, &waitSemaphore,
+			1, &swapChain, &imageIndex,
+			nullptr
+		};
+		return m_presentQueue.presentKHR(&presentInfo);
 	}
 }

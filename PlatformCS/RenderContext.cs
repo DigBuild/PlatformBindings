@@ -5,6 +5,13 @@ namespace DigBuildPlatformCS
 {
     public readonly ref struct RenderContext
     {
+        private readonly IntPtr _ptr;
+
+        internal RenderContext(IntPtr ptr)
+        {
+            _ptr = ptr;
+        }
+
         public FramebufferFormatBuilder CreateFramebufferFormat(
         ) => throw new NotImplementedException();
 

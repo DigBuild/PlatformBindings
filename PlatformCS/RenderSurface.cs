@@ -39,8 +39,6 @@ namespace DigBuildPlatformCS
         }
 
         public void Dispose() => Handle.Dispose();
-        
-        internal RenderSurfaceContext Context => new(this);
 
         public Task Close()
         {
@@ -53,38 +51,38 @@ namespace DigBuildPlatformCS
 
     public readonly ref struct RenderSurfaceContext
     {
-        private readonly RenderSurface _surface;
+        private readonly IntPtr _ptr;
 
-        internal RenderSurfaceContext(RenderSurface surface)
+        internal RenderSurfaceContext(IntPtr ptr)
         {
-            _surface = surface;
+            _ptr = ptr;
         }
 
         public uint Width
         {
-            get => RenderSurface.Bindings.GetWidth(_surface.Handle);
-            set => RenderSurface.Bindings.SetWidth(_surface.Handle, value);
+            get => RenderSurface.Bindings.GetWidth(_ptr);
+            set => RenderSurface.Bindings.SetWidth(_ptr, value);
         }
         public uint Height
         {
-            get => RenderSurface.Bindings.GetHeight(_surface.Handle);
-            set => RenderSurface.Bindings.SetHeight(_surface.Handle, value);
+            get => RenderSurface.Bindings.GetHeight(_ptr);
+            set => RenderSurface.Bindings.SetHeight(_ptr, value);
         }
         public string Title
         {
-            get => _surface.Title;
+            get => "";//_ptr.Title;
             set
             {
-                RenderSurface.Bindings.SetTitle(_surface.Handle, value);
-                _surface.Title = value;
+                // RenderSurface.Bindings.SetTitle(_ptr.Handle, value);
+                // _ptr.Title = value;
             }
         }
         public bool Fullscreen
         {
-            get => RenderSurface.Bindings.IsFullscreen(_surface.Handle);
-            set => RenderSurface.Bindings.SetFullscreen(_surface.Handle, value);
+            get => RenderSurface.Bindings.IsFullscreen(_ptr);
+            set => RenderSurface.Bindings.SetFullscreen(_ptr, value);
         }
-        public bool Visible => RenderSurface.Bindings.IsVisible(_surface.Handle);
+        public bool Visible => RenderSurface.Bindings.IsVisible(_ptr);
 
         public Framebuffer Framebuffer => throw new NotImplementedException();
         public FramebufferAttachment ColorAttachment => throw new NotImplementedException();

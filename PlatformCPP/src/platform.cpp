@@ -21,15 +21,15 @@ extern "C" {
 	}
 	
 	DLLEXPORT util::native_handle dbp_platform_request_render_surface(
-		void(*update)(void* renderContext),
+		void(*update)(const void* surfaceContext, const void* renderContext),
 		const RenderSurfaceCreationHints hints
 	)
 	{
 		return util::make_native_handle(
 			Platform::getInstance().getRenderManager().requestRenderSurface(
-				[update](render::RenderContext& ctx)
+				[update](const render::RenderSurface& surface, const render::RenderContext& ctx)
 				{
-					update(&ctx);
+					update(&surface, &ctx);
 				},
 				hints
 			)

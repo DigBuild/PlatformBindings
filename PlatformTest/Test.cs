@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using System.Threading.Tasks;
 using DigBuildPlatformCS;
 using DigBuildPlatformCS.Util;
@@ -179,7 +179,12 @@ namespace DigBuildPlatformTest
 
         public static async Task Main()
         {
-            var surface = await Platform.RequestRenderSurface(Update, 800, 600, "Platform Bindings Test");
+            var surface = await Platform.RequestRenderSurface(
+                Update,
+                widthHint: 800,
+                heightHint: 600,
+                titleHint: "Platform Bindings Test"
+            );
             await surface.Closed;
         }
     }

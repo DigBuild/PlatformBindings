@@ -26,6 +26,7 @@ namespace DigBuildPlatformCS
         public static RenderSurfaceRequestBuilder RequestRenderSurface(
             RenderSurface.UpdateDelegate update,
             RenderSurface? parent = null,
+            bool fallbackOnIncompatibleParentHint = false,
             uint widthHint = 800,
             uint heightHint = 600,
             string titleHint = "",
@@ -40,7 +41,8 @@ namespace DigBuildPlatformCS
                     Width = widthHint,
                     Height = heightHint,
                     Title = titleHint,
-                    Fullscreen = fullscreenHint
+                    Fullscreen = fullscreenHint,
+                    FallbackOnIncompatibleParent = fallbackOnIncompatibleParentHint
                 }
             );
         }
@@ -48,11 +50,11 @@ namespace DigBuildPlatformCS
 
     public readonly ref struct RenderSurfaceRequestBuilder
     {
-        private readonly RenderSurface _parent;
+        private readonly RenderSurface? _parent;
         private readonly RenderSurface.UpdateDelegate _update;
         private readonly RenderSurfaceCreationHints _hints;
 
-        internal RenderSurfaceRequestBuilder(RenderSurface parent, RenderSurface.UpdateDelegate update, RenderSurfaceCreationHints hints)
+        internal RenderSurfaceRequestBuilder(RenderSurface? parent, RenderSurface.UpdateDelegate update, RenderSurfaceCreationHints hints)
         {
             _parent = parent;
             _update = update;
@@ -62,12 +64,14 @@ namespace DigBuildPlatformCS
         public TaskAwaiter<RenderSurface> GetAwaiter()
         {
             var hints = _hints;
+            var updateFunc = _update;
             return Task.Run(() =>
             {
                 return new RenderSurface(
                     new NativeHandle(
                         Platform.Bindings.RequestRenderSurface(
-                            _ => { },  // TODO: Implement calls to update delegate
+                            (renderSurfaceContextPtr, renderContextPtr) =>
+                                updateFunc(new RenderSurfaceContext(renderSurfaceContextPtr), new RenderContext(renderContextPtr)),
                             hints
                         )
                     ),
@@ -77,12 +81,13 @@ namespace DigBuildPlatformCS
         }
     }
 
-    internal delegate void NativeRenderSurfaceUpdateDelegate(IntPtr renderContext);
+    internal delegate void NativeRenderSurfaceUpdateDelegate(IntPtr renderSurfaceContext, IntPtr renderContext);
 
     internal struct RenderSurfaceCreationHints
     {
         public uint Width, Height;
         public string Title;
         public bool Fullscreen;
+        public bool FallbackOnIncompatibleParent;
     }
 }

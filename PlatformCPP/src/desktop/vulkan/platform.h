@@ -1,4 +1,5 @@
 #pragma once
+#include "../context.h"
 #include "../../platform.h"
 
 namespace digbuild::platform::desktop::vulkan
@@ -6,15 +7,21 @@ namespace digbuild::platform::desktop::vulkan
 	class RenderManager final : public platform::RenderManager
 	{
 	public:
+		RenderManager() :
+			m_glfwContext(true) {}
+		
 		[[nodiscard]] bool supportsMultipleRenderSurfaces() const override
 		{
 			return true;
 		}
 		
 		[[nodiscard]] std::shared_ptr<render::RenderSurface> requestRenderSurface(
-			render::RenderSurfaceUpdateFunction update,
+			const render::RenderSurfaceUpdateFunction& update,
 			RenderSurfaceCreationHints hints
 		) override;
+	
+	private:
+		GLFWContext m_glfwContext;
 	};
 	
 	class Platform final : public platform::Platform

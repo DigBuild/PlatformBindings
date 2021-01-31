@@ -5,7 +5,9 @@
 
 namespace digbuild::platform::render
 {
-	using RenderSurfaceUpdateFunction = std::function<void(RenderContext&)>;
+	class RenderSurface;
+	
+	using RenderSurfaceUpdateFunction = std::function<void(const RenderSurface&, const RenderContext&)>;
 	
 	class RenderSurface : public std::enable_shared_from_this<RenderSurface>
 	{

@@ -4,6 +4,7 @@
 #include <thread>
 #include <vulkan.h>
 
+#include "context.h"
 #include "render_context.h"
 #include "../render/render_surface.h"
 
@@ -13,6 +14,7 @@ namespace digbuild::platform::desktop
 	{
 	public:
 		RenderSurface(
+			const GLFWContext& glfwContext,
 			std::shared_ptr<RenderSurface>&& parent,
 			const RenderContextFactory& contextFactory,
 			uint32_t width,
@@ -50,6 +52,7 @@ namespace digbuild::platform::desktop
 		static std::vector<const char*> getSurfaceExtensions();
 
 	private:
+		const GLFWContext& m_glfwContext;
 		const std::shared_ptr<RenderSurface> m_parent;
 		std::unique_ptr<RenderContext> m_context;
 		uint32_t m_width, m_height;

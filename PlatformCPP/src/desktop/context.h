@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include <mutex>
 #include <thread>
 
 namespace digbuild::platform::desktop

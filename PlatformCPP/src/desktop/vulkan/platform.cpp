@@ -6,11 +6,14 @@
 namespace digbuild::platform::desktop::vulkan
 {
 	std::shared_ptr<render::RenderSurface> RenderManager::requestRenderSurface(
-		render::RenderSurfaceUpdateFunction update, RenderSurfaceCreationHints hints)
+		const render::RenderSurfaceUpdateFunction& update,
+		RenderSurfaceCreationHints hints
+	)
 	{
 		return std::make_shared<RenderSurface>(
+			m_glfwContext,
 			nullptr,
-			[hints](RenderSurface& surface, RenderSurface* parent)
+			[update, hints](RenderSurface& surface, RenderSurface* parent)
 			{
 				std::shared_ptr<VulkanContext> context;
 				if (parent != nullptr)
@@ -32,7 +35,7 @@ namespace digbuild::platform::desktop::vulkan
 						throw std::runtime_error("Incompatible parent surface. Could not create fallback Vulkan context.");
 				}
 
-				return std::make_unique<RenderContext>(surface, std::move(context), std::move(vkSurface));
+				return std::make_unique<RenderContext>(surface, std::move(context), std::move(vkSurface), update);
 			},
 			hints.width,
 			hints.height,
