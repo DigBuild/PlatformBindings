@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace DigBuildPlatformCS.Resource
 {
@@ -11,6 +12,11 @@ namespace DigBuildPlatformCS.Resource
         public ResourceManager(List<IResourceProvider> resourceProviders)
         {
             _resourceProviders = resourceProviders;
+        }
+
+        public ResourceManager(params IResourceProvider[] resourceProviders) :
+            this(resourceProviders.ToList())
+        {
         }
 
         IReadOnlySet<ResourceName> GetAndClearModifiedResources()

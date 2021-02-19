@@ -42,6 +42,7 @@ namespace digbuild::platform::util
 	template<typename T>
 	std::shared_ptr<T> handle_share(native_handle pointer)
 	{
+		if (pointer == nullptr) return nullptr;
 		return static_cast<const SharedPtr<T>*>(pointer)->pointer;
 	}
 }

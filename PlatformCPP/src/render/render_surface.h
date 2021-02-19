@@ -9,11 +9,11 @@ namespace digbuild::platform::render
 	
 	using RenderSurfaceUpdateFunction = std::function<void(const RenderSurface&, const RenderContext&)>;
 	
-	class RenderSurface : public std::enable_shared_from_this<RenderSurface>
+	class RenderSurface : public IRenderTarget, public std::enable_shared_from_this<RenderSurface>
 	{
 	public:
 		RenderSurface() = default;
-		virtual ~RenderSurface() = default;
+		~RenderSurface() override = default;
 		RenderSurface(const RenderSurface& other) = delete;
 		RenderSurface(RenderSurface&& other) noexcept = delete;
 		RenderSurface& operator=(const RenderSurface& other) = delete;

@@ -1,8 +1,8 @@
-﻿using System;
+﻿using AdvancedDLSupport;
+using DigBuildPlatformCS.Util;
+using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using AdvancedDLSupport;
-using DigBuildPlatformCS.Util;
 
 namespace DigBuildPlatformCS
 {
@@ -13,7 +13,8 @@ namespace DigBuildPlatformCS
 
         IntPtr RequestRenderSurface(
             NativeRenderSurfaceUpdateDelegate update,
-            RenderSurfaceCreationHints hints
+            RenderSurfaceCreationHints hints,
+            IntPtr parent
         );
     }
 
@@ -65,17 +66,25 @@ namespace DigBuildPlatformCS
         {
             var hints = _hints;
             var updateFunc = _update;
+            var parent = _parent;
             return Task.Run(() =>
             {
                 return new RenderSurface(
                     new NativeHandle(
                         Platform.Bindings.RequestRenderSurface(
                             (renderSurfaceContextPtr, renderContextPtr) =>
-                                updateFunc(new RenderSurfaceContext(renderSurfaceContextPtr), new RenderContext(renderContextPtr)),
-                            hints
+                            {
+                                var handle = new NativeHandle(renderSurfaceContextPtr);
+                                updateFunc(
+                                    new RenderSurfaceContext(handle),
+                                    new RenderContext(renderContextPtr)
+                                );
+                                handle.Dispose();
+                            },
+                            hints,
+                            parent?.Handle ?? NativeHandle.Empty
                         )
-                    ),
-                    hints.Title
+                    )
                 );
             }).GetAwaiter();
         }

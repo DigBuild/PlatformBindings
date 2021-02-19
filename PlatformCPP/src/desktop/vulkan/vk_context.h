@@ -3,8 +3,9 @@
 #include <mutex>
 #include <vulkan.h>
 
-#include "staging_resource.h"
-#include "utils.h"
+#include "vk_buffer.h"
+#include "vk_staging_resource.h"
+#include "vk_util.h"
 
 namespace digbuild::platform::desktop::vulkan
 {
@@ -32,7 +33,7 @@ namespace digbuild::platform::desktop::vulkan
 	public:
 		void waitIdle() const;
 		
-		[[nodiscard]] utils::SwapChainDescriptor getSwapChainDescriptor(const vk::SurfaceKHR& surface) const;
+		[[nodiscard]] util::SwapChainDescriptor getSwapChainDescriptor(const vk::SurfaceKHR& surface) const;
 
 		[[nodiscard]] vk::UniqueSwapchainKHR createSwapChain(
 			const vk::SurfaceKHR& surface,
@@ -44,7 +45,7 @@ namespace digbuild::platform::desktop::vulkan
 			const vk::SwapchainKHR& oldSwapchain
 		) const;
 
-		[[nodiscard]] utils::StagingResource<vk::ImageView> createSwapChainViews(
+		[[nodiscard]] std::vector<vk::UniqueImageView> createSwapChainViews(
 			const vk::SwapchainKHR& swapChain,
 			vk::Format format
 		) const;
@@ -61,26 +62,42 @@ namespace digbuild::platform::desktop::vulkan
 			const std::vector<vk::ImageView>& images
 		) const;
 
-		[[nodiscard]] utils::StagingResource<vk::Framebuffer> createStagedFramebuffer(
+		[[nodiscard]] std::vector<vk::UniqueFramebuffer> createFramebuffers(
 			const vk::RenderPass& pass,
 			const vk::Extent2D& extent,
-			const utils::StagingResource<vk::ImageView>& images
+			const std::vector<vk::UniqueImageView>& images
 		) const;
 
 		[[nodiscard]] vk::UniqueRenderPass createSimpleRenderPass(
 			const std::vector<RenderPassAttachment>& colorAttachments
 		) const;
-		
-		[[nodiscard]] utils::StagingResource<vk::CommandBuffer> createCommandBuffer(
+
+		[[nodiscard]] std::vector<vk::UniqueCommandBuffer> createCommandBuffers(
 			uint32_t stages,
 			vk::CommandBufferLevel level
 		) const;
 
-		[[nodiscard]] utils::StagingResource<vk::Semaphore> createSemaphore(
+		[[nodiscard]] util::StagingResource<vk::CommandBuffer> createCommandBuffer(
+			uint32_t stages,
+			vk::CommandBufferLevel level
+		) const;
+
+		[[nodiscard]] std::unique_ptr<VulkanBuffer> createBuffer(
+			uint32_t size,
+			vk::BufferUsageFlags usage,
+			vk::SharingMode sharingMode,
+			vk::MemoryPropertyFlags memoryProperties
+		);
+		
+		[[nodiscard]] vk::UniqueShaderModule createShaderModule(
+			const std::vector<uint8_t>& bytes
+		) const;
+
+		[[nodiscard]] util::StagingResource<vk::Semaphore> createSemaphore(
 			uint32_t stages
 		) const;
 		
-		[[nodiscard]] utils::StagingResource<vk::Fence> createFence(
+		[[nodiscard]] util::StagingResource<vk::Fence> createFence(
 			uint32_t stages,
 			bool signaled
 		) const;
@@ -117,7 +134,7 @@ namespace digbuild::platform::desktop::vulkan
 		bool m_deviceInitialized = false;
 		std::vector<const char*> m_requiredDeviceExtensions;
 		vk::PhysicalDevice m_physicalDevice;
-		utils::QueueFamilyIndices m_familyIndices;
+		util::QueueFamilyIndices m_familyIndices;
 		vk::UniqueDevice m_device;
 
 		vk::Queue m_graphicsQueue;
@@ -125,5 +142,9 @@ namespace digbuild::platform::desktop::vulkan
 
 		vk::UniqueCommandPool m_commandPool;
 		vk::UniquePipelineCache m_pipelineCache;
+
+		friend class VulkanBuffer;
+		friend class RenderPipeline;
+		friend class FramebufferFormat;
 	};
 }

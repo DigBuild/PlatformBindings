@@ -1,4 +1,4 @@
-﻿#include "render_surface.h"
+﻿#include "dt_render_surface.h"
 
 namespace digbuild::platform::desktop
 {
@@ -47,6 +47,7 @@ namespace digbuild::platform::desktop
 
 						window->m_width = width;
 						window->m_height = height;
+						window->m_visible = width != 0 && height != 0;
 					}
 				);
 
@@ -56,7 +57,14 @@ namespace digbuild::platform::desktop
 				{
 					// [[maybe_unused]] std::scoped_lock<std::mutex> lock(m_renderLock);
 
-					glfwPollEvents();
+					if (m_width == 0 || m_height == 0)
+						glfwWaitEvents();
+					else
+						glfwPollEvents();
+					
+					if (m_width == 0 || m_height == 0)
+						continue;
+					
 					m_context->update();
 				}
 

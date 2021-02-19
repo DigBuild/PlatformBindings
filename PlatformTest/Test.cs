@@ -1,187 +1,113 @@
+using System;
+using DigBuildPlatformCS;
+using DigBuildPlatformCS.Resource;
+using DigBuildPlatformCS.Util;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
-using DigBuildPlatformCS;
-using DigBuildPlatformCS.Util;
 
 namespace DigBuildPlatformTest
 {
     public struct Vertex
     {
         public Vector3 Position;
-        public Vector3 Normal;
         public Vector4 Color;
-    }
 
-    public struct Instance
-    {
-        public Vector3 Offset;
-
-        public Instance(float x, float y, float z)
+        public Vertex(float x, float y, float z, float r, float g, float b, float a)
         {
-            Offset = new Vector3(x, y, z);
+            Position = new Vector3(x, y, z);
+            Color = new Vector4(r, g, b, a);
         }
     }
 
-    public struct Vertex2
-    {
-        public Vector2 Position;
-
-        public Vertex2(float x, float y)
-        {
-            Position = new Vector2(x, y);
-        }
-    }
-
-    public interface IVertexUniforms
-    {
-        [Uniform(0)]
-        public Matrix4x4 ProjectionMatrix { set; }
-        [Uniform(1)]
-        public Matrix4x4 ModelViewMatrix { set; }
-    }
-
-    public interface IFragmentUniforms
-    {
-        [Uniform(0)]
-        public Texture ColorTexture { set; }
-        [Uniform(1)]
-        public Texture BloomTexture { set; }
-        [Uniform(2)]
-        public Texture DepthTexture { set; }
-    }
+    // public interface IVertexUniforms : IUniform<IVertexUniforms>
+    // {
+    //     [Uniform(0)]
+    //     public Matrix4x4 Matrix { set; }
+    // }
 
     public class RenderResources
     {
-        public readonly IVertexUniforms VertexUniforms1, VertexUniforms2;
-        public readonly VertexBufferWriter<Vertex> MainVertexBuffer;
-        public readonly VertexBufferWriter<Instance> BloomInstanceBuffer;
-        public readonly DrawCommand DrawCommand;
-
-        public RenderResources(RenderSurfaceContext surface, RenderContext context, NativeBufferPool bufferPool)
+        // public readonly UniformHandle<IVertexUniforms> Uniforms;
+        public readonly VertexBufferWriter<Vertex> VertexBufferWriter;
+        public readonly CommandBuffer CommandBuffer;
+        
+        public RenderResources(
+            RenderSurfaceContext surface, RenderContext context,
+            NativeBufferPool bufferPool, ResourceManager resourceManager)
         {
-            // Custom framebuffer format and render stages for preliminary rendering
-            FramebufferFormat framebufferFormat = context
-                .CreateFramebufferFormat()
-                .WithColorAttachment(out var colorAttachment, default)
-                .WithColorAttachment(out var bloomAttachment, default)
-                .WithDepthStencilAttachment(out var depthStencilAttachment, default)
-                .WithStage(out var mainRenderStage, colorAttachment, depthStencilAttachment)
-                .WithStage(out var bloomRenderStage, colorAttachment, bloomAttachment, depthStencilAttachment)
-                .WithDependency(bloomRenderStage, mainRenderStage);
-
-            // Framebuffer for preliminary rendering
-            Framebuffer framebuffer = context.CreateFramebuffer(framebufferFormat, surface.Framebuffer.Width, surface.Framebuffer.Height);
-
-            // Main geometry pipeline
-            VertexShader<IVertexUniforms> vsMain = context.CreateVertexShader<IVertexUniforms>();
-            FragmentShader fsMain = context.CreateFragmentShader();
-            RenderPipeline<Vertex> mainPipeline = context
-                .CreatePipeline<Vertex>(mainRenderStage, Topology.Triangles)
-                .WithShader(vsMain, out VertexUniforms1)
-                .WithShader(fsMain)
-                .WithStandardBlending(0);
-
-            // Secondary geometry pipeline for bloom
-            VertexShader<IVertexUniforms> vsBloom = context.CreateVertexShader<IVertexUniforms>();
-            FragmentShader fsBloom = context.CreateFragmentShader();
-            RenderPipeline<Vertex, Instance> bloomPipeline = context
-                .CreatePipeline<Vertex, Instance>(bloomRenderStage, Topology.Triangles)
-                .WithShader(vsBloom, out VertexUniforms2)
-                .WithShader(fsBloom)
-                .WithStandardBlending(0);
-
-            // Composition pipeline
-            VertexShader vsComp = context.CreateVertexShader();
-            FragmentShader<IFragmentUniforms> fsComp = context.CreateFragmentShader<IFragmentUniforms>();
-            RenderPipeline<Vertex2> compositionPipeline = context
-                .CreatePipeline<Vertex2>(surface.RenderStage, Topology.TriangleStrips)
-                .WithShader(vsComp)
-                .WithShader(fsComp, out var myFragmentUniforms)
-                .WithStandardBlending(0);
-            // Set fragment uniforms to the textures from the first pass
-            myFragmentUniforms.ColorTexture = framebuffer.Get(colorAttachment);
-            myFragmentUniforms.BloomTexture = framebuffer.Get(bloomAttachment);
-            myFragmentUniforms.DepthTexture = framebuffer.Get(depthStencilAttachment);
-
-            // Main vertex buffer w/ external writer
-            VertexBuffer<Vertex> mainVertexBuffer = context.CreateVertexBuffer(out MainVertexBuffer);
-
-            // Secondary vertex buffer, pre-filled, and secondary index buffer w/ external writer
-            using var bloomVertexData = bufferPool.Request<Vertex>();
-            FillBloomVertexData(bloomVertexData);
-            VertexBuffer<Vertex> bloomVertexBuffer = context.CreateVertexBuffer(bloomVertexData);
-            VertexBuffer<Instance> bloomInstanceBuffer = context.CreateVertexBuffer(out BloomInstanceBuffer);
-
-            // Composition vertex buffer, pre-filled with screen rectangle
-            using var compVertexData = bufferPool.Request<Vertex2>();
-            compVertexData.Add(
-                new Vertex2(0, 0),
-                new Vertex2(1, 0),
-                new Vertex2(1, 1),
-                new Vertex2(0, 1)
+            VertexShader/* <IVertexUniforms> */ vs = context.CreateVertexShader/* <IVertexUniforms> */(
+                resourceManager.GetResource(new ResourceName("test", "shaders/test.vert.spv"))!
             );
-            VertexBuffer<Vertex2> compVertexBuffer = context.CreateVertexBuffer(compVertexData);
+            FragmentShader fs = context.CreateFragmentShader(
+                resourceManager.GetResource(new ResourceName("test", "shaders/test.frag.spv"))!
+            );
+            RenderPipeline<Vertex> pipeline = context
+                .CreatePipeline<Vertex>(surface.RenderStage, Topology.Triangles)
+                .WithShader(vs/* , out Uniforms */)
+                .WithShader(fs);
+            
+            VertexBuffer<Vertex> vb = context.CreateVertexBuffer(out VertexBufferWriter);
 
-            // Draw command for the entire render process
-            DrawCommand = context.CreateDrawCommand();
-            using (var cmd = DrawCommand.BeginRecording())
-            {
-                cmd.SetAndClearRenderTarget(framebuffer)
-                    .WithColor(colorAttachment, Vector4.One);
-                cmd.Draw(mainPipeline, mainVertexBuffer);
-                cmd.Draw(bloomPipeline, bloomVertexBuffer, bloomInstanceBuffer);
-
-                cmd.SetAndClearRenderTarget(surface.Framebuffer);
-                cmd.Draw(compositionPipeline, compVertexBuffer);
-            }
-        }
-
-        private static void FillBloomVertexData(PooledNativeBuffer<Vertex> bloomVertexData)
-        {
-            throw new System.NotImplementedException();
+            CommandBuffer = context.CreateDrawCommand(out var cbw);
+            var cmd = cbw.BeginRecording(surface.Format, bufferPool);
+            cmd.SetViewportAndScissor(surface);
+            // var uniforms = cmd.Push(Uniforms);
+            // uniforms.Matrix = Matrix4x4.Identity;
+            cmd.Draw(pipeline, vb);
+            cmd.Commit(context);
         }
     }
 
     public static class Test
     {
         private static readonly NativeBufferPool BufferPool = new();
+        private static readonly ResourceManager ResourceManager = new(
+            new FileSystemResourceProvider(
+                new Dictionary<string, string>
+                {
+                    ["test"] = "../../PlatformTest/Resources"
+                }
+            )
+        );
         private static RenderResources? _resources;
-
+        
         private static void Update(RenderSurfaceContext surface, RenderContext context)
         {
-            // Create render resources if not already available and initialize projection matrices
             if (_resources == null)
             {
-                _resources = new RenderResources(surface, context, BufferPool);
-                _resources.VertexUniforms1.ProjectionMatrix = Matrix4x4.Identity;
-                _resources.VertexUniforms2.ProjectionMatrix = Matrix4x4.Identity;
+                _resources = new RenderResources(surface, context, BufferPool, ResourceManager);
+            //     _resources.Uniforms.Matrix = Matrix4x4.Identity;
             }
-            
-            // Set main stage transforms and write geometry
-            _resources.VertexUniforms1.ModelViewMatrix = Matrix4x4.Identity;
-            using var mainGeometry = BufferPool.Request<Vertex>();
-            // mainGeometry.Add(
-            //     
-            // );
-            _resources.MainVertexBuffer.Write(mainGeometry);
 
-            // Set bloom stage transforms and write geometry
-            _resources.VertexUniforms2.ModelViewMatrix = Matrix4x4.Identity;
-            using var bloomInstances = BufferPool.Request<Instance>();
-            bloomInstances.Add(
-                new Instance(1, 0, 0)
+            var milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            var angle = (milliseconds % 5000) / 5000f;
+
+            var sc = 0.5f;
+            var si = MathF.Sin(2 * MathF.PI / 3f) * sc;
+            var co = MathF.Sin(2 * MathF.PI / 3f) * sc;
+
+            var mat = Matrix4x4.CreateRotationZ(angle * 2 * MathF.PI);
+            var a = Vector3.Transform(new Vector3(0.0f, -sc, 0), mat);
+            var b = Vector3.Transform(new Vector3(co, si, 0), mat);
+            var c = Vector3.Transform(new Vector3(-co, si, 0), mat);
+
+            using var vertexData = BufferPool.Request<Vertex>();
+            vertexData.Add(
+                new Vertex(a.X, a.Y, a.Z, 1, 0, 0, 1),
+                new Vertex(b.X, b.Y, b.Z, 0, 1, 0, 1),
+                new Vertex(c.X, c.Y, c.Z, 0, 0, 1, 1)
             );
-            _resources.BloomInstanceBuffer.Write(bloomInstances);
+            _resources.VertexBufferWriter.Write(vertexData);
 
-            // Enqueue draw command
-            context.Enqueue(_resources.DrawCommand);
+            context.Enqueue(surface, _resources.CommandBuffer);
         }
 
         public static async Task Main()
         {
             var surface = await Platform.RequestRenderSurface(
                 Update,
-                widthHint: 800,
+                widthHint: 600,
                 heightHint: 600,
                 titleHint: "Platform Bindings Test"
             );

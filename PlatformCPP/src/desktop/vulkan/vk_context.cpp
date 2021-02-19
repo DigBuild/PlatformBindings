@@ -1,8 +1,8 @@
-#include "context.h"
+#include "vk_context.h"
 
 #include <iostream>
 
-#include "utils.h"
+#include "vk_util.h"
 
 namespace digbuild::platform::desktop::vulkan
 {
@@ -27,7 +27,8 @@ namespace digbuild::platform::desktop::vulkan
 	std::vector<const char*> getRequiredDeviceExtensions()
 	{
 		return std::vector<const char*>{
-			VK_KHR_SWAPCHAIN_EXTENSION_NAME
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+			VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME
 		};
 	}
 	
@@ -38,6 +39,19 @@ namespace digbuild::platform::desktop::vulkan
 			"DigBuild", VK_MAKE_VERSION(1, 0, 0),
 			VK_API_VERSION_1_2
 		};
+	}
+
+	uint32_t findMemoryType(const vk::PhysicalDevice& device, const uint32_t memoryTypeBits, const vk::MemoryPropertyFlags memoryProperties)
+	{
+		const auto properties = device.getMemoryProperties();
+		for (uint32_t i = 0; i < properties.memoryTypeCount; i++)
+		{
+			if ((memoryTypeBits & (1 << i)) && (properties.memoryTypes[i].propertyFlags & memoryProperties) == memoryProperties)
+			{
+				return i;
+			}
+		}
+		throw std::runtime_error("Failed to find suitable memory type.");
 	}
 
 	VKAPI_ATTR VkBool32 VKAPI_CALL logDebugMessage(
@@ -59,10 +73,10 @@ namespace digbuild::platform::desktop::vulkan
 	
 	VulkanContext::VulkanContext(const std::vector<const char*>& surfaceExtensions)
 	{
-		utils::initializeDispatcher();
+		util::initializeDispatcher();
 
 		m_requiredLayers = getRequiredLayers();
-		if (!utils::areAllLayersAvailable(m_requiredLayers))
+		if (!util::areAllLayersAvailable(m_requiredLayers))
 			throw std::runtime_error("Not all requested layers are available.");
 
 		const auto instanceExtensions = getRequiredInstanceExtensions();
@@ -117,17 +131,17 @@ namespace digbuild::platform::desktop::vulkan
 	{
 		m_requiredDeviceExtensions = getRequiredDeviceExtensions();
 		
-		const auto deviceDescriptor = utils::findOptimalPhysicalDevice(*m_instance, surface, m_requiredDeviceExtensions);
+		const auto deviceDescriptor = util::findOptimalPhysicalDevice(*m_instance, surface, m_requiredDeviceExtensions);
 		m_physicalDevice = deviceDescriptor.device;
 		m_familyIndices = deviceDescriptor.familyIndices;
 
-		m_device = utils::createLogicalDevice(m_physicalDevice, m_familyIndices, m_requiredLayers, m_requiredDeviceExtensions);
+		m_device = util::createLogicalDevice(m_physicalDevice, m_familyIndices, m_requiredLayers, m_requiredDeviceExtensions);
 		
 		m_graphicsQueue = m_device->getQueue(m_familyIndices.graphicsFamily.value(), 0);
 		m_presentQueue = m_device->getQueue(m_familyIndices.presentFamily.value(), 0);
 		
-		m_commandPool = utils::createCommandPool(*m_device, m_familyIndices.graphicsFamily.value());
-		m_pipelineCache = utils::createPipelineCache(*m_device);
+		m_commandPool = util::createCommandPool(*m_device, m_familyIndices.graphicsFamily.value());
+		m_pipelineCache = util::createPipelineCache(*m_device);
 
 		m_deviceInitialized = true;
 		return true;
@@ -135,7 +149,7 @@ namespace digbuild::platform::desktop::vulkan
 
 	bool VulkanContext::validateDeviceCompatibility(const vk::SurfaceKHR& surface) const
 	{
-		return utils::getPhysicalDeviceDescriptor(m_physicalDevice, surface, m_requiredDeviceExtensions).has_value();
+		return util::getPhysicalDeviceDescriptor(m_physicalDevice, surface, m_requiredDeviceExtensions).has_value();
 	}
 
 	void VulkanContext::waitIdle() const
@@ -148,9 +162,9 @@ namespace digbuild::platform::desktop::vulkan
 			m_device->waitIdle();
 	}
 
-	[[nodiscard]] utils::SwapChainDescriptor VulkanContext::getSwapChainDescriptor(const vk::SurfaceKHR& surface) const
+	[[nodiscard]] util::SwapChainDescriptor VulkanContext::getSwapChainDescriptor(const vk::SurfaceKHR& surface) const
 	{
-		return utils::getSwapChainDescriptor(m_physicalDevice, surface);
+		return util::getSwapChainDescriptor(m_physicalDevice, surface);
 	}
 
 	[[nodiscard]] vk::UniqueSwapchainKHR VulkanContext::createSwapChain(
@@ -179,17 +193,25 @@ namespace digbuild::platform::desktop::vulkan
 		return m_device->createSwapchainKHRUnique(swapchainCreateInfo);
 	}
 
-	[[nodiscard]] utils::StagingResource<vk::ImageView> VulkanContext::createSwapChainViews(
+	[[nodiscard]] std::vector<vk::UniqueImageView> VulkanContext::createSwapChainViews(
 		const vk::SwapchainKHR& swapChain,
 		const vk::Format format
 	) const
 	{
 		const auto images = m_device->getSwapchainImagesKHR(swapChain);
+		// for (auto& image : images)
+		// 	util::transitionImageLayout(
+		// 		*m_device, *m_commandPool, m_graphicsQueue,
+		// 		image, vk::ImageAspectFlagBits::eColor,
+		// 		vk::ImageLayout::eUndefined,
+		// 		vk::ImageLayout::eColorAttachmentOptimal
+		// 	);
+		
 		std::vector<vk::UniqueImageView> views;
 		views.reserve(images.size());
 		for (const auto& image : images)
 			views.push_back(createImageView(image, format, vk::ImageAspectFlagBits::eColor));
-		return utils::StagingResource<vk::ImageView>(std::move(views));
+		return std::move(views);
 	}
 
 	[[nodiscard]] vk::UniqueImageView VulkanContext::createImageView(
@@ -225,17 +247,17 @@ namespace digbuild::platform::desktop::vulkan
 		});
 	}
 
-	[[nodiscard]] utils::StagingResource<vk::Framebuffer> VulkanContext::createStagedFramebuffer(
+	[[nodiscard]] std::vector<vk::UniqueFramebuffer> VulkanContext::createFramebuffers(
 		const vk::RenderPass& pass,
 		const vk::Extent2D& extent,
-		const utils::StagingResource<vk::ImageView>& images
+		const std::vector<vk::UniqueImageView>& images
 	) const
 	{
 		std::vector<vk::UniqueFramebuffer> framebuffers;
 		framebuffers.reserve(images.size());
-		for (int i = 0; i < images.size(); i++)
-			framebuffers.push_back(createFramebuffer(pass, extent, { images[i] }));
-		return utils::StagingResource<vk::Framebuffer>(std::move(framebuffers));
+		for (auto i = 0u; i < images.size(); i++)
+			framebuffers.push_back(createFramebuffer(pass, extent, { *images[i] }));
+		return std::move(framebuffers);
 	}
 
 	[[nodiscard]] vk::UniqueRenderPass VulkanContext::createSimpleRenderPass(
@@ -246,7 +268,7 @@ namespace digbuild::platform::desktop::vulkan
 		std::vector<vk::AttachmentReference> references;
 		attachments.reserve(colorAttachments.size());
 		references.reserve(colorAttachments.size());
-		for (auto& attachment : colorAttachments) {
+		for (const auto& attachment : colorAttachments) {
 			attachments.push_back({
 				{},
 				attachment.format,
@@ -258,13 +280,13 @@ namespace digbuild::platform::desktop::vulkan
 				vk::ImageLayout::eUndefined,
 				attachment.targetLayout
 			});
-			references.push_back({
+			references.emplace_back(
 				static_cast<uint32_t>(references.size()),
 				vk::ImageLayout::eColorAttachmentOptimal
-			});
+			);
 		}
 		
-		vk::SubpassDescription subpass{
+		const vk::SubpassDescription subpass{
 			{},
 			vk::PipelineBindPoint::eGraphics,
 			0, nullptr,
@@ -272,7 +294,7 @@ namespace digbuild::platform::desktop::vulkan
 			nullptr, nullptr,
 			0, nullptr
 		};
-		vk::SubpassDependency subpassDependency{
+		const vk::SubpassDependency subpassDependency{
 			VK_SUBPASS_EXTERNAL, 0,
 			vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
 			vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
@@ -282,13 +304,25 @@ namespace digbuild::platform::desktop::vulkan
 		
 		return m_device->createRenderPassUnique({
 			{},
-			static_cast<uint32_t>(attachments.size()), attachments.data(),
-			1, &subpass,
-			1, &subpassDependency
+			attachments,
+			std::vector{subpass},
+			std::vector{subpassDependency}
 		});
 	}
 
-	[[nodiscard]] utils::StagingResource<vk::CommandBuffer> VulkanContext::createCommandBuffer(
+	std::vector<vk::UniqueCommandBuffer> VulkanContext::createCommandBuffers(
+		const uint32_t stages,
+		const vk::CommandBufferLevel level
+	) const
+	{
+		return m_device->allocateCommandBuffersUnique({
+			*m_commandPool,
+			level,
+			stages
+		});
+	}
+
+	[[nodiscard]] util::StagingResource<vk::CommandBuffer> VulkanContext::createCommandBuffer(
 		const uint32_t stages,
 		const vk::CommandBufferLevel level
 	) const
@@ -298,21 +332,48 @@ namespace digbuild::platform::desktop::vulkan
 			level,
 			stages
 		});
-		return utils::StagingResource<vk::CommandBuffer>(std::move(commandBuffers));
+		return util::StagingResource(std::move(commandBuffers));
 	}
 
-	[[nodiscard]] utils::StagingResource<vk::Semaphore> VulkanContext::createSemaphore(
+	[[nodiscard]] std::unique_ptr<VulkanBuffer> VulkanContext::createBuffer(
+		const uint32_t size,
+		const vk::BufferUsageFlags usage,
+		const vk::SharingMode sharingMode,
+		const vk::MemoryPropertyFlags memoryProperties
+	)
+	{
+		auto buffer = m_device->createBufferUnique({ {}, size, usage, sharingMode });
+		const auto memRequirements = m_device->getBufferMemoryRequirements(*buffer);
+		auto memory = m_device->allocateMemoryUnique({
+			memRequirements.size,
+			findMemoryType(m_physicalDevice, memRequirements.memoryTypeBits, memoryProperties)
+		});
+		m_device->bindBufferMemory(*buffer, *memory, 0);
+		return std::make_unique<VulkanBuffer>(shared_from_this(), std::move(buffer), std::move(memory), size);
+	}
+
+	vk::UniqueShaderModule VulkanContext::createShaderModule(
+		const std::vector<uint8_t>& bytes
+	) const
+	{
+		return m_device->createShaderModuleUnique({
+			{},
+			bytes.size(), reinterpret_cast<const uint32_t*>(bytes.data())
+		});
+	}
+
+	[[nodiscard]] util::StagingResource<vk::Semaphore> VulkanContext::createSemaphore(
 		const uint32_t stages
 	) const
 	{
 		std::vector<vk::UniqueSemaphore> semaphores;
 		semaphores.reserve(stages);
-		for (int i = 0; i < stages; ++i)
+		for (auto i = 0u; i < stages; ++i)
 			semaphores.push_back(m_device->createSemaphoreUnique({}));
-		return utils::StagingResource<vk::Semaphore>(std::move(semaphores));
+		return util::StagingResource<vk::Semaphore>(std::move(semaphores));
 	}
 
-	[[nodiscard]] utils::StagingResource<vk::Fence> VulkanContext::createFence(
+	[[nodiscard]] util::StagingResource<vk::Fence> VulkanContext::createFence(
 		const uint32_t stages,
 		const bool signaled
 	) const
@@ -322,9 +383,9 @@ namespace digbuild::platform::desktop::vulkan
 			createInfo.flags |= vk::FenceCreateFlagBits::eSignaled;
 		std::vector<vk::UniqueFence> fences;
 		fences.reserve(stages);
-		for (int i = 0; i < stages; ++i)
+		for (auto i = 0u; i < stages; ++i)
 			fences.push_back(m_device->createFenceUnique(createInfo));
-		return utils::StagingResource<vk::Fence>(std::move(fences));
+		return util::StagingResource<vk::Fence>(std::move(fences));
 	}
 
 	void VulkanContext::wait(const vk::Fence& fence) const

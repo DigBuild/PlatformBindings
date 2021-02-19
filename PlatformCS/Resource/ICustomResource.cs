@@ -1,6 +1,6 @@
-﻿using System;
+﻿using DigBuildPlatformCS.Util;
+using System;
 using System.Reflection;
-using DigBuildPlatformCS.Util;
 
 namespace DigBuildPlatformCS.Resource
 {

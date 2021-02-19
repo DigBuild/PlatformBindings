@@ -1,5 +1,5 @@
-﻿using System;
-using AdvancedDLSupport;
+﻿using AdvancedDLSupport;
+using System;
 
 namespace DigBuildPlatformCS.Util
 {
@@ -13,10 +13,15 @@ namespace DigBuildPlatformCS.Util
     {
         private static readonly INativeHandleBindings Bindings = NativeLib.Get<INativeHandleBindings>();
 
-        private readonly IntPtr _ptr;
+        public static readonly NativeHandle Empty = new(IntPtr.Zero, true);
 
-        internal NativeHandle(IntPtr ptr)
+        private readonly IntPtr _ptr;
+        private bool _invalid;
+
+        internal NativeHandle(IntPtr ptr, bool allowInvalid = false)
         {
+            if (!allowInvalid && ptr == IntPtr.Zero)
+                throw new InvalidHandleException();
             _ptr = ptr;
         }
 
@@ -27,10 +32,18 @@ namespace DigBuildPlatformCS.Util
 
         public void Dispose()
         {
+            if (_invalid)
+                throw new InvalidHandleException();
             Bindings.Destroy(_ptr);
+            _invalid = true;
             GC.SuppressFinalize(this);
         }
 
-        public static implicit operator IntPtr(NativeHandle handle) => handle._ptr;
+        public static implicit operator IntPtr(NativeHandle handle)
+        {
+            if (handle._invalid)
+                throw new InvalidHandleException();
+            return handle._ptr;
+        }
     }
 }

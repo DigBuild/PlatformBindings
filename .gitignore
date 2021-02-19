@@ -9,3 +9,5 @@ obj/
 *.vcxproj.filters
 Makefile
 launchSettings.json
+
+*.DotSettings.user

@@ -1,14 +1,24 @@
 ﻿#pragma once
+#include <cstdint>
 
 namespace digbuild::platform::util
 {
-	struct Vector2
+	union Vector2
 	{
+		uint8_t data[2 * 4];
 	};
-	struct Vector3
+	union Vector3
 	{
+		uint8_t data[3 * 4];
 	};
-	struct Vector4
+	union Vector4
 	{
+		uint8_t data[4 * 4];
+	};
+	
+	struct Extents2D
+	{
+		const uint32_t x, y;
+		const uint32_t width, height;
 	};
 }

@@ -7,7 +7,7 @@ namespace digbuild::platform::render
 		
 	};
 
-	class Texture
+	class Texture : public Resource
 	{
 		
 	};

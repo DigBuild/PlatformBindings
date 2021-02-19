@@ -1,7 +1,7 @@
-﻿#include "platform.h"
+﻿#include "vk_platform.h"
 
-#include "render_context.h"
-#include "../render_surface.h"
+#include "vk_render_context.h"
+#include "../dt_render_surface.h"
 
 namespace digbuild::platform::desktop::vulkan
 {

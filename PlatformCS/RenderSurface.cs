@@ -1,7 +1,8 @@
-﻿using System;
-using System.Threading.Tasks;
-using AdvancedDLSupport;
+﻿using AdvancedDLSupport;
 using DigBuildPlatformCS.Util;
+using System;
+using System.Numerics;
+using System.Threading.Tasks;
 
 namespace DigBuildPlatformCS
 {
@@ -12,7 +13,6 @@ namespace DigBuildPlatformCS
 
         uint GetWidth(IntPtr handle);
         uint GetHeight(IntPtr handle);
-
         void GetTitle(IntPtr handle, GetTitleDelegate del);
         bool IsFullscreen(IntPtr handle);
         bool IsVisible(IntPtr handle);
@@ -33,12 +33,10 @@ namespace DigBuildPlatformCS
         public delegate void UpdateDelegate(RenderSurfaceContext surface, RenderContext context);
 
         internal readonly NativeHandle Handle;
-        internal string Title;
 
-        internal RenderSurface(NativeHandle handle, string title)
+        internal RenderSurface(NativeHandle handle)
         {
             Handle = handle;
-            Title = title;
             Closed = Task.Run(() => Bindings.WaitClosed(handle));
         }
 
@@ -53,46 +51,54 @@ namespace DigBuildPlatformCS
         public Task Closed { get; }
     }
 
-    public readonly ref struct RenderSurfaceContext
+    public readonly struct RenderSurfaceContext : IRenderTarget
     {
-        private readonly IntPtr _ptr;
+        private static readonly FramebufferAttachment AttachmentS = new(0, new Vector4(0, 0, 0, 1));
+        private static readonly FramebufferFormat FormatS = new(NativeHandle.Empty, 1, new[] { AttachmentS });
+        private static readonly RenderStage StageS = new(0, FormatS);
 
-        internal RenderSurfaceContext(IntPtr ptr)
+        private readonly NativeHandle _handle;
+
+        internal RenderSurfaceContext(NativeHandle handle)
         {
-            _ptr = ptr;
+            _handle = handle;
         }
+
+        NativeHandle IRenderTarget.Handle => _handle;
+
+        public FramebufferFormat Format => FormatS;
+        public FramebufferAttachment ColorAttachment => AttachmentS;
+        public RenderStage RenderStage => StageS;
 
         public uint Width
         {
-            get => RenderSurface.Bindings.GetWidth(_ptr);
-            set => RenderSurface.Bindings.SetWidth(_ptr, value);
+            get => RenderSurface.Bindings.GetWidth(_handle);
+            set => RenderSurface.Bindings.SetWidth(_handle, value);
         }
+
         public uint Height
         {
-            get => RenderSurface.Bindings.GetHeight(_ptr);
-            set => RenderSurface.Bindings.SetHeight(_ptr, value);
+            get => RenderSurface.Bindings.GetHeight(_handle);
+            set => RenderSurface.Bindings.SetHeight(_handle, value);
         }
+
         public string Title
         {
             get
             {
                 string title = null!;
-                RenderSurface.Bindings.GetTitle(_ptr, s => title = s);
+                RenderSurface.Bindings.GetTitle(_handle, s => title = s);
                 return title;
             }
-            set => RenderSurface.Bindings.SetTitle(_ptr, value);
+            set => RenderSurface.Bindings.SetTitle(_handle, value);
         }
 
         public bool Fullscreen
         {
-            get => RenderSurface.Bindings.IsFullscreen(_ptr);
-            set => RenderSurface.Bindings.SetFullscreen(_ptr, value);
+            get => RenderSurface.Bindings.IsFullscreen(_handle);
+            set => RenderSurface.Bindings.SetFullscreen(_handle, value);
         }
-        public bool Visible => RenderSurface.Bindings.IsVisible(_ptr);
 
-        public Framebuffer Framebuffer => throw new NotImplementedException();
-        public FramebufferAttachment ColorAttachment => throw new NotImplementedException();
-        public FramebufferAttachment DepthStencilAttachment => throw new NotImplementedException();
-        public RenderStage RenderStage => throw new NotImplementedException();
+        public bool Visible => RenderSurface.Bindings.IsVisible(_handle);
     }
 }

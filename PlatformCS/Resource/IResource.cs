@@ -1,5 +1,5 @@
-﻿using System.IO;
-using DigBuildPlatformCS.Util;
+﻿using DigBuildPlatformCS.Util;
+using System.IO;
 
 namespace DigBuildPlatformCS.Resource
 {

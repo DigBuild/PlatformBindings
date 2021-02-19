@@ -1,11 +1,11 @@
-﻿#include "utils.h"
+﻿#include "vk_util.h"
 
 #include <map>
 #include <vulkan.h>
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
-namespace digbuild::platform::desktop::vulkan::utils
+namespace digbuild::platform::desktop::vulkan::util
 {
 	bool QueueFamilyIndices::isComplete() const
 	{
@@ -203,13 +203,15 @@ namespace digbuild::platform::desktop::vulkan::utils
 			deviceQueueCreateInfos.push_back(vk::DeviceQueueCreateInfo({}, index, 1, &queuePriority));
 
 		vk::PhysicalDeviceFeatures deviceFeatures;
-		const vk::DeviceCreateInfo deviceCreateInfo(
+		vk::DeviceCreateInfo deviceCreateInfo(
 			{},
-			static_cast<uint32_t>(deviceQueueCreateInfos.size()), deviceQueueCreateInfos.data(),
-			static_cast<uint32_t>(requiredLayers.size()), requiredLayers.data(),
-			static_cast<uint32_t>(requiredExtensions.size()), requiredExtensions.data(),
+			deviceQueueCreateInfos,
+			requiredLayers,
+			requiredExtensions,
 			&deviceFeatures
 		);
+		vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT ext1{ true };
+		deviceCreateInfo.setPNext(&ext1);
 
 		auto device = physicalDevice.createDeviceUnique(deviceCreateInfo);
 		VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
@@ -230,5 +232,91 @@ namespace digbuild::platform::desktop::vulkan::utils
 			{},
 			0, nullptr
 		});
+	}
+
+	void directExecuteCommands(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+		const vk::Queue& queue,
+		const std::function<void(vk::CommandBuffer&)>& commands
+	)
+	{
+		auto buffers = device.allocateCommandBuffersUnique({commandPool, vk::CommandBufferLevel::ePrimary, 1});
+		auto& buffer = *buffers[0];
+		
+		buffer.begin({ vk::CommandBufferUsageFlagBits::eOneTimeSubmit });
+		commands(buffer);
+		buffer.end();
+
+		queue.submit({
+			             {{}, {}, std::vector{buffer}, {}}
+		             }, nullptr);
+		queue.waitIdle();
+	}
+
+	void transitionImageLayout(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+        const vk::Queue& graphicsQueue, const vk::Image& image,
+        const vk::ImageAspectFlags& aspectFlags,
+        const vk::ImageLayout& oldLayout,
+		const vk::ImageLayout& newLayout
+	)
+	{
+		vk::AccessFlags srcAccessMask, dstAccessMask;
+		vk::PipelineStageFlags srcStageMask, dstStageMask;
+
+		if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal)
+		{
+			srcAccessMask = {};
+			dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+			srcStageMask = vk::PipelineStageFlagBits::eTopOfPipe;
+			dstStageMask = vk::PipelineStageFlagBits::eTransfer;
+		}
+		else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout ==
+			vk::ImageLayout::eShaderReadOnlyOptimal)
+		{
+			srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+			dstAccessMask = vk::AccessFlagBits::eShaderRead;
+			srcStageMask = vk::PipelineStageFlagBits::eTransfer;
+			dstStageMask = vk::PipelineStageFlagBits::eFragmentShader;
+		}
+		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout ==
+			vk::ImageLayout::eDepthStencilAttachmentOptimal)
+		{
+			srcAccessMask = {};
+			dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead |
+				vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+			srcStageMask = vk::PipelineStageFlagBits::eTopOfPipe;
+			dstStageMask = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+		}
+		else
+		{
+			throw std::invalid_argument("Unsupported layout transition!");
+		}
+
+		directExecuteCommands(
+			device, commandPool, graphicsQueue,
+			[&](vk::CommandBuffer& buffer)
+			{
+				vk::ImageMemoryBarrier barrier{
+					srcAccessMask, dstAccessMask,
+					oldLayout, newLayout,
+					VK_QUEUE_FAMILY_IGNORED,
+					VK_QUEUE_FAMILY_IGNORED,
+					image,
+					vk::ImageSubresourceRange{
+						aspectFlags,
+						0, 1,
+						0, 1
+					}
+				};
+				buffer.pipelineBarrier(
+					srcStageMask, dstStageMask, {},
+					0, nullptr,
+					0, nullptr,
+					1, &barrier);
+			}
+		);
 	}
 }

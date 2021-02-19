@@ -16,6 +16,8 @@ namespace digbuild::platform::desktop
 		RenderContext& operator=(RenderContext&& other) noexcept = delete;
 
 		virtual void update() = 0;
+
+		virtual render::Framebuffer& getFramebuffer() = 0;
 	};
 
 	class RenderSurface;

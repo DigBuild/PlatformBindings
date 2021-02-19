@@ -1,55 +1,101 @@
-﻿using System;
+﻿using AdvancedDLSupport;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using AdvancedDLSupport;
 
 namespace DigBuildPlatformCS.Util
 {
-    [NativeSymbols(Prefix = "db_buffer_", SymbolTransformationMethod = SymbolTransformationMethod.Underscore)]
-    internal interface INativeBuffer
+    [NativeSymbols(Prefix = "dbp_native_buffer_", SymbolTransformationMethod = SymbolTransformationMethod.Underscore)]
+    internal interface INativeBufferBindings
     {
-        IntPtr Create(uint initialCapacity, uint elementSize, ref IntPtr ptr, ref uint capacity);
+        IntPtr Create(uint initialCapacity, ref IntPtr ptr, ref uint capacity);
 
         void Reserve(IntPtr instance, uint minCapacity, ref IntPtr ptr, ref uint capacity);
     }
-
-    internal static class NativeBuffer
+    
+    internal sealed class NativeBuffer : IDisposable
     {
         private const uint GrowthRate = 16;
 
-        internal static readonly INativeBuffer Native = null!; //NativeLib.Get<INativeBuffer>();
+        internal static readonly INativeBufferBindings Native = NativeLib.Get<INativeBufferBindings>();
 
         internal static uint CalculateCapacity(uint capacity)
         {
-            return GrowthRate * (uint) MathF.Ceiling((capacity + 1f) / GrowthRate);
+            return GrowthRate * (uint)MathF.Ceiling((capacity + 1f) / GrowthRate);
         }
-    }
-
-    public sealed unsafe class NativeBuffer<T> : IEnumerable<T>, IDisposable where T : unmanaged
-    {
+        
         private readonly NativeHandle _instance;
 
-        private T* _ptr;
-        private uint _capacity, _count;
+        internal IntPtr Ptr { get; private set; }
+        internal uint Capacity { get; private set; }
         private bool _valid = true;
 
         public NativeBuffer(uint initialCapacity = 0)
         {
             var ptr = IntPtr.Zero;
+            var capacity = 0u;
             _instance = new NativeHandle(
                 NativeBuffer.Native.Create(
-                    NativeBuffer.CalculateCapacity(initialCapacity),
-                    (uint) sizeof(T),
-                    ref ptr, ref _capacity
+                    initialCapacity,
+                    ref ptr, ref capacity
                 )
             );
-            _ptr = (T*) ptr.ToPointer();
+            Ptr = ptr;
+            Capacity = capacity;
+        }
+
+        internal void Reserve(uint minCapacity)
+        {
+            if (!_valid)
+                throw new ObjectDisposedException(nameof(NativeBuffer));
+            var ptr = IntPtr.Zero;
+            var capacity = 0u;
+            NativeBuffer.Native.Reserve(_instance, minCapacity, ref ptr, ref capacity);
+            Ptr = ptr;
+            Capacity = capacity;
+        }
+
+        internal NativeBuffer<T> Typed<T>() where T : unmanaged
+        {
+            if (!_valid)
+                throw new ObjectDisposedException(nameof(NativeBuffer));
+            return new NativeBuffer<T>(this, true);
         }
 
         public void Dispose()
         {
             _instance.Dispose();
+            _valid = false;
+        }
+    }
+
+    public sealed unsafe class NativeBuffer<T> : IEnumerable<T>, IDisposable where T : unmanaged
+    {
+        private readonly NativeBuffer _buf;
+        private readonly bool _borrowed;
+        private uint _capacity, _count;
+        private bool _valid = true;
+
+        internal IntPtr Ptr => _buf.Ptr;
+        private T* TypedPtr => (T*) Ptr.ToPointer();
+
+        internal NativeBuffer(NativeBuffer buf, bool borrowed)
+        {
+            _buf = buf;
+            _borrowed = borrowed;
+            _capacity = buf.Capacity / (uint) sizeof(T);
+            _count = 0;
+        }
+
+        public NativeBuffer(uint initialCapacity = 0) : this(
+            new NativeBuffer(NativeBuffer.CalculateCapacity(initialCapacity) * (uint)sizeof(T)), false)
+        {
+        }
+
+        public void Dispose()
+        {
+            if (!_borrowed)
+                _buf.Dispose();
             _valid = false;
         }
 
@@ -78,9 +124,9 @@ namespace DigBuildPlatformCS.Util
             if (!_valid)
                 throw new ObjectDisposedException(nameof(NativeBuffer<T>));
             if (_count == _capacity)
-                Reserve(NativeBuffer.CalculateCapacity(_capacity + 1));
+                Reserve(_capacity + 1);
 
-            _ptr[_count] = value;
+            TypedPtr[_count] = value;
             _count++;
         }
 
@@ -89,10 +135,10 @@ namespace DigBuildPlatformCS.Util
             if (!_valid)
                 throw new ObjectDisposedException(nameof(NativeBuffer<T>));
             if (_count + values.Length >= _capacity)
-                Reserve(NativeBuffer.CalculateCapacity(_capacity + (uint) values.Length));
+                Reserve(_capacity + (uint)values.Length);
 
             for (var i = 0; i < values.Length; i++)
-                _ptr[_count + i] = values[i];
+                TypedPtr[_count + i] = values[i];
             _count += (uint) values.Length;
         }
 
@@ -101,9 +147,9 @@ namespace DigBuildPlatformCS.Util
             if (!_valid)
                 throw new ObjectDisposedException(nameof(NativeBuffer<T>));
             if (index >= _capacity)
-                Reserve(NativeBuffer.CalculateCapacity(index + 1));
+                Reserve(index + 1);
 
-            _ptr[_count] = value;
+            TypedPtr[_count] = value;
             _count = System.Math.Max(_count, index + 1);
         }
 
@@ -112,10 +158,10 @@ namespace DigBuildPlatformCS.Util
             if (!_valid)
                 throw new ObjectDisposedException(nameof(NativeBuffer<T>));
             if (index + values.Length >= _capacity)
-                Reserve(NativeBuffer.CalculateCapacity(index + (uint) values.Length));
+                Reserve(index + (uint) values.Length);
 
             for (var i = 0; i < values.Length; i++)
-                _ptr[index + i] = values[i];
+                TypedPtr[index + i] = values[i];
             _count = System.Math.Max(_count, index + (uint) values.Length);
         }
 
@@ -130,9 +176,8 @@ namespace DigBuildPlatformCS.Util
         {
             if (!_valid)
                 throw new ObjectDisposedException(nameof(NativeBuffer<T>));
-            var ptr = IntPtr.Zero;
-            NativeBuffer.Native.Reserve(_instance, minCapacity, ref ptr, ref _capacity);
-            _ptr = (T*) ptr.ToPointer();
+            _buf.Reserve(NativeBuffer.CalculateCapacity(minCapacity) * (uint)sizeof(T));
+            _capacity = _buf.Capacity / (uint)sizeof(T);
         }
 
         public T this[uint i]
@@ -143,7 +188,7 @@ namespace DigBuildPlatformCS.Util
                     throw new ObjectDisposedException(nameof(NativeBuffer<T>));
                 if (i >= _capacity)
                     throw new IndexOutOfRangeException("Not enough space in buffer.");
-                return i < _count ? _ptr[i] : default;
+                return i < _count ? TypedPtr[i] : default;
             }
             set
             {
@@ -151,7 +196,7 @@ namespace DigBuildPlatformCS.Util
                     throw new ObjectDisposedException(nameof(NativeBuffer<T>));
                 if (i >= _capacity)
                     throw new IndexOutOfRangeException("Not enough space in buffer.");
-                _ptr[i] = value;
+                TypedPtr[i] = value;
                 if (_count <= i)
                     _count = i + 1;
             }
@@ -173,7 +218,7 @@ namespace DigBuildPlatformCS.Util
 
             public Enumerator(NativeBuffer<T> buffer)
             {
-                this._buffer = buffer;
+                _buffer = buffer;
             }
 
             public bool MoveNext()
@@ -197,38 +242,29 @@ namespace DigBuildPlatformCS.Util
         }
     }
 
-    internal class NativeBufferPool<T> where T : unmanaged
-    {
-        private static readonly ConditionalWeakTable<NativeBufferPool, Lazy<NativeBufferPool<T>>> Store = new();
-
-        internal static NativeBufferPool<T> Of(NativeBufferPool pool)
-        {
-            return Store.GetOrCreateValue(pool).Value;
-        }
-
-        internal readonly Queue<NativeBuffer<T>> Buffers = new();
-    }
-
     public sealed class NativeBufferPool
     {
+        private readonly Queue<NativeBuffer> _buffers = new();
+
         public PooledNativeBuffer<T> Request<T>() where T : unmanaged
         {
-            Queue<NativeBuffer<T>> buffers = NativeBufferPool<T>.Of(this).Buffers;
-            var buffer = buffers.Count > 0 ? buffers.Dequeue() : new NativeBuffer<T>();
-            return new PooledNativeBuffer<T>(buffer, buffers);
+            var backingBuffer = _buffers.Count > 0 ? _buffers.Dequeue() : new NativeBuffer();
+            return new PooledNativeBuffer<T>(backingBuffer, _buffers);
         }
     }
 
     public sealed class PooledNativeBuffer<T> : IDisposable where T : unmanaged
     {
+        private readonly NativeBuffer _backingBuffer;
+        private readonly Queue<NativeBuffer> _queue;
         private readonly NativeBuffer<T> _buffer;
-        private readonly Queue<NativeBuffer<T>> _queue;
         private bool _valid = true;
 
-        internal PooledNativeBuffer(NativeBuffer<T> buffer, Queue<NativeBuffer<T>> queue)
+        internal PooledNativeBuffer(NativeBuffer backingBuffer, Queue<NativeBuffer> queue)
         {
-            _buffer = buffer;
+            _backingBuffer = backingBuffer;
             _queue = queue;
+            _buffer = backingBuffer.Typed<T>();
         }
 
         public void Dispose()
@@ -236,8 +272,8 @@ namespace DigBuildPlatformCS.Util
             if (!_valid)
                 throw new ObjectDisposedException(nameof(PooledNativeBuffer<T>));
             _valid = false;
-            _buffer.Clear();
-            _queue.Enqueue(_buffer);
+            _buffer.Dispose();
+            _queue.Enqueue(_backingBuffer);
         }
 
         public NativeBuffer<T> Unpooled

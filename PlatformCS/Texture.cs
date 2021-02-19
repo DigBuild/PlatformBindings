@@ -1,5 +1,6 @@
-﻿using System;
-using DigBuildPlatformCS.Util;
+﻿using DigBuildPlatformCS.Util;
+using System;
+using System.Numerics;
 
 namespace DigBuildPlatformCS
 {
@@ -19,7 +20,26 @@ namespace DigBuildPlatformCS
         public TextureFormat Format => throw new NotImplementedException();
     }
     
-    public enum TextureFormat
+    public sealed class TextureUploader
     {
+        public void Upload() => throw new NotImplementedException();
+    }
+
+    public class TextureFormat
+    {
+        public static readonly TextureFormat<Vector4> RGBA8 = new();
+        
+        internal TextureFormat()
+        {
+        }
+    }
+
+    public sealed class TextureFormat<T> : TextureFormat where T : unmanaged
+    {
+        internal TextureFormat()
+        {
+        }
+
+        internal Vector4 ToVector4(T value) => throw new NotImplementedException();
     }
 }

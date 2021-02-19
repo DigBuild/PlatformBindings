@@ -4,7 +4,7 @@
 #include <vector>
 #include <vulkan.h>
 
-namespace digbuild::platform::desktop::vulkan::utils
+namespace digbuild::platform::desktop::vulkan::util
 {
 	struct QueueFamilyIndices
 	{
@@ -64,4 +64,21 @@ namespace digbuild::platform::desktop::vulkan::utils
 	[[nodiscard]] vk::UniqueCommandPool createCommandPool(const vk::Device& device, uint32_t graphicsFamily);
 
 	[[nodiscard]] vk::UniquePipelineCache createPipelineCache(const vk::Device& device);
+
+	void directExecuteCommands(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+		const vk::Queue& queue,
+		const std::function<void(vk::CommandBuffer&)>& commands
+	);
+
+	void transitionImageLayout(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+		const vk::Queue& graphicsQueue,
+		const vk::Image& image,
+		const vk::ImageAspectFlags& aspectFlags,
+		const vk::ImageLayout& oldLayout,
+		const vk::ImageLayout& newLayout
+	);
 }

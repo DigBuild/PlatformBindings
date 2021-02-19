@@ -2,8 +2,17 @@
 #include <vector>
 #include <vulkan.h>
 
-namespace digbuild::platform::desktop::vulkan::utils
+namespace digbuild::platform::desktop::vulkan::util
 {
+	class ScalableStagingResource
+	{
+	public:
+		ScalableStagingResource() = default;
+		virtual ~ScalableStagingResource() = default;
+		
+		virtual void reserve(uint32_t stages) = 0;
+	};
+	
 	template<typename T>
 	class StagingResource final
 	{

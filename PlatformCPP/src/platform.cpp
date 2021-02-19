@@ -1,6 +1,6 @@
 ﻿#include "platform.h"
 
-#include "desktop/vulkan/platform.h"
+#include "desktop/vulkan/vk_platform.h"
 #include "util/native_handle.h"
 #include "util/utils.h"
 
@@ -21,7 +21,7 @@ extern "C" {
 	}
 	
 	DLLEXPORT util::native_handle dbp_platform_request_render_surface(
-		void(*update)(const void* surfaceContext, const void* renderContext),
+		void(*update)(util::native_handle surfaceContext, const void* renderContext),
 		const RenderSurfaceCreationHints hints
 	)
 	{
@@ -29,7 +29,7 @@ extern "C" {
 			Platform::getInstance().getRenderManager().requestRenderSurface(
 				[update](const render::RenderSurface& surface, const render::RenderContext& ctx)
 				{
-					update(&surface, &ctx);
+					update(util::make_native_handle(surface.shared_from_this()), &ctx);
 				},
 				hints
 			)

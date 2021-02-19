@@ -2,33 +2,56 @@
 
 namespace DigBuildPlatformCS
 {
-    public readonly struct RenderState
+    internal readonly struct RenderState
     {
-        public readonly Topology Topology;
-        public readonly RasterMode RasterMode;
-        public readonly CullingMode CullingMode;
-        public readonly FrontFace FrontFace;
-        public readonly DepthBiasFactors? DepthBiasFactors;
-        public readonly float LineWidth;
-        public readonly Extents2D? Viewport;
-        public readonly Extents2D? Scissor;
-        public readonly DepthTest? DepthTest;
-        public readonly StencilTest? StencilTest;
+        internal readonly Topology Topology;
+        internal readonly RasterMode RasterMode;
+        internal readonly bool DiscardRaster;
+        internal readonly MaybeDynamic<float> LineWidth;
+        internal readonly MaybeDynamic<DepthBias> DepthBias;
+        internal readonly MaybeDynamic<DepthTest> DepthTest;
+        internal readonly MaybeDynamic<StencilTest> StencilTest;
+        internal readonly MaybeDynamic<CullingMode> CullingMode;
+        internal readonly MaybeDynamic<FrontFace> FrontFace;
 
+        internal RenderState(
+            Topology topology,
+            RasterMode rasterMode,
+            bool discardRaster,
+            MaybeDynamic<float>? lineWidth,
+            MaybeDynamic<DepthBias>? depthBias,
+            MaybeDynamic<DepthTest>? depthTest,
+            MaybeDynamic<StencilTest>? stencilTest,
+            MaybeDynamic<CullingMode>? cullingMode,
+            MaybeDynamic<FrontFace>? frontFace
+        )
+        {
+            Topology = topology;
+            RasterMode = rasterMode;
+            DiscardRaster = discardRaster;
+            LineWidth = lineWidth ?? 1.0f;
+            DepthBias = depthBias ?? DigBuildPlatformCS.DepthBias.Default;
+            DepthTest = depthTest ?? DigBuildPlatformCS.DepthTest.Default;
+            StencilTest = stencilTest ?? DigBuildPlatformCS.StencilTest.Default;
+            CullingMode = cullingMode ?? DigBuildPlatformCS.CullingMode.Back;
+            FrontFace = frontFace ?? DigBuildPlatformCS.FrontFace.Clockwise;
+        }
     }
-
-    public readonly struct DynamicRenderState
+    
+    public readonly struct MaybeDynamic<T> where T : unmanaged
     {
-        public readonly Extents2D? Scissor;
-        public readonly float? LineWidth;
-        public readonly DepthBiasFactors? DepthBiasFactors;
-        // Depth bounds?
-        public readonly uint? CompareMask;
-        public readonly uint? WriteMask;
-        public readonly uint? Reference;
-        public readonly CullingMode? CullingMode;
-        public readonly FrontFace? FrontFace;
+        public static readonly MaybeDynamic<T> Dynamic = default;
+        
+        public readonly bool HasValue;
+        public readonly T Value;
 
+        private MaybeDynamic(T value)
+        {
+            HasValue = true;
+            Value = value;
+        }
+
+        public static implicit operator MaybeDynamic<T>(T value) => new(value);
     }
 
     public enum Topology : byte
@@ -70,22 +93,38 @@ namespace DigBuildPlatformCS
         }
     }
 
-    public readonly struct DepthBiasFactors
+    public readonly struct DepthBias
     {
+        public static readonly DepthBias Default = new(false, 0.0f, 0.0f, 0.0f);
+
+        public readonly bool Enabled;
         public readonly float Constant;
+        public readonly float Clamp;
         public readonly float Slope;
 
-        public DepthBiasFactors(float constant, float slope)
+        public DepthBias(bool enabled, float constant, float clamp, float slope)
         {
+            Enabled = enabled;
             Constant = constant;
+            Clamp = clamp;
             Slope = slope;
         }
     }
 
     public readonly struct DepthTest
     {
+        public static readonly DepthTest Default = new(false, CompareOperation.Always, false);
+
+        public readonly bool Enabled;
         public readonly CompareOperation Comparison;
         public readonly bool Write;
+
+        public DepthTest(bool enabled, CompareOperation comparison, bool write)
+        {
+            Enabled = enabled;
+            Comparison = comparison;
+            Write = write;
+        }
     }
 
     public enum CompareOperation : byte
@@ -99,12 +138,35 @@ namespace DigBuildPlatformCS
 
     public readonly struct StencilTest
     {
+        public static readonly StencilTest Default = new(false, StencilFaceOperation.Default);
+
+        public readonly bool Enabled;
         public readonly StencilFaceOperation Front;
         public readonly StencilFaceOperation Back;
+
+        public StencilTest(bool enabled, StencilFaceOperation front, StencilFaceOperation back)
+        {
+            Enabled = enabled;
+            Front = front;
+            Back = back;
+        }
+
+        public StencilTest(bool enabled, StencilFaceOperation operation) :
+            this(enabled, operation, operation)
+        {
+        }
     }
 
     public readonly struct StencilFaceOperation
     {
+        public static readonly StencilFaceOperation Default = new(
+            StencilOperation.Keep,
+            StencilOperation.Keep,
+            StencilOperation.Keep,
+            CompareOperation.Never,
+            0, 0, 0
+        );
+
         public readonly StencilOperation StencilFailOperation;
         public readonly StencilOperation DepthFailOperation;
         public readonly StencilOperation SuccessOperation;
@@ -112,6 +174,25 @@ namespace DigBuildPlatformCS
         public readonly uint CompareMask;
         public readonly uint WriteMask;
         public readonly uint Value;
+
+        public StencilFaceOperation(
+            StencilOperation stencilFailOperation,
+            StencilOperation depthFailOperation,
+            StencilOperation successOperation,
+            CompareOperation compareOperation,
+            uint compareMask,
+            uint writeMask,
+            uint value
+        )
+        {
+            StencilFailOperation = stencilFailOperation;
+            DepthFailOperation = depthFailOperation;
+            SuccessOperation = successOperation;
+            CompareOperation = compareOperation;
+            CompareMask = compareMask;
+            WriteMask = writeMask;
+            Value = value;
+        }
     }
 
     public enum StencilOperation
