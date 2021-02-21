@@ -131,15 +131,12 @@ namespace digbuild::platform::desktop::vulkan
 		[[nodiscard]] vk::CommandBuffer& get();
 
 	private:
-		void writeAndSkip();
-
 		std::shared_ptr<VulkanContext> m_context;
 
 		std::vector<vk::UniqueCommandBuffer> m_commandBuffers;
 		std::vector<std::vector<std::shared_ptr<Resource>>> m_resources;
 		std::vector<std::unique_ptr<CBCmd>> m_commandQueue;
 		uint32_t m_readIndex = 0;
-		bool m_justWrote = false;
 		uint32_t m_leftoverWrites = 0;
 	};
 }

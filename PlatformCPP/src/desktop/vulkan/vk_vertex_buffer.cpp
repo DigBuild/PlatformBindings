@@ -47,9 +47,8 @@ namespace digbuild::platform::desktop::vulkan
 
 	void DynamicVertexBuffer::write(const std::vector<uint8_t>& data)
 	{
-		const auto index = getWriteIndex();
-		auto& buf = m_buffers[index];
-		auto& size = m_sizes[index];
+		const auto writeIndex = getWriteIndex();
+		auto& buf = m_buffers[writeIndex];
 
 		if (!buf || buf->size() < data.size())
 		{
@@ -65,7 +64,7 @@ namespace digbuild::platform::desktop::vulkan
 		memcpy(memory, data.data(), data.size());
 		buf->unmapMemory();
 
-		size = data.size() / m_vertexSize;
+		m_sizes[writeIndex] = data.size() / m_vertexSize;
 
 		m_advanceIndex = true;
 	}

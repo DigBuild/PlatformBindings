@@ -116,7 +116,23 @@ namespace digbuild::platform::desktop::vulkan
 
 	void CommandBuffer::tick()
 	{
-		writeAndSkip();
+		const auto writeIndex = (m_readIndex + 1) % static_cast<uint32_t>(m_commandBuffers.size());
+
+		if (m_leftoverWrites == 0)
+		{
+			m_readIndex = writeIndex;
+			return;
+		}
+
+		auto& cmd = *m_commandBuffers[writeIndex];
+		auto& resources = m_resources[writeIndex];
+		resources.clear();
+
+		for (auto& cbCmd : m_commandQueue)
+			cbCmd->record(cmd, resources);
+
+		m_leftoverWrites--;
+		m_readIndex = writeIndex;
 	}
 
 	void CommandBuffer::reserve(const uint32_t stages)
@@ -167,37 +183,10 @@ namespace digbuild::platform::desktop::vulkan
 		m_commandQueue.push_back(std::make_unique<CBCmdEnd>());
 		
 		m_leftoverWrites = static_cast<uint32_t>(m_commandBuffers.size());
-		m_justWrote = true;
 	}
 
 	vk::CommandBuffer& CommandBuffer::get()
 	{
-		// if (m_justWrote)
-		// {
-		// 	m_justWrote = false;
-		// 	writeAndSkip();
-		// }
 		return *m_commandBuffers[m_readIndex];
-	}
-
-	void CommandBuffer::writeAndSkip()
-	{
-		const auto writeIndex = (m_readIndex + 1) % static_cast<uint32_t>(m_commandBuffers.size());
-
-		if (m_leftoverWrites == 0)
-		{
-			m_readIndex = writeIndex;
-			return;
-		}
-
-		auto& cmd = *m_commandBuffers[writeIndex];
-		auto& resources = m_resources[writeIndex];
-		resources.clear();
-
-		for (auto& cbCmd : m_commandQueue)
-			cbCmd->record(cmd, resources);
-		
-		m_leftoverWrites--;
-		m_readIndex = writeIndex;
 	}
 }
