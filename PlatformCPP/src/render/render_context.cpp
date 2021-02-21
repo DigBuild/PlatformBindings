@@ -8,6 +8,37 @@
 
 namespace digbuild::platform::render
 {
+	uint32_t calculateSize(const NumericType numericType)
+	{
+		switch (numericType) {
+		case NumericType::BYTE:
+		case NumericType::UBYTE:
+			return sizeof(uint8_t);
+		case NumericType::SHORT:
+		case NumericType::USHORT:
+			return sizeof(uint16_t);
+		case NumericType::INT:
+		case NumericType::UINT:
+			return sizeof(uint32_t);
+		case NumericType::LONG:
+		case NumericType::ULONG:
+			return sizeof(uint64_t);
+		case NumericType::FLOAT:
+			return sizeof(float);
+		case NumericType::DOUBLE:
+			return sizeof(double);
+		case NumericType::FLOAT2:
+			return 2 * sizeof(float);
+		case NumericType::FLOAT3:
+			return 3 * sizeof(float);
+		case NumericType::FLOAT4:
+			return 4 * sizeof(float);
+		case NumericType::FLOAT4X4:
+			return 4 * 4 * sizeof(float);
+		}
+		throw std::runtime_error("Invalid type.");
+	}
+	
 	struct FramebufferAttachmentDescriptorC
 	{
 		const FramebufferAttachmentType type;
@@ -52,7 +83,6 @@ namespace digbuild::platform::render
 	};
 	struct ShaderBindingC
 	{
-		const uint32_t id;
 		const uint32_t offset;
 		const uint32_t propertyCount;
 
@@ -60,10 +90,14 @@ namespace digbuild::platform::render
 		{
 			std::vector<ShaderUniformProperty> propertyVector;
 			propertyVector.reserve(propertyCount);
-			for (auto i = 0u; i < propertyCount; ++i)
-				propertyVector.push_back(properties[offset + i].toCpp());
+			uint32_t size = 0;
+			for (auto i = 0u; i < propertyCount; ++i) {
+				auto prop = properties[offset + i].toCpp();
+				propertyVector.push_back(prop);
+				size += calculateSize(prop.type);
+			}
 			return ShaderBinding{
-				id,
+				size,
 				propertyVector
 			};
 		}
@@ -154,37 +188,6 @@ namespace digbuild::platform::render
 			};
 		}
 	};
-
-	uint32_t calculateSize(const NumericType numericType)
-	{
-		switch (numericType) {
-			case NumericType::BYTE:
-			case NumericType::UBYTE:
-				return sizeof(uint8_t);
-			case NumericType::SHORT:
-			case NumericType::USHORT:
-				return sizeof(uint16_t);
-			case NumericType::INT:
-			case NumericType::UINT:
-				return sizeof(uint32_t);
-			case NumericType::LONG:
-			case NumericType::ULONG:
-				return sizeof(uint64_t);
-			case NumericType::FLOAT:
-				return sizeof(float);
-			case NumericType::DOUBLE:
-				return sizeof(double);
-			case NumericType::FLOAT2:
-				return 2 * sizeof(float);
-			case NumericType::FLOAT3:
-				return 3 * sizeof(float);
-			case NumericType::FLOAT4:
-				return 4 * sizeof(float);
-			case NumericType::FLOAT4X4:
-				return 4 * 4 * sizeof(float);
-		}
-		throw std::runtime_error("Invalid type.");
-	}
 
 	uint32_t calculateSize(const std::vector<VertexFormatElement>& elements)
 	{

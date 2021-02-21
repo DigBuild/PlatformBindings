@@ -18,6 +18,11 @@ namespace DigBuildPlatformCS
         }
     }
 
+    public abstract class Shader<TUniform> : Shader where TUniform : class, IUniform<TUniform>
+    {
+        internal Shader(NativeHandle handle) : base(handle) { }
+    }
+
     public sealed class VertexShader : Shader
     {
         internal VertexShader(NativeHandle handle) : base(handle)
@@ -25,7 +30,7 @@ namespace DigBuildPlatformCS
         }
     }
 
-    public sealed class VertexShader<TUniform> : Shader where TUniform : IUniform<TUniform>
+    public sealed class VertexShader<TUniform> : Shader<TUniform> where TUniform : class, IUniform<TUniform>
     {
         internal VertexShader(NativeHandle handle) : base(handle)
         {
@@ -39,14 +44,14 @@ namespace DigBuildPlatformCS
         }
     }
 
-    public sealed class FragmentShader<TUniform> : Shader where TUniform : IUniform<TUniform>
+    public sealed class FragmentShader<TUniform> : Shader<TUniform> where TUniform : class, IUniform<TUniform>
     {
         internal FragmentShader(NativeHandle handle) : base(handle)
         {
         }
     }
 
-    public interface IUniform<TUniform> where TUniform : IUniform<TUniform>
+    public interface IUniform<TUniform> where TUniform : class, IUniform<TUniform>
     {
     }
 
@@ -54,19 +59,6 @@ namespace DigBuildPlatformCS
     {
         internal IRenderPipeline Pipeline { get; set; }
         internal ShaderType ShaderType { get; }
-    }
-
-    public sealed class UniformHandle<TUniform> : IUniformHandle where TUniform : IUniform<TUniform>
-    {
-        private readonly ShaderType _shaderType;
-
-        IRenderPipeline IUniformHandle.Pipeline { get; set; } = null!;
-        ShaderType IUniformHandle.ShaderType => _shaderType;
-
-        internal UniformHandle(ShaderType shaderType)
-        {
-            _shaderType = shaderType;
-        }
     }
 
     public sealed class UniformAttribute : Attribute
@@ -103,7 +95,7 @@ namespace DigBuildPlatformCS
         }
     }
 
-    internal static class UniformDescriptor<TUniform> where TUniform : IUniform<TUniform>
+    internal static class UniformDescriptor<TUniform> where TUniform : class, IUniform<TUniform>
     {
         internal static readonly UniformDescriptor Instance;
 
@@ -178,20 +170,24 @@ namespace DigBuildPlatformCS
         {
             var properties = new UniformProperty[builder._uniformDescriptor?.TotalPropertyCount ?? 0];
             var offset = 0u;
-            List<BindingData> bindings = new();
+            List<(uint, BindingData)> indexedBindings = new();
             if (builder._uniformDescriptor != null)
             {
                 foreach (var (binding, props) in builder._uniformDescriptor.Bindings)
                 {
                     props.CopyTo(properties, offset);
-                    bindings.Add(new BindingData(binding, offset, (uint) properties.Length));
+                    indexedBindings.Add((binding, new BindingData(offset, (uint) properties.Length)));
                     offset += (uint) props.Length;
                 }
             }
+            var bindings = indexedBindings
+                .OrderBy(a => a.Item1)
+                .Select(a => a.Item2)
+                .ToArray();
 
             var bytes = builder._resource.ReadAllBytes();
             var span1 = new Span<byte>(bytes);
-            var span2 = new Span<BindingData>(bindings.ToArray());
+            var span2 = new Span<BindingData>(bindings);
             var span3 = new Span<UniformProperty>(properties);
 
             fixed (byte* p1 = &span1.GetPinnableReference())
@@ -216,11 +212,10 @@ namespace DigBuildPlatformCS
 
         private struct BindingData
         {
-            public uint Id, Offset, PropertyCount;
+            public uint Offset, PropertyCount;
 
-            internal BindingData(uint id, uint offset, uint propertyCount)
+            internal BindingData(uint offset, uint propertyCount)
             {
-                Id = id;
                 Offset = offset;
                 PropertyCount = propertyCount;
             }

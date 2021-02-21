@@ -87,16 +87,16 @@ namespace DigBuildPlatformCS
             _commands.Add(new CommandBufferCmd.SetScissor(extents));
         }
 
-        public TUniform Push<TUniform>(UniformHandle<TUniform> uniform) where TUniform : IUniform<TUniform>
+        public void Using<TUniform>(UniformHandle<TUniform> handle, UniformBuffer<TUniform> buffer)
+            where TUniform : class, IUniform<TUniform>
         {
-            if (_committed)
-                throw new RecordingAlreadyCommittedException();
+            throw new NotImplementedException();
+        }
 
-            // if (!_uniforms.TryGetValue(uniform, out var buffer))
-            //     buffer = _uniforms[uniform] = _bufferPool.Request<TUniform>();
-            // buffer.Type<TUniform>()
-
-            return default!; // TODO: Actually implement this
+        public void Using<TUniform>(UniformHandle<TUniform> handle, UniformBuffer<TUniform> buffer, TUniform value)
+            where TUniform : class, IUniform<TUniform>
+        {
+            throw new NotImplementedException();
         }
 
         public void Draw<TVertex>(

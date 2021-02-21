@@ -74,7 +74,7 @@ namespace DigBuildPlatformCS
 
         public ShaderBuilder<VertexShader<TUniform>> CreateVertexShader<TUniform>(
             IResource resource
-        ) where TUniform : IUniform<TUniform>
+        ) where TUniform : class, IUniform<TUniform>
             => new(this, resource, ShaderType.Vertex, UniformDescriptor<TUniform>.Instance,
                 h => new VertexShader<TUniform>(h));
 
@@ -84,7 +84,7 @@ namespace DigBuildPlatformCS
 
         public ShaderBuilder<FragmentShader<TUniform>> CreateFragmentShader<TUniform>(
             IResource resource
-        ) where TUniform : IUniform<TUniform>
+        ) where TUniform : class, IUniform<TUniform>
             => new(this, resource, ShaderType.Fragment, UniformDescriptor<TUniform>.Instance,
                 h => new FragmentShader<TUniform>(h));
 
@@ -159,6 +159,13 @@ namespace DigBuildPlatformCS
             PooledNativeBuffer<TVertex> initialData
         ) where TVertex : unmanaged
             => CreateVertexBuffer(out writer, initialData.Unpooled);
+
+        public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
+            Shader<TUniform> shader
+        ) where TUniform : class, IUniform<TUniform>
+        {
+            throw new NotImplementedException();
+        }
 
         public Texture CreateTexture(
         ) => throw new NotImplementedException();

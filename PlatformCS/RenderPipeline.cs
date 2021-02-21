@@ -32,6 +32,19 @@ namespace DigBuildPlatformCS
         internal NativeHandle Handle { get; }
     }
 
+    public sealed class UniformHandle<T> : IUniformHandle where T : class, IUniform<T>
+    {
+        private readonly ShaderType _shaderType;
+
+        IRenderPipeline IUniformHandle.Pipeline { get; set; } = null!;
+        ShaderType IUniformHandle.ShaderType => _shaderType;
+
+        internal UniformHandle(ShaderType shaderType)
+        {
+            _shaderType = shaderType;
+        }
+    }
+
     public readonly ref struct RenderPipelineBuilder<TPipeline> where TPipeline : IRenderPipeline
     {
         private class Data
@@ -92,7 +105,7 @@ namespace DigBuildPlatformCS
         public RenderPipelineBuilder<TPipeline> WithShader<TUniform>(
             VertexShader<TUniform> shader,
             out UniformHandle<TUniform> uniform
-        ) where TUniform : IUniform<TUniform>
+        ) where TUniform : class, IUniform<TUniform>
         {
             _data.VertexShader = shader;
             _data.VertexUniform = uniform = new UniformHandle<TUniform>(ShaderType.Vertex);
@@ -111,7 +124,7 @@ namespace DigBuildPlatformCS
         public RenderPipelineBuilder<TPipeline> WithShader<TUniform>(
             FragmentShader<TUniform> shader,
             out UniformHandle<TUniform> uniform
-        ) where TUniform : IUniform<TUniform>
+        ) where TUniform : class, IUniform<TUniform>
         {
             _data.FragmentShader = shader;
             _data.FragmentUniform = uniform = new UniformHandle<TUniform>(ShaderType.Fragment);

@@ -362,6 +362,51 @@ namespace digbuild::platform::desktop::vulkan
 		});
 	}
 
+	vk::UniqueDescriptorSetLayout VulkanContext::createDescriptorSetLayout(
+		const std::vector<vk::DescriptorSetLayoutBinding>& bindings
+	)
+	{
+		return m_device->createDescriptorSetLayoutUnique({ {}, bindings });
+	}
+
+	vk::UniqueDescriptorPool VulkanContext::createDescriptorPool(
+		const uint32_t maxSets
+	) const
+	{
+		return m_device->createDescriptorPoolUnique({
+			{}, maxSets, std::vector{
+				vk::DescriptorPoolSize{
+					vk::DescriptorType::eUniformBuffer,
+					maxSets
+				}
+			}
+		});
+	}
+
+	void VulkanContext::updateDescriptorSets(
+		const std::vector<vk::WriteDescriptorSet>& writes,
+		const std::vector<vk::CopyDescriptorSet>& copies
+	) const
+	{
+		m_device->updateDescriptorSets(writes, copies);
+	}
+
+	std::vector<vk::UniqueDescriptorSet> VulkanContext::createDescriptorSets(
+		vk::DescriptorPool& descriptorPool,
+		vk::DescriptorSetLayout& layout,
+		const uint32_t count
+	) const
+	{
+		std::vector<vk::DescriptorSetLayout> vector;
+		vector.reserve(count);
+		for (auto i = 0u; i < count; ++i)
+			vector.push_back(layout);
+		return m_device->allocateDescriptorSetsUnique(vk::DescriptorSetAllocateInfo{
+			descriptorPool,
+			vector
+		});
+	}
+
 	[[nodiscard]] util::StagingResource<vk::Semaphore> VulkanContext::createSemaphore(
 		const uint32_t stages
 	) const

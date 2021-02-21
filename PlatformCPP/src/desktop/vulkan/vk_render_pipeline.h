@@ -30,7 +30,6 @@ namespace digbuild::platform::desktop::vulkan
 		std::shared_ptr<VulkanContext> m_context;
 		std::shared_ptr<FramebufferFormat> m_format;
 		std::vector<std::shared_ptr<Shader>> m_shaders;
-		vk::UniqueDescriptorSetLayout m_layoutDesc;
 		vk::UniquePipelineLayout m_layout;
 		vk::UniquePipeline m_pipeline;
 	};

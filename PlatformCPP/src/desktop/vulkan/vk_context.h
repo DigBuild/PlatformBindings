@@ -92,6 +92,25 @@ namespace digbuild::platform::desktop::vulkan
 		[[nodiscard]] vk::UniqueShaderModule createShaderModule(
 			const std::vector<uint8_t>& bytes
 		) const;
+		
+		[[nodiscard]] vk::UniqueDescriptorSetLayout createDescriptorSetLayout(
+			const std::vector<vk::DescriptorSetLayoutBinding>& bindings
+		);
+		
+		[[nodiscard]] vk::UniqueDescriptorPool createDescriptorPool(
+			uint32_t maxSets
+		) const;
+
+		void updateDescriptorSets(
+			const std::vector<vk::WriteDescriptorSet>& writes,
+			const std::vector<vk::CopyDescriptorSet>& copies
+		) const;
+
+		[[nodiscard]] std::vector<vk::UniqueDescriptorSet> createDescriptorSets(
+			vk::DescriptorPool& descriptorPool,
+			vk::DescriptorSetLayout& layout,
+			uint32_t count
+		) const;
 
 		[[nodiscard]] util::StagingResource<vk::Semaphore> createSemaphore(
 			uint32_t stages

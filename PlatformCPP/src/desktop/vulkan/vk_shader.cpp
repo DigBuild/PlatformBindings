@@ -2,6 +2,18 @@
 
 namespace digbuild::platform::desktop::vulkan
 {
+	vk::ShaderStageFlagBits toVulkan(const render::ShaderType type)
+	{
+		switch (type)
+		{
+		case render::ShaderType::VERTEX:
+			return vk::ShaderStageFlagBits::eVertex;
+		case render::ShaderType::FRAGMENT:
+			return vk::ShaderStageFlagBits::eFragment;
+		}
+		throw std::runtime_error("Invalid type.");
+	}
+	
 	Shader::Shader(
 		std::shared_ptr<VulkanContext> context,
 		const render::ShaderType type,
@@ -10,20 +22,13 @@ namespace digbuild::platform::desktop::vulkan
 	) :
 		m_context(std::move(context)),
 		m_module(m_context->createShaderModule(data)),
-		m_type(type),
-		m_bindings(std::move(bindings))
+		m_bindings(std::move(bindings)),
+		m_stage(toVulkan(type))
 	{
-	}
-
-	vk::ShaderStageFlagBits Shader::getStage() const
-	{
-		switch (m_type)
-		{
-		case render::ShaderType::VERTEX:
-			return vk::ShaderStageFlagBits::eVertex;
-		case render::ShaderType::FRAGMENT:
-			return vk::ShaderStageFlagBits::eFragment;
-		}
-		throw std::runtime_error("Invalid type.");
+		std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
+		layoutBindings.reserve(m_bindings.size());
+		for (const auto& binding : m_bindings)
+			layoutBindings.emplace_back(layoutBindings.size(), vk::DescriptorType::eUniformBuffer, 1, m_stage);
+		m_layoutDesc = m_context->createDescriptorSetLayout(layoutBindings);
 	}
 }

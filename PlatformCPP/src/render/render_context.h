@@ -186,7 +186,7 @@ namespace digbuild::platform::render
 	};
 	struct ShaderBinding
 	{
-		const uint32_t id;
+		const uint32_t size;
 		const std::vector<ShaderUniformProperty> properties;
 	};
 	
