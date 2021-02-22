@@ -49,7 +49,8 @@ namespace digbuild::platform::desktop::vulkan
 	
 	std::vector<vk::VertexInputAttributeDescription> toVulkan(
 		const render::VertexFormatDescriptor& format,
-		const uint32_t binding
+		const uint32_t binding,
+		const uint32_t locationOffset
 	)
 	{
 		std::vector<vk::VertexInputAttributeDescription> descriptions;
@@ -57,7 +58,7 @@ namespace digbuild::platform::desktop::vulkan
 		for (const auto& element : format.elements)
 		{
 			vk::VertexInputAttributeDescription description {
-				element.location,
+				element.location + locationOffset,
 				binding,
 				toVulkan(element.type),
 				static_cast<uint32_t>(element.offset)
@@ -314,13 +315,13 @@ namespace digbuild::platform::desktop::vulkan
 		std::vector<vk::VertexInputAttributeDescription> vertexAttributes;
 		
 		vertexBindings.emplace_back(BINDING_VERTEX, vertexFormat.size, vk::VertexInputRate::eVertex);
-		auto perVertexAttributes = toVulkan(vertexFormat, BINDING_VERTEX);
+		auto perVertexAttributes = toVulkan(vertexFormat, BINDING_VERTEX, 0);
 		vertexAttributes.insert(vertexAttributes.end(), perVertexAttributes.begin(), perVertexAttributes.end());
 		
 		if (instanceFormat.size > 0)
 		{
 			vertexBindings.emplace_back(BINDING_INSTANCE, instanceFormat.size, vk::VertexInputRate::eInstance);
-			auto perInstanceAttributes = toVulkan(vertexFormat, BINDING_INSTANCE);
+			auto perInstanceAttributes = toVulkan(instanceFormat, BINDING_INSTANCE, static_cast<uint32_t>(vertexFormat.elements.size()));
 			vertexAttributes.insert(vertexAttributes.end(), perInstanceAttributes.begin(), perInstanceAttributes.end());
 		}
 
