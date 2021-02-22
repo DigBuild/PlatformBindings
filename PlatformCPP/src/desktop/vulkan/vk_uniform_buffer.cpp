@@ -5,22 +5,26 @@ namespace digbuild::platform::desktop::vulkan
 	UniformBuffer::UniformBuffer(
 		std::shared_ptr<VulkanContext> context,
 		std::shared_ptr<Shader> shader,
-		const uint32_t stages
+		const uint32_t binding,
+		const uint32_t stages,
+		const std::vector<uint8_t>& initialData
 	) :
 		m_context(std::move(context)),
-		m_shader(std::move(shader))
+		m_shader(std::move(shader)),
+		m_binding(binding)
 	{
-		m_descriptorPool = context->createDescriptorPool(stages);
-		m_descriptorSets = context->createDescriptorSets(
+		m_descriptorPool = m_context->createDescriptorPool(stages);
+		m_descriptorSets = m_context->createDescriptorSets(
 			*m_descriptorPool,
-			m_shader->getDescriptorSetLayout(),
+			m_shader->getDescriptorSetLayouts()[binding],
 			stages
 		);
 		
 		const auto bindingCount = m_shader->getBindings().size();
 		m_buffers.resize(stages);
-		for (auto i = 0u; i < stages; ++i)
-			m_buffers[i].resize(bindingCount);
+
+		if (!initialData.empty())
+			write(initialData);
 	}
 
 	void UniformBuffer::tick()
@@ -33,45 +37,36 @@ namespace digbuild::platform::desktop::vulkan
 			return;
 		}
 		
-		auto& bufs = m_buffers[writeIndex];
-		std::vector<vk::WriteDescriptorSet> writes;
-		writes.reserve(bufs.size());
-
-		auto i = 0u;
-		for (const auto& binding : m_shader->getBindings())
+		auto& buf = m_buffers[writeIndex];
+		const auto& binding = m_shader->getBindings()[m_binding];
+		
+		if (!buf || buf->size() < m_uniformData.size())
 		{
-			auto& buf = bufs[i];
-			
-			if (!buf || buf->size() < m_uniformData.size())
-			{
-				buf = m_context->createBuffer(
-					static_cast<uint32_t>(m_uniformData.size()),
-					vk::BufferUsageFlagBits::eUniformBuffer,
-					vk::SharingMode::eExclusive,
-					vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-				);
-			}
+			buf = m_context->createBuffer(
+				static_cast<uint32_t>(m_uniformData.size()),
+				vk::BufferUsageFlagBits::eUniformBuffer,
+				vk::SharingMode::eExclusive,
+				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+			);
 
-			void* memory = buf->mapMemory();
-			memcpy(memory, m_uniformData.data(), m_uniformData.size());
-			buf->unmapMemory();
-
-			vk::WriteDescriptorSet write{
+			const vk::DescriptorBufferInfo bufferInfo{ buf->buffer(), 0, binding.size };
+			const vk::WriteDescriptorSet write{
 				*m_descriptorSets[writeIndex],
-				i,
+				m_binding,
 				0,
-				vk::DescriptorType::eUniformBuffer,
-				{},
-				std::vector{
-					vk::DescriptorBufferInfo{ buf->buffer(), 0, binding.size }
-				},
-				{}
+				1,
+				vk::DescriptorType::eUniformBufferDynamic,
+				nullptr,
+				&bufferInfo,
+				nullptr
 			};
 
-			i++;
+			m_context->updateDescriptorSets({ write }, {});
 		}
 
-		m_context->updateDescriptorSets(writes, {});
+		void* memory = buf->mapMemory();
+		memcpy(memory, m_uniformData.data(), m_uniformData.size());
+		buf->unmapMemory();
 
 		m_leftoverWrites--;
 		m_readIndex = writeIndex;

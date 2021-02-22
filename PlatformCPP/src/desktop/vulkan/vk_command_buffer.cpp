@@ -1,10 +1,11 @@
-﻿#include "vk_command_buffer.h"
+#include "vk_command_buffer.h"
 
 #include <iostream>
 
 
 #include "vk_framebuffer_format.h"
 #include "vk_render_pipeline.h"
+#include "vk_uniform_buffer.h"
 #include "vk_vertex_buffer.h"
 
 namespace digbuild::platform::desktop::vulkan
@@ -65,6 +66,23 @@ namespace digbuild::platform::desktop::vulkan
 			{ static_cast<int32_t>(m_extents.x), static_cast<int32_t>(m_extents.y) },
 			{ m_extents.width, m_extents.height }
 		});
+	}
+
+	void CBCmdBindUniform::record(
+		vk::CommandBuffer& cmd,
+		std::vector<std::shared_ptr<render::Resource>>& resources
+	)
+	{
+		auto pipeline = std::static_pointer_cast<RenderPipeline>(m_pipeline);
+		auto ub = std::static_pointer_cast<UniformBuffer>(m_uniformBuffer);
+		
+		cmd.bindDescriptorSets(
+			vk::PipelineBindPoint::eGraphics,
+			pipeline->getLayout(),
+			pipeline->getLayoutOffset(ub->getShader()) + ub->getBinding(),
+			{ ub->get() },
+			{ m_index * ub->getShader()->getBindings()[ub->getBinding()].size }
+		);
 	}
 
 	void CBCmdDraw::record(
@@ -167,6 +185,15 @@ namespace digbuild::platform::desktop::vulkan
 	void CommandBuffer::setScissor(const platform::util::Extents2D extents)
 	{
 		m_commandQueue.push_back(std::make_unique<CBCmdSetScissor>(extents));
+	}
+
+	void CommandBuffer::bindUniform(
+		std::shared_ptr<render::RenderPipeline> pipeline,
+		std::shared_ptr<render::UniformBuffer> uniformBuffer,
+		uint32_t index
+	)
+	{
+		m_commandQueue.push_back(std::make_unique<CBCmdBindUniform>(pipeline, uniformBuffer, index));
 	}
 
 	void CommandBuffer::draw(

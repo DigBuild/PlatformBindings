@@ -15,7 +15,7 @@ namespace DigBuildPlatformCS
             ShaderType type,
             IntPtr data, int dataLength,
             IntPtr bindings, int bindingCount,
-            IntPtr properties
+            IntPtr members
         );
 
         IntPtr CreateRenderPipeline(
@@ -35,6 +35,13 @@ namespace DigBuildPlatformCS
             bool hasStencilTest, StencilTest stencilTest,
             bool hasCullingMode, CullingMode cullingMode,
             bool hasFrontFace, FrontFace frontFace
+        );
+
+        IntPtr CreateUniformBuffer(
+            IntPtr instance,
+            IntPtr shader,
+            uint binding,
+            IntPtr data, uint dataLength
         );
 
         IntPtr CreateVertexBuffer(
@@ -70,25 +77,15 @@ namespace DigBuildPlatformCS
 
         public ShaderBuilder<VertexShader> CreateVertexShader(
             IResource resource
-        ) => new(this, resource, ShaderType.Vertex, null, h => new VertexShader(h));
-
-        public ShaderBuilder<VertexShader<TUniform>> CreateVertexShader<TUniform>(
-            IResource resource
-        ) where TUniform : class, IUniform<TUniform>
-            => new(this, resource, ShaderType.Vertex, UniformDescriptor<TUniform>.Instance,
-                h => new VertexShader<TUniform>(h));
-
+        ) => new(this, resource, ShaderType.Vertex, h => new VertexShader(h));
+        
         public ShaderBuilder<FragmentShader> CreateFragmentShader(
             IResource resource
-        ) => new(this, resource, ShaderType.Fragment, null, h => new FragmentShader(h));
-
-        public ShaderBuilder<FragmentShader<TUniform>> CreateFragmentShader<TUniform>(
-            IResource resource
-        ) where TUniform : class, IUniform<TUniform>
-            => new(this, resource, ShaderType.Fragment, UniformDescriptor<TUniform>.Instance,
-                h => new FragmentShader<TUniform>(h));
-
+        ) => new(this, resource, ShaderType.Fragment, h => new FragmentShader(h));
+        
         public RenderPipelineBuilder<RenderPipeline<TVertex>> CreatePipeline<TVertex>(
+            VertexShader vertexShader,
+            FragmentShader fragmentShader,
             RenderStage renderStage,
             Topology topology,
             RasterMode rasterMode = RasterMode.Fill,
@@ -102,6 +99,7 @@ namespace DigBuildPlatformCS
         ) where TVertex : unmanaged
             => new(
                 this,
+                vertexShader, fragmentShader,
                 renderStage,
                 new RenderState(
                     topology, rasterMode, discardRaster,
@@ -114,6 +112,8 @@ namespace DigBuildPlatformCS
             );
 
         public RenderPipelineBuilder<RenderPipeline<TVertex, TInstance>> CreatePipeline<TVertex, TInstance>(
+            VertexShader vertexShader,
+            FragmentShader fragmentShader,
             RenderStage renderStage,
             Topology topology,
             RasterMode rasterMode = RasterMode.Fill,
@@ -127,6 +127,7 @@ namespace DigBuildPlatformCS
         ) where TVertex : unmanaged where TInstance : unmanaged
             => new(
                 this,
+                vertexShader, fragmentShader,
                 renderStage,
                 new RenderState(
                     topology, rasterMode, discardRaster,
@@ -161,11 +162,21 @@ namespace DigBuildPlatformCS
             => CreateVertexBuffer(out writer, initialData.Unpooled);
 
         public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
-            Shader<TUniform> shader
-        ) where TUniform : class, IUniform<TUniform>
-        {
-            throw new NotImplementedException();
-        }
+            UniformHandle<TUniform> uniform
+        ) where TUniform : unmanaged, IUniform<TUniform>
+            => new UniformBufferBuilder<TUniform>(this, uniform, null);
+
+        public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
+            UniformHandle<TUniform> uniform,
+            NativeBuffer<TUniform> initialData
+        ) where TUniform : unmanaged, IUniform<TUniform>
+            => new UniformBufferBuilder<TUniform>(this, uniform, initialData);
+
+        public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
+            UniformHandle<TUniform> uniform,
+            PooledNativeBuffer<TUniform> initialData
+        ) where TUniform : unmanaged, IUniform<TUniform>
+            => CreateUniformBuffer(uniform, initialData.Unpooled);
 
         public Texture CreateTexture(
         ) => throw new NotImplementedException();

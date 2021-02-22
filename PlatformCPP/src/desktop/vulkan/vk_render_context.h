@@ -5,6 +5,7 @@
 #include "vk_context.h"
 #include "vk_framebuffer.h"
 #include "vk_framebuffer_format.h"
+#include "vk_uniform_buffer.h"
 #include "vk_vertex_buffer.h"
 #include "../dt_render_context.h"
 #include "../../render/render_surface.h"
@@ -74,6 +75,12 @@ namespace digbuild::platform::desktop::vulkan
 			const std::vector<render::BlendOptions>& blendOptions
 		) override;
 
+		[[nodiscard]] std::shared_ptr<render::UniformBuffer> createUniformBuffer(
+			const std::shared_ptr<render::Shader>& shader,
+			uint32_t binding,
+			const std::vector<uint8_t>& initialData
+		) override;
+
 		[[nodiscard]] std::shared_ptr<render::VertexBuffer> createVertexBuffer(
 			const std::vector<uint8_t>& initialData,
 			uint32_t vertexSize,
@@ -95,6 +102,7 @@ namespace digbuild::platform::desktop::vulkan
 
 	private:
 		void addTicking(std::weak_ptr<DynamicVertexBuffer> resource);
+		void addTicking(std::weak_ptr<UniformBuffer> resource);
 		void addTicking(std::weak_ptr<CommandBuffer> resource);
 		void visitTicking();
 		
@@ -120,6 +128,8 @@ namespace digbuild::platform::desktop::vulkan
 
 		std::vector<std::weak_ptr<DynamicVertexBuffer>> m_tickingVertexBuffers;
 		std::queue<uint32_t> m_availableTickingVertexBufferSlots;
+		std::vector<std::weak_ptr<UniformBuffer>> m_tickingUniformBuffers;
+		std::queue<uint32_t> m_availableTickingUniformBufferSlots;
 		std::vector<std::weak_ptr<CommandBuffer>> m_tickingCommandBuffers;
 		std::queue<uint32_t> m_availableTickingCommandBufferSlots;
 

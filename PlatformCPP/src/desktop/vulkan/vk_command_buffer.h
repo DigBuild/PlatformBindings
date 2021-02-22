@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "vk_context.h"
 #include "../../render/command_buffer.h"
+#include "../../render/shader.h"
+#include "../../render/uniform_buffer.h"
 
 namespace digbuild::platform::desktop::vulkan
 {
@@ -82,6 +84,28 @@ namespace digbuild::platform::desktop::vulkan
 	private:
 		platform::util::Extents2D m_extents;
 	};
+	class CBCmdBindUniform final : public CBCmd
+	{
+	public:
+		explicit CBCmdBindUniform(
+			std::shared_ptr<render::RenderPipeline> pipeline,
+			std::shared_ptr<render::UniformBuffer> uniformBuffer,
+			const uint32_t index
+		) :
+			m_pipeline(std::move(pipeline)),
+			m_uniformBuffer(std::move(uniformBuffer)),
+			m_index(index)
+		{ }
+
+		void record(
+			vk::CommandBuffer& cmd,
+			std::vector<std::shared_ptr<render::Resource>>& resources
+		) override;
+	private:
+		std::shared_ptr<render::RenderPipeline> m_pipeline;
+		std::shared_ptr<render::UniformBuffer> m_uniformBuffer;
+		uint32_t m_index;
+	};
 	class CBCmdDraw final : public CBCmd
 	{
 	public:
@@ -121,6 +145,11 @@ namespace digbuild::platform::desktop::vulkan
 		void setViewportAndScissor(std::shared_ptr<render::IRenderTarget> renderTarget) override;
 		void setViewport(platform::util::Extents2D extents) override;
 		void setScissor(platform::util::Extents2D extents) override;
+		void bindUniform(
+			std::shared_ptr<render::RenderPipeline> pipeline,
+			std::shared_ptr<render::UniformBuffer> uniformBuffer,
+			uint32_t index
+		) override;
 		void draw(
 			std::shared_ptr<render::RenderPipeline> pipeline,
 			std::shared_ptr<render::VertexBuffer> vertexBuffer,

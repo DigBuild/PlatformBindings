@@ -25,10 +25,18 @@ namespace digbuild::platform::desktop::vulkan
 		m_bindings(std::move(bindings)),
 		m_stage(toVulkan(type))
 	{
-		std::vector<vk::DescriptorSetLayoutBinding> layoutBindings;
-		layoutBindings.reserve(m_bindings.size());
+		m_layoutDesc.reserve(m_bindings.size());
+		m_layoutDesc2.reserve(m_bindings.size());
 		for (const auto& binding : m_bindings)
-			layoutBindings.emplace_back(layoutBindings.size(), vk::DescriptorType::eUniformBuffer, 1, m_stage);
-		m_layoutDesc = m_context->createDescriptorSetLayout(layoutBindings);
+		{
+			auto layout = m_context->createDescriptorSetLayout({
+				static_cast<uint32_t>(m_layoutDesc.size()),
+				vk::DescriptorType::eUniformBufferDynamic,
+				1,
+				m_stage
+			});
+			m_layoutDesc2.push_back(*layout);
+			m_layoutDesc.push_back(std::move(layout));
+		}
 	}
 }

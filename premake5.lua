@@ -6,4 +6,5 @@ workspace "DigBuildPlatform"
 
     include "PlatformCPP"
     include "PlatformCS"
+    include "PlatformSourceGen"
     include "PlatformTest"

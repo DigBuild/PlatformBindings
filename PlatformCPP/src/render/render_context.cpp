@@ -70,7 +70,7 @@ namespace digbuild::platform::render
 		}
 	};
 
-	struct ShaderUniformPropertyC
+	struct ShaderUniformMemberC
 	{
 		const NumericType type;
 
@@ -83,18 +83,17 @@ namespace digbuild::platform::render
 	};
 	struct ShaderBindingC
 	{
-		const uint32_t offset;
-		const uint32_t propertyCount;
+		const uint32_t memberOffset;
+		const uint32_t memberCount;
+		const uint32_t size;
 
-		[[nodiscard]] ShaderBinding toCpp(const ShaderUniformPropertyC* properties) const
+		[[nodiscard]] ShaderBinding toCpp(const ShaderUniformMemberC* properties) const
 		{
 			std::vector<ShaderUniformProperty> propertyVector;
-			propertyVector.reserve(propertyCount);
-			uint32_t size = 0;
-			for (auto i = 0u; i < propertyCount; ++i) {
-				auto prop = properties[offset + i].toCpp();
+			propertyVector.reserve(memberCount);
+			for (auto i = 0u; i < memberCount; ++i) {
+				auto prop = properties[memberOffset + i].toCpp();
 				propertyVector.push_back(prop);
-				size += calculateSize(prop.type);
 			}
 			return ShaderBinding{
 				size,
@@ -238,13 +237,13 @@ extern "C" {
 		const ShaderType type,
 		const uint8_t* data, const uint32_t dataLength,
 		const ShaderBindingC* bindings, const uint32_t bindingCount,
-		const ShaderUniformPropertyC* properties
+		const ShaderUniformMemberC* members
 	)
 	{
 		std::vector<ShaderBinding> bindingVector;
 		bindingVector.reserve(bindingCount);
 		for (auto i = 0u; i < bindingCount; ++i)
-			bindingVector.push_back(bindings[i].toCpp(properties));
+			bindingVector.push_back(bindings[i].toCpp(members));
 		
 		return make_native_handle(
 			instance->createShader(
@@ -317,6 +316,23 @@ extern "C" {
 		);
 	}
 
+	DLLEXPORT native_handle dbp_render_context_create_uniform_buffer(
+		RenderContext* instance,
+		const native_handle shader,
+		const uint32_t binding,
+		const uint8_t* data,
+		const uint32_t dataLength
+	)
+	{
+		return make_native_handle(
+			instance->createUniformBuffer(
+				handle_share<Shader>(shader),
+				binding,
+				std::vector(data, data + dataLength)
+			)
+		);
+	}
+
 	DLLEXPORT native_handle dbp_render_context_create_vertex_buffer(
 		RenderContext* instance,
 		const uint8_t* data,
@@ -327,7 +343,7 @@ extern "C" {
 	{
 		return make_native_handle(
 			instance->createVertexBuffer(
-				std::vector<uint8_t>(data, data + (vertexCount * vertexSize)),
+				std::vector(data, data + (vertexCount * vertexSize)),
 				vertexSize,
 				writable
 			)

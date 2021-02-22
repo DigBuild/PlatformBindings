@@ -3,6 +3,7 @@
 #include "vk_command_buffer.h"
 #include "vk_render_pipeline.h"
 #include "vk_shader.h"
+#include "vk_uniform_buffer.h"
 #include "vk_vertex_buffer.h"
 #include "../dt_render_surface.h"
 
@@ -242,6 +243,23 @@ namespace digbuild::platform::desktop::vulkan
 		);
 	}
 
+	std::shared_ptr<render::UniformBuffer> RenderContext::createUniformBuffer(
+		const std::shared_ptr<render::Shader>& shader,
+		uint32_t binding,
+		const std::vector<uint8_t>& initialData
+	)
+	{
+		auto ub = std::make_shared<UniformBuffer>(
+			m_context,
+			std::static_pointer_cast<Shader>(shader),
+			binding,
+			m_swapChainStages,
+			initialData
+		);
+		addTicking(ub);
+		return std::move(ub);
+	}
+
 	std::shared_ptr<render::VertexBuffer> RenderContext::createVertexBuffer(
 		const std::vector<uint8_t>& initialData,
 		const uint32_t vertexSize,
@@ -299,6 +317,16 @@ namespace digbuild::platform::desktop::vulkan
 		m_tickingVertexBuffers[slot] = std::move(resource);
 	}
 
+	void RenderContext::addTicking(std::weak_ptr<UniformBuffer> resource)
+	{
+		if (m_availableTickingUniformBufferSlots.empty())
+			return m_tickingUniformBuffers.push_back(std::move(resource));
+
+		const auto slot = m_availableTickingUniformBufferSlots.front();
+		m_availableTickingUniformBufferSlots.pop();
+		m_tickingUniformBuffers[slot] = std::move(resource);
+	}
+
 	void RenderContext::addTicking(std::weak_ptr<CommandBuffer> resource)
 	{
 		if (m_availableTickingCommandBufferSlots.empty())
@@ -317,6 +345,20 @@ namespace digbuild::platform::desktop::vulkan
 			if (res.expired())
 			{
 				m_availableTickingVertexBufferSlots.emplace(i);
+				i++;
+				continue;
+			}
+
+			res.lock()->tick();
+			i++;
+		}
+
+		i = 0;
+		for (auto& res : m_tickingUniformBuffers)
+		{
+			if (res.expired())
+			{
+				m_availableTickingUniformBufferSlots.emplace(i);
 				i++;
 				continue;
 			}

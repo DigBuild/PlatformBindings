@@ -363,10 +363,10 @@ namespace digbuild::platform::desktop::vulkan
 	}
 
 	vk::UniqueDescriptorSetLayout VulkanContext::createDescriptorSetLayout(
-		const std::vector<vk::DescriptorSetLayoutBinding>& bindings
+		const vk::DescriptorSetLayoutBinding& binding
 	)
 	{
-		return m_device->createDescriptorSetLayoutUnique({ {}, bindings });
+		return m_device->createDescriptorSetLayoutUnique({ {}, std::vector{ binding } });
 	}
 
 	vk::UniqueDescriptorPool VulkanContext::createDescriptorPool(

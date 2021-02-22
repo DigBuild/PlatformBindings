@@ -4,142 +4,80 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace DigBuildPlatformCS
 {
     public abstract class Shader
     {
         internal readonly NativeHandle Handle;
+        internal readonly ShaderType ShaderType;
 
-        internal Shader(NativeHandle handle)
+        internal Shader(NativeHandle handle, ShaderType shaderType)
         {
             Handle = handle;
+            ShaderType = shaderType;
         }
-    }
-
-    public abstract class Shader<TUniform> : Shader where TUniform : class, IUniform<TUniform>
-    {
-        internal Shader(NativeHandle handle) : base(handle) { }
     }
 
     public sealed class VertexShader : Shader
     {
-        internal VertexShader(NativeHandle handle) : base(handle)
-        {
-        }
-    }
-
-    public sealed class VertexShader<TUniform> : Shader<TUniform> where TUniform : class, IUniform<TUniform>
-    {
-        internal VertexShader(NativeHandle handle) : base(handle)
+        internal VertexShader(NativeHandle handle) : base(handle, ShaderType.Vertex)
         {
         }
     }
 
     public sealed class FragmentShader : Shader
     {
-        internal FragmentShader(NativeHandle handle) : base(handle)
+        internal FragmentShader(NativeHandle handle) : base(handle, ShaderType.Fragment)
         {
         }
     }
-
-    public sealed class FragmentShader<TUniform> : Shader<TUniform> where TUniform : class, IUniform<TUniform>
-    {
-        internal FragmentShader(NativeHandle handle) : base(handle)
-        {
-        }
-    }
-
-    public interface IUniform<TUniform> where TUniform : class, IUniform<TUniform>
+    
+    public interface IUniform<TUniform> where TUniform : unmanaged, IUniform<TUniform>
     {
     }
 
     internal interface IUniformHandle
     {
-        internal IRenderPipeline Pipeline { get; set; }
-        internal ShaderType ShaderType { get; }
+        internal Shader Shader { set; }
     }
 
-    public sealed class UniformAttribute : Attribute
+    public sealed class UniformHandle<T> : IUniformHandle where T : unmanaged, IUniform<T>
     {
+        internal Shader Shader { get; private set; } = null!;
         internal readonly uint Binding;
-        internal readonly uint Order;
 
-        public UniformAttribute(uint binding, [CallerLineNumber] int order = 0)
+        internal UniformHandle(uint binding)
         {
             Binding = binding;
-            Order = (uint) order;
+        }
+
+        Shader IUniformHandle.Shader
+        {
+            set => Shader = value;
         }
     }
 
-    internal readonly struct UniformProperty
+    internal readonly struct UniformMember
     {
         internal readonly NumericType Type;
 
-        internal UniformProperty(PropertyInfo property)
+        internal UniformMember(FieldInfo field)
         {
-            Type = NumericTypeHelper.GetType(property.PropertyType);
+            Type = NumericTypeHelper.GetType(field.FieldType);
         }
     }
 
-    internal sealed class UniformDescriptor
+    internal readonly struct BindingData
     {
-        internal readonly IReadOnlyDictionary<uint, UniformProperty[]> Bindings;
-        internal readonly int TotalPropertyCount;
+        private readonly uint _memberOffset, _memberCount, _size;
 
-        internal UniformDescriptor(IReadOnlyDictionary<uint, UniformProperty[]> bindings)
+        internal BindingData(uint memberOffset, uint memberCount, uint size)
         {
-            Bindings = bindings;
-            TotalPropertyCount = bindings.Values.Sum(properties => properties.Length);
-        }
-    }
-
-    internal static class UniformDescriptor<TUniform> where TUniform : class, IUniform<TUniform>
-    {
-        internal static readonly UniformDescriptor Instance;
-
-        static UniformDescriptor()
-        {
-            var type = typeof(TUniform);
-            if (!type.IsInterface)
-                throw new UniformNotInterfaceException(type);
-
-            Dictionary<uint, SortedSet<(PropertyInfo, UniformAttribute)>> bindings = new();
-
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            foreach (var property in properties)
-            {
-                var attribute = property.GetCustomAttribute<UniformAttribute>();
-                if (attribute == null)
-                    throw new UntaggedUniformPropertyException(type, property.Name);
-
-                if (!bindings.TryGetValue(attribute.Binding, out var elements))
-                    elements = bindings[attribute.Binding]
-                        = new SortedSet<(PropertyInfo, UniformAttribute)>(new Comparer());
-
-                elements.Add((property, attribute));
-            }
-
-            Dictionary<uint, UniformProperty[]> finalBindings = new();
-            foreach (var (binding, elements) in bindings)
-            {
-                var finalElements = new UniformProperty[elements.Count];
-                var i = 0;
-                foreach (var (property, _) in elements)
-                    finalElements[i++] = new UniformProperty(property);
-                finalBindings[binding] = finalElements;
-            }
-
-            Instance = new UniformDescriptor(finalBindings);
-        }
-
-        private sealed class Comparer : IComparer<(PropertyInfo, UniformAttribute)>
-        {
-            public int Compare((PropertyInfo, UniformAttribute) a, (PropertyInfo, UniformAttribute) b)
-            {
-                return a.Item2.Order.CompareTo(b.Item2.Order);
-            }
+            _memberOffset = memberOffset;
+            _memberCount = memberCount;
+            _size = size;
         }
     }
 
@@ -150,55 +88,69 @@ namespace DigBuildPlatformCS
 
     public readonly ref struct ShaderBuilder<TShader> where TShader : Shader
     {
-        private readonly RenderContext _ctx;
-        private readonly IResource _resource;
-        private readonly ShaderType _type;
-        private readonly UniformDescriptor? _uniformDescriptor;
-        private readonly Func<NativeHandle, TShader> _factory;
+        private sealed class Data
+        {
+            internal readonly IResource Resource;
+            internal readonly ShaderType Type;
+            internal readonly Func<NativeHandle, TShader> Factory;
 
-        internal ShaderBuilder(RenderContext ctx, IResource resource, ShaderType type,
-            UniformDescriptor? uniformDescriptor, Func<NativeHandle, TShader> factory)
+            internal readonly List<BindingData> UniformBindings = new();
+            internal readonly List<UniformMember> UniformMembers = new();
+            internal readonly List<IUniformHandle> UniformHandles = new();
+
+            public Data(IResource resource, ShaderType type, Func<NativeHandle, TShader> factory)
+            {
+                Resource = resource;
+                Type = type;
+                Factory = factory;
+            }
+        }
+
+        private readonly RenderContext _ctx;
+        private readonly Data _data;
+
+        internal ShaderBuilder(RenderContext ctx, IResource resource, ShaderType type, Func<NativeHandle, TShader> factory)
         {
             _ctx = ctx;
-            _resource = resource;
-            _type = type;
-            _uniformDescriptor = uniformDescriptor;
-            _factory = factory;
+            _data = new Data(resource, type, factory);
+        }
+
+        public ShaderBuilder<TShader> WithUniform<TUniform>(
+            out UniformHandle<TUniform> handle
+        ) where TUniform : unmanaged, IUniform<TUniform>
+        {
+            var members = typeof(TUniform).GetFields(BindingFlags.NonPublic)
+                .Select(field => new UniformMember(field))
+                .ToList();
+            _data.UniformBindings.Add(new BindingData(
+                (uint)_data.UniformMembers.Count,
+                (uint)members.Count,
+                (uint)Marshal.SizeOf<TUniform>()
+            ));
+            _data.UniformMembers.AddRange(members);
+            _data.UniformHandles.Add(handle = new UniformHandle<TUniform>((uint) _data.UniformHandles.Count));
+            return this;
         }
 
         public static unsafe implicit operator TShader(ShaderBuilder<TShader> builder)
         {
-            var properties = new UniformProperty[builder._uniformDescriptor?.TotalPropertyCount ?? 0];
-            var offset = 0u;
-            List<(uint, BindingData)> indexedBindings = new();
-            if (builder._uniformDescriptor != null)
-            {
-                foreach (var (binding, props) in builder._uniformDescriptor.Bindings)
-                {
-                    props.CopyTo(properties, offset);
-                    indexedBindings.Add((binding, new BindingData(offset, (uint) properties.Length)));
-                    offset += (uint) props.Length;
-                }
-            }
-            var bindings = indexedBindings
-                .OrderBy(a => a.Item1)
-                .Select(a => a.Item2)
-                .ToArray();
+            var bindings = builder._data.UniformBindings.ToArray();
+            var members = builder._data.UniformMembers.ToArray();
 
-            var bytes = builder._resource.ReadAllBytes();
+            var bytes = builder._data.Resource.ReadAllBytes();
             var span1 = new Span<byte>(bytes);
             var span2 = new Span<BindingData>(bindings);
-            var span3 = new Span<UniformProperty>(properties);
+            var span3 = new Span<UniformMember>(members);
 
             fixed (byte* p1 = &span1.GetPinnableReference())
             fixed (BindingData* p2 = &span2.GetPinnableReference())
-            fixed (UniformProperty* p3 = &span3.GetPinnableReference())
+            fixed (UniformMember* p3 = &span3.GetPinnableReference())
             {
-                return builder._factory(
+                var shader = builder._data.Factory(
                     new NativeHandle(
                         RenderContext.Bindings.CreateShader(
                             builder._ctx.Ptr,
-                            builder._type,
+                            builder._data.Type,
                             new IntPtr(p1),
                             span1.Length,
                             new IntPtr(p2),
@@ -207,17 +159,9 @@ namespace DigBuildPlatformCS
                         )
                     )
                 );
-            }
-        }
-
-        private struct BindingData
-        {
-            public uint Offset, PropertyCount;
-
-            internal BindingData(uint offset, uint propertyCount)
-            {
-                Offset = offset;
-                PropertyCount = propertyCount;
+                foreach (var handle in builder._data.UniformHandles)
+                    handle.Shader = shader;
+                return shader;
             }
         }
     }

@@ -12,6 +12,7 @@ namespace digbuild::platform::render
 		SET_VIEWPORT_SCISSOR,
 		SET_VIEWPORT,
 		SET_SCISSOR,
+		BIND_UNIFORM,
 		DRAW
 	};
 
@@ -26,6 +27,12 @@ namespace digbuild::platform::render
 	struct CommandBufferCmdSetScissorC
 	{
 		const util::Extents2D extents;
+	};
+	struct CommandBufferCmdBindUniformC
+	{
+		const util::native_handle pipeline;
+		const util::native_handle uniformBuffer;
+		const uint32_t index;
 	};
 	struct CommandBufferCmdDrawC
 	{
@@ -42,6 +49,7 @@ namespace digbuild::platform::render
 			const CommandBufferCmdSetViewportScissorC cmdSetViewportScissor;
 			const CommandBufferCmdSetViewportC cmdSetViewport;
 			const CommandBufferCmdSetScissorC cmdSetScissor;
+			const CommandBufferCmdBindUniformC cmdBindUniform;
 			const CommandBufferCmdDrawC cmdDraw;
 		};
 	};
@@ -79,6 +87,13 @@ extern "C" {
 				break;
 			case CommandBufferCmdTypeC::SET_SCISSOR:
 				commandBuffer->setScissor(cmd.cmdSetScissor.extents);
+				break;
+			case CommandBufferCmdTypeC::BIND_UNIFORM:
+				commandBuffer->bindUniform(
+					handle_share<RenderPipeline>(cmd.cmdBindUniform.pipeline),
+					handle_share<UniformBuffer>(cmd.cmdBindUniform.uniformBuffer),
+					cmd.cmdBindUniform.index
+				);
 				break;
 			case CommandBufferCmdTypeC::DRAW:
 				commandBuffer->draw(

@@ -10,6 +10,7 @@
 #include "render_target.h"
 #include "shader.h"
 #include "texture.h"
+#include "uniform_buffer.h"
 #include "vertex_buffer.h"
 #include "../util/vecmath.h"
 
@@ -226,6 +227,12 @@ namespace digbuild::platform::render
 			const VertexFormatDescriptor& instanceFormat,
 			RenderState state,
 			const std::vector<BlendOptions>& blendOptions
+		) = 0;
+
+		[[nodiscard]] virtual std::shared_ptr<UniformBuffer> createUniformBuffer(
+			const std::shared_ptr<Shader>& shader,
+			uint32_t binding,
+			const std::vector<uint8_t>& initialData
 		) = 0;
 
 		[[nodiscard]] virtual std::shared_ptr<VertexBuffer> createVertexBuffer(

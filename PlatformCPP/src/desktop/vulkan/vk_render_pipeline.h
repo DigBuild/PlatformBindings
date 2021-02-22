@@ -25,11 +25,22 @@ namespace digbuild::platform::desktop::vulkan
 		{
 			return *m_pipeline;
 		}
+
+		[[nodiscard]] vk::PipelineLayout& getLayout()
+		{
+			return *m_layout;
+		}
+
+		[[nodiscard]] uint32_t getLayoutOffset(const std::shared_ptr<Shader>& shader) const
+		{
+			return m_shaderLayoutOffsets.at(shader.get());
+		}
 	
 	private:
 		std::shared_ptr<VulkanContext> m_context;
 		std::shared_ptr<FramebufferFormat> m_format;
 		std::vector<std::shared_ptr<Shader>> m_shaders;
+		std::unordered_map<Shader*, uint32_t> m_shaderLayoutOffsets;
 		vk::UniquePipelineLayout m_layout;
 		vk::UniquePipeline m_pipeline;
 	};

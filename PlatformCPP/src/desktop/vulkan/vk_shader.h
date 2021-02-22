@@ -25,9 +25,9 @@ namespace digbuild::platform::desktop::vulkan
 			return m_bindings;
 		}
 
-		[[nodiscard]] vk::DescriptorSetLayout& getDescriptorSetLayout()
+		[[nodiscard]] std::vector<vk::DescriptorSetLayout>& getDescriptorSetLayouts()
 		{
-			return *m_layoutDesc;
+			return m_layoutDesc2;
 		}
 
 		[[nodiscard]] vk::ShaderStageFlagBits getStage() const
@@ -39,7 +39,8 @@ namespace digbuild::platform::desktop::vulkan
 		std::shared_ptr<VulkanContext> m_context;
 		vk::UniqueShaderModule m_module;
 		std::vector<render::ShaderBinding> m_bindings;
-		vk::UniqueDescriptorSetLayout m_layoutDesc;
+		std::vector<vk::UniqueDescriptorSetLayout> m_layoutDesc;
+		std::vector<vk::DescriptorSetLayout> m_layoutDesc2;
 		vk::ShaderStageFlagBits m_stage;
 	};
 }

@@ -32,40 +32,31 @@ namespace DigBuildPlatformCS
         internal NativeHandle Handle { get; }
     }
 
-    public sealed class UniformHandle<T> : IUniformHandle where T : class, IUniform<T>
-    {
-        private readonly ShaderType _shaderType;
-
-        IRenderPipeline IUniformHandle.Pipeline { get; set; } = null!;
-        ShaderType IUniformHandle.ShaderType => _shaderType;
-
-        internal UniformHandle(ShaderType shaderType)
-        {
-            _shaderType = shaderType;
-        }
-    }
-
     public readonly ref struct RenderPipelineBuilder<TPipeline> where TPipeline : IRenderPipeline
     {
         private class Data
         {
+            internal readonly VertexShader VertexShader;
+            internal readonly FragmentShader FragmentShader;
             internal readonly RenderStage RenderStage;
             internal readonly RenderState RenderState;
             internal readonly FormatDescriptor VertexDescriptor;
             internal readonly FormatDescriptor? InstanceDescriptor;
             internal readonly Func<NativeHandle, TPipeline> Factory;
             internal readonly BlendOptions[] BlendOptions;
-            internal Shader? VertexShader;
-            internal IUniformHandle? VertexUniform;
-            internal Shader? FragmentShader;
-            internal IUniformHandle? FragmentUniform;
 
             internal Data(
+                VertexShader vertexShader,
+                FragmentShader fragmentShader,
                 RenderStage renderStage,
                 RenderState renderState,
                 FormatDescriptor vertexDescriptor,
-                FormatDescriptor? instanceDescriptor, Func<NativeHandle, TPipeline> factory)
+                FormatDescriptor? instanceDescriptor,
+                Func<NativeHandle, TPipeline> factory
+            )
             {
+                VertexShader = vertexShader;
+                FragmentShader = fragmentShader;
                 RenderStage = renderStage;
                 RenderState = renderState;
                 VertexDescriptor = vertexDescriptor;
@@ -82,6 +73,8 @@ namespace DigBuildPlatformCS
 
         internal RenderPipelineBuilder(
             RenderContext context,
+            VertexShader vertexShader,
+            FragmentShader fragmentShader,
             RenderStage renderStage,
             RenderState renderState,
             FormatDescriptor vertexDescriptor,
@@ -90,45 +83,12 @@ namespace DigBuildPlatformCS
         )
         {
             _context = context;
-            _data = new Data(renderStage, renderState, vertexDescriptor, instanceDescriptor, factory);
-        }
-
-        public RenderPipelineBuilder<TPipeline> WithShader(
-            VertexShader shader
-        )
-        {
-            _data.VertexShader = shader;
-            _data.VertexUniform = null;
-            return this;
-        }
-
-        public RenderPipelineBuilder<TPipeline> WithShader<TUniform>(
-            VertexShader<TUniform> shader,
-            out UniformHandle<TUniform> uniform
-        ) where TUniform : class, IUniform<TUniform>
-        {
-            _data.VertexShader = shader;
-            _data.VertexUniform = uniform = new UniformHandle<TUniform>(ShaderType.Vertex);
-            return this;
-        }
-
-        public RenderPipelineBuilder<TPipeline> WithShader(
-            FragmentShader shader
-        )
-        {
-            _data.FragmentShader = shader;
-            _data.FragmentUniform = null;
-            return this;
-        }
-
-        public RenderPipelineBuilder<TPipeline> WithShader<TUniform>(
-            FragmentShader<TUniform> shader,
-            out UniformHandle<TUniform> uniform
-        ) where TUniform : class, IUniform<TUniform>
-        {
-            _data.FragmentShader = shader;
-            _data.FragmentUniform = uniform = new UniformHandle<TUniform>(ShaderType.Fragment);
-            return this;
+            _data = new Data(
+                vertexShader, fragmentShader,
+                renderStage, renderState,
+                vertexDescriptor, instanceDescriptor,
+                factory
+            );
         }
 
         public RenderPipelineBuilder<TPipeline> WithStandardBlending(
@@ -208,8 +168,8 @@ namespace DigBuildPlatformCS
                         new IntPtr(p1), (uint) span1.Length,
                         new IntPtr(p2), (uint) span2.Length,
                         new IntPtr(p3),
-                        data.VertexShader?.Handle ?? NativeHandle.Empty,
-                        data.FragmentShader?.Handle ?? NativeHandle.Empty,
+                        data.VertexShader.Handle,
+                        data.FragmentShader.Handle,
                         data.RenderState.Topology,
                         data.RenderState.RasterMode,
                         data.RenderState.DiscardRaster,
@@ -227,14 +187,7 @@ namespace DigBuildPlatformCS
                         data.RenderState.FrontFace.Value
                     )
                 );
-                var pipeline = data.Factory(handle);
-
-                if (data.VertexUniform != null)
-                    data.VertexUniform.Pipeline = pipeline;
-                if (data.FragmentUniform != null)
-                    data.FragmentUniform.Pipeline = pipeline;
-
-                return pipeline;
+                return data.Factory(handle);
             }
         }
 
