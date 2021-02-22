@@ -180,7 +180,7 @@ namespace DigBuildPlatformCS.Util
             _capacity = _buf.Capacity / (uint)sizeof(T);
         }
 
-        public T this[uint i]
+        public ref T this[uint i]
         {
             get
             {
@@ -188,17 +188,9 @@ namespace DigBuildPlatformCS.Util
                     throw new ObjectDisposedException(nameof(NativeBuffer<T>));
                 if (i >= _capacity)
                     throw new IndexOutOfRangeException("Not enough space in buffer.");
-                return i < _count ? TypedPtr[i] : default;
-            }
-            set
-            {
-                if (!_valid)
-                    throw new ObjectDisposedException(nameof(NativeBuffer<T>));
-                if (i >= _capacity)
-                    throw new IndexOutOfRangeException("Not enough space in buffer.");
-                TypedPtr[i] = value;
-                if (_count <= i)
-                    _count = i + 1;
+                if (i >= _count)
+                    throw new IndexOutOfRangeException("No element at the specified index.");
+                return ref TypedPtr[i];
             }
         }
 
@@ -348,19 +340,13 @@ namespace DigBuildPlatformCS.Util
             _buffer.Reserve(minCapacity);
         }
 
-        public T this[uint i]
+        public ref T this[uint i]
         {
             get
             {
                 if (!_valid)
                     throw new ObjectDisposedException(nameof(PooledNativeBuffer<T>));
-                return _buffer[i];
-            }
-            set
-            {
-                if (!_valid)
-                    throw new ObjectDisposedException(nameof(PooledNativeBuffer<T>));
-                _buffer[i] = value;
+                return ref _buffer[i];
             }
         }
     }

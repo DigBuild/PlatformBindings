@@ -32,6 +32,7 @@ namespace DigBuildPlatformTest
 
         public readonly UniformHandle<VertexUniform> Uniform;
         public readonly UniformBuffer<VertexUniform> UniformBuffer;
+        public readonly PooledNativeBuffer<VertexUniform> UniformNativeBuffer;
 
         public RenderResources(
             RenderSurfaceContext surface, RenderContext context,
@@ -60,13 +61,13 @@ namespace DigBuildPlatformTest
             );
             VertexBuffer<Vertex> vb = context.CreateVertexBuffer(vertexData);
 
-            using var uniformData = bufferPool.Request<VertexUniform>();
-            uniformData.Add(
+            UniformNativeBuffer = bufferPool.Request<VertexUniform>();
+            UniformNativeBuffer.Add(
                 new VertexUniform{
                     Matrix = Matrix4x4.Identity
                 }
             );
-            UniformBuffer = context.CreateUniformBuffer(Uniform, uniformData);
+            UniformBuffer = context.CreateUniformBuffer(Uniform, UniformNativeBuffer);
 
             CommandBuffer = context.CreateDrawCommand(out var cbw);
             var cmd = cbw.BeginRecording(surface.Format, bufferPool);
@@ -98,15 +99,12 @@ namespace DigBuildPlatformTest
             // Calculate the new angle
             var milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             var angle = (milliseconds % 5000) / 5000f;
-            
+
             // Update the angle on the GPU
-            using var uniforms = BufferPool.Request<VertexUniform>();
-            uniforms.Add(new VertexUniform()
-            {
-                Matrix = Matrix4x4.CreateRotationZ(angle * 2 * MathF.PI)
-                         * Matrix4x4.CreateScale(1, 800 / 600f, 0)
-            });
-            _resources.UniformBuffer.Write(uniforms);
+            var unb = _resources.UniformNativeBuffer;
+            unb[0].Matrix = Matrix4x4.CreateRotationZ(angle * 2 * MathF.PI)
+                            * Matrix4x4.CreateScale(1, 800 / 600f, 0);
+            _resources.UniformBuffer.Write(unb);
 
             // Enqueue draw commands
             context.Enqueue(surface, _resources.CommandBuffer);
