@@ -26,7 +26,9 @@ namespace digbuild::platform::desktop::vulkan
 
 	void RenderQueue::write(vk::CommandBuffer& cmd)
 	{
-		cmd.begin(vk::CommandBufferBeginInfo{});
+		cmd.begin(vk::CommandBufferBeginInfo{
+			vk::CommandBufferUsageFlagBits::eOneTimeSubmit
+		});
 		for (auto& [target, buffer] : m_queue)
 		{
 			auto& framebuffer = reinterpret_cast<Framebuffer&>(target->getFramebuffer());
@@ -121,6 +123,7 @@ namespace digbuild::platform::desktop::vulkan
 		auto imageViews = m_context->createSwapChainViews(*m_swapChain, surfaceFormat.format);
 		auto framebuffers = m_context->createFramebuffers(m_surfaceFormat->getPass(), surfaceExtent, imageViews);
 		m_framebuffer = std::make_shared<Framebuffer>(
+			m_context,
 			m_surfaceFormat,
 			surfaceExtent.width, surfaceExtent.height,
 			std::move(imageViews), std::move(framebuffers)

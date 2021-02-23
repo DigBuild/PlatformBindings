@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "vk_framebuffer_format.h"
 #include "../../render/framebuffer.h"
 
@@ -8,11 +8,13 @@ namespace digbuild::platform::desktop::vulkan
 	{
 	public:
 		Framebuffer(
+			std::shared_ptr<VulkanContext> context,
 			std::shared_ptr<FramebufferFormat> format,
 			const uint32_t width, const uint32_t height,
 			std::vector<vk::UniqueImageView> imageViews,
 			std::vector<vk::UniqueFramebuffer> framebuffers
 		) :
+			m_context(std::move(context)),
 			m_format(std::move(format)),
 			m_width(width),
 			m_height(height),

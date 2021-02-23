@@ -296,8 +296,8 @@ namespace digbuild::platform::desktop::vulkan
 		};
 		const vk::SubpassDependency subpassDependency{
 			VK_SUBPASS_EXTERNAL, 0,
-			vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
-			vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
+			vk::PipelineStageFlagBits::eColorAttachmentOutput,
+			vk::PipelineStageFlagBits::eColorAttachmentOutput,
 			{},
 			vk::AccessFlagBits::eColorAttachmentWrite
 		};
