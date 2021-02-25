@@ -3,6 +3,8 @@
 #include "vk_command_buffer.h"
 #include "vk_render_pipeline.h"
 #include "vk_shader.h"
+#include "vk_texture_binding.h"
+#include "vk_texture_sampler.h"
 #include "vk_uniform_buffer.h"
 #include "vk_vertex_buffer.h"
 #include "../dt_render_surface.h"
@@ -33,18 +35,26 @@ namespace digbuild::platform::desktop::vulkan
 		{
 			auto& framebuffer = reinterpret_cast<Framebuffer&>(target->getFramebuffer());
 			const auto& format = reinterpret_cast<const FramebufferFormat&>(framebuffer.getFormat());
+
+			std::vector<vk::ClearValue> clearValues;
+			clearValues.reserve(format.getAttachmentCount());
+			for (const auto& attachment : format.getAttachments())
+			{
+				if (attachment.type == render::FramebufferAttachmentType::COLOR)
+					clearValues.push_back(vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } });
+				else
+					clearValues.push_back(vk::ClearDepthStencilValue{ 1.0f, 0 });
+			}
 			
 			cmd.beginRenderPass(
 				{
 					format.getPass(),
-					framebuffer.get(),
+					framebuffer.getTarget(),
 					{
 						{0, 0},
 						{framebuffer.getWidth(), framebuffer.getHeight()}
 					},
-					std::vector<vk::ClearValue>{
-						vk::ClearColorValue { std::array<float, 4>{ 0.3f, 0.1f, 0.0f, 1.0f } }
-					} // TODO: Clear values
+					clearValues
 				},
 				vk::SubpassContents::eSecondaryCommandBuffers
 			);
@@ -52,13 +62,10 @@ namespace digbuild::platform::desktop::vulkan
 			cmd.executeCommands({ buffer->get() });
 			
 			cmd.endRenderPass();
-		
-			// cmd.pipelineBarrier(
-			// 	vk::PipelineStageFlagBits::eBottomOfPipe,
-			// 	vk::PipelineStageFlagBits::eTopOfPipe,
-			// 	vk::DependencyFlagBits::eDeviceGroup,
-			// 	{ }, { }, { }
-			// );
+
+			framebuffer.transitionTexturesPost(cmd);
+
+			framebuffer.advance();
 		}
 		cmd.end();
 	}
@@ -118,7 +125,16 @@ namespace digbuild::platform::desktop::vulkan
 		auto renderPass = m_context->createSimpleRenderPass({
 			{ surfaceFormat.format, vk::ImageLayout::ePresentSrcKHR }
 		});
-		m_surfaceFormat = std::make_shared<FramebufferFormat>(m_context, std::move(renderPass), 1);
+		m_surfaceFormat = std::make_shared<FramebufferFormat>(
+			m_context,
+			std::move(renderPass),
+			std::vector{
+				render::FramebufferAttachmentDescriptor{
+					render::FramebufferAttachmentType::COLOR,
+					render::TextureFormat::B8G8R8A8_SRGB
+				}
+			}
+		);
 		
 		auto imageViews = m_context->createSwapChainViews(*m_swapChain, surfaceFormat.format);
 		auto framebuffers = m_context->createFramebuffers(m_surfaceFormat->getPass(), surfaceExtent, imageViews);
@@ -193,7 +209,6 @@ namespace digbuild::platform::desktop::vulkan
 		// TODO: Check present result and potentially recreate all live resources
 
 		m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
-		m_framebuffer->next();
 	}
 
 	std::shared_ptr<render::FramebufferFormat> RenderContext::createFramebufferFormat(
@@ -210,7 +225,12 @@ namespace digbuild::platform::desktop::vulkan
 		const uint32_t height
 	)
 	{
-		return nullptr;
+		return std::make_shared<Framebuffer>(
+			m_context,
+			std::static_pointer_cast<FramebufferFormat>(format),
+			width, height,
+			m_swapChainStages
+		);
 	}
 
 	std::shared_ptr<render::Shader> RenderContext::createShader(
@@ -288,6 +308,43 @@ namespace digbuild::platform::desktop::vulkan
 		);
 	}
 
+	std::shared_ptr<render::TextureBinding> RenderContext::createTextureBinding(
+		const std::shared_ptr<render::Shader>& shader,
+		const uint32_t binding,
+		const std::shared_ptr<render::TextureSampler>& sampler,
+		const std::shared_ptr<render::Texture>& texture
+	)
+	{
+		auto b = std::make_shared<TextureBinding>(
+			m_context,
+			std::static_pointer_cast<Shader>(shader),
+			binding,
+			m_swapChainStages,
+			sampler,
+			texture
+		);
+		addTicking(b);
+		return std::move(b);
+	}
+
+	std::shared_ptr<render::TextureSampler> RenderContext::createTextureSampler(
+		const render::TextureFiltering minFiltering,
+		const render::TextureFiltering magFiltering,
+		const render::TextureWrapping wrapping,
+		const render::TextureBorderColor borderColor,
+		const bool enableAnisotropy,
+		const uint32_t anisotropyLevel
+	)
+	{
+		return std::make_shared<TextureSampler>(
+			m_context,
+			minFiltering, magFiltering,
+			wrapping,
+			borderColor,
+			enableAnisotropy, anisotropyLevel
+		);
+	}
+
 
 	std::shared_ptr<render::CommandBuffer> RenderContext::createCommandBuffer()
 	{
@@ -330,6 +387,16 @@ namespace digbuild::platform::desktop::vulkan
 		m_tickingUniformBuffers[slot] = std::move(resource);
 	}
 
+	void RenderContext::addTicking(std::weak_ptr<TextureBinding> resource)
+	{
+		if (m_availableTickingTextureBindingSlots.empty())
+			return m_tickingTextureBindings.push_back(std::move(resource));
+
+		const auto slot = m_availableTickingTextureBindingSlots.front();
+		m_availableTickingTextureBindingSlots.pop();
+		m_tickingTextureBindings[slot] = std::move(resource);
+	}
+
 	void RenderContext::addTicking(std::weak_ptr<CommandBuffer> resource)
 	{
 		if (m_availableTickingCommandBufferSlots.empty())
@@ -362,6 +429,20 @@ namespace digbuild::platform::desktop::vulkan
 			if (res.expired())
 			{
 				m_availableTickingUniformBufferSlots.emplace(i);
+				i++;
+				continue;
+			}
+
+			res.lock()->tick();
+			i++;
+		}
+
+		i = 0;
+		for (auto& res : m_tickingTextureBindings)
+		{
+			if (res.expired())
+			{
+				m_availableTickingTextureBindingSlots.emplace(i);
 				i++;
 				continue;
 			}

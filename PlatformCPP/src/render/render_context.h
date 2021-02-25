@@ -9,14 +9,14 @@
 #include "render_pipeline.h"
 #include "render_target.h"
 #include "shader.h"
-#include "texture.h"
+#include "texture_binding.h"
+#include "texture_sampler.h"
 #include "uniform_buffer.h"
 #include "vertex_buffer.h"
-#include "../util/vecmath.h"
 
 namespace digbuild::platform::render
 {
-	enum class FramebufferAttachmentType
+	enum class FramebufferAttachmentType : uint8_t
 	{
 		COLOR,
 		DEPTH_STENCIL
@@ -185,10 +185,34 @@ namespace digbuild::platform::render
 	{
 		const NumericType type;
 	};
+	enum class ShaderBindingType : uint8_t
+	{
+		UNIFORM,
+		SAMPLER
+	};
 	struct ShaderBinding
 	{
+		const ShaderBindingType type;
 		const uint32_t size;
 		const std::vector<ShaderUniformProperty> properties;
+	};
+
+	enum class TextureFiltering : uint8_t
+	{
+		LINEAR,
+		NEAREST
+	};
+	enum class TextureWrapping : uint8_t
+	{
+		REPEAT, MIRRORED_REPEAT,
+		CLAMP_TO_EDGE, MIRRORED_CLAMP_TO_EDGE,
+		CLAMP_TO_BORDER
+	};
+	enum class TextureBorderColor : uint8_t
+	{
+		TRANSPARENT_BLACK,
+		OPAQUE_BLACK,
+		OPAQUE_WHITE
 	};
 	
 	class RenderContext
@@ -239,6 +263,22 @@ namespace digbuild::platform::render
 			const std::vector<uint8_t>& initialData,
 			uint32_t vertexSize,
 			bool writable
+		) = 0;
+
+		[[nodiscard]] virtual std::shared_ptr<TextureBinding> createTextureBinding(
+			const std::shared_ptr<Shader>& shader,
+			uint32_t binding,
+			const std::shared_ptr<TextureSampler>& sampler,
+			const std::shared_ptr<Texture>& texture
+		) = 0;
+
+		[[nodiscard]] virtual std::shared_ptr<TextureSampler> createTextureSampler(
+			TextureFiltering minFiltering,
+			TextureFiltering magFiltering,
+			TextureWrapping wrapping,
+			TextureBorderColor borderColor,
+			bool enableAnisotropy,
+			uint32_t anisotropyLevel
 		) = 0;
 
 		[[nodiscard]] virtual std::shared_ptr<CommandBuffer> createCommandBuffer(

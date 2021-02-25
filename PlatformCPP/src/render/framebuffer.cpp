@@ -13,12 +13,20 @@ extern "C" {
 	{
 		return handle_cast<Framebuffer>(instance)->getWidth();
 	}
-	
+
 	DLLEXPORT uint32_t dbp_framebuffer_get_height(
 		const native_handle instance
 	)
 	{
 		return handle_cast<Framebuffer>(instance)->getHeight();
+	}
+
+	DLLEXPORT native_handle dbp_framebuffer_get_texture(
+		const native_handle instance,
+		const uint32_t attachment
+	)
+	{
+		return make_native_handle(handle_cast<Framebuffer>(instance)->getTexture(attachment));
 	}
 }
 

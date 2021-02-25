@@ -40,18 +40,10 @@ namespace DigBuildPlatformCS.Util
         }
     }
 
-    public sealed class UniformNotInterfaceException : PlatformException
+    public sealed class ShaderBindingAlreadyInUseException : PlatformException
     {
-        internal UniformNotInterfaceException(Type type) :
-            base($"The specified uniform type must be an interface: {type.Name}")
-        {
-        }
-    }
-
-    public sealed class UntaggedUniformPropertyException : PlatformException
-    {
-        internal UntaggedUniformPropertyException(Type type, string name) :
-            base($"The specified uniform type contains a property that isn't tagged with UniformAttribute: {type.Name}.{name}")
+        internal ShaderBindingAlreadyInUseException(uint binding) :
+            base($"The specified shader binding is already in use: {binding}")
         {
         }
     }

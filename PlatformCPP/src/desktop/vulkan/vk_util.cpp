@@ -253,70 +253,129 @@ namespace digbuild::platform::desktop::vulkan::util
 		             }, nullptr);
 		queue.waitIdle();
 	}
-
-	void transitionImageLayout(
-		const vk::Device& device,
-		const vk::CommandPool& commandPool,
-        const vk::Queue& graphicsQueue, const vk::Image& image,
-        const vk::ImageAspectFlags& aspectFlags,
-        const vk::ImageLayout& oldLayout,
-		const vk::ImageLayout& newLayout
+	
+	ImageMemoryBarrierSet createImageMemoryBarriers(
+		const std::vector<ImageTransitionInfo>& transitions
 	)
 	{
-		vk::AccessFlags srcAccessMask, dstAccessMask;
-		vk::PipelineStageFlags srcStageMask, dstStageMask;
+		vk::PipelineStageFlags srcStageMask = {}, dstStageMask = {};
+		std::vector<vk::ImageMemoryBarrier> barriers;
 
-		if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal)
+		for (const auto& transition : transitions)
 		{
-			srcAccessMask = {};
-			dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-			srcStageMask = vk::PipelineStageFlagBits::eTopOfPipe;
-			dstStageMask = vk::PipelineStageFlagBits::eTransfer;
-		}
-		else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout ==
-			vk::ImageLayout::eShaderReadOnlyOptimal)
-		{
-			srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-			dstAccessMask = vk::AccessFlagBits::eShaderRead;
-			srcStageMask = vk::PipelineStageFlagBits::eTransfer;
-			dstStageMask = vk::PipelineStageFlagBits::eFragmentShader;
-		}
-		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout ==
-			vk::ImageLayout::eDepthStencilAttachmentOptimal)
-		{
-			srcAccessMask = {};
-			dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead |
-				vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-			srcStageMask = vk::PipelineStageFlagBits::eTopOfPipe;
-			dstStageMask = vk::PipelineStageFlagBits::eEarlyFragmentTests;
-		}
-		else
-		{
-			throw std::invalid_argument("Unsupported layout transition!");
-		}
+			vk::AccessFlags srcAccessMask, dstAccessMask;
+			if (transition.oldLayout == vk::ImageLayout::eUndefined
+				&& transition.newLayout == vk::ImageLayout::eTransferDstOptimal)
+			{
+				srcAccessMask = {};
+				dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+				srcStageMask |= vk::PipelineStageFlagBits::eTopOfPipe;
+				dstStageMask |= vk::PipelineStageFlagBits::eTransfer;
+			}
+			else if (transition.oldLayout == vk::ImageLayout::eTransferDstOptimal
+				&& transition.newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+			{
+				srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+				dstAccessMask = vk::AccessFlagBits::eShaderRead;
+				srcStageMask |= vk::PipelineStageFlagBits::eTransfer;
+				dstStageMask |= vk::PipelineStageFlagBits::eFragmentShader;
+			}
+			else if (transition.oldLayout == vk::ImageLayout::eUndefined
+				&& transition.newLayout == vk::ImageLayout::eColorAttachmentOptimal)
+			{
+				srcAccessMask = {};
+				dstAccessMask = vk::AccessFlagBits::eShaderWrite;
+				srcStageMask |= vk::PipelineStageFlagBits::eTopOfPipe;
+				dstStageMask |= vk::PipelineStageFlagBits::eFragmentShader;
+			}
+			else if (transition.oldLayout == vk::ImageLayout::eUndefined
+				&& transition.newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+			{
+				srcAccessMask = {};
+				dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead |
+					vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+				srcStageMask |= vk::PipelineStageFlagBits::eTopOfPipe;
+				dstStageMask |= vk::PipelineStageFlagBits::eEarlyFragmentTests;
+			}
+			else if (transition.oldLayout == vk::ImageLayout::eColorAttachmentOptimal
+				&& transition.newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+			{
+				srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+				dstAccessMask = vk::AccessFlagBits::eShaderRead;
+				srcStageMask |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
+				dstStageMask |= vk::PipelineStageFlagBits::eFragmentShader;
+			}
+			else if (transition.oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal
+				&& transition.newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+			{
+				srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+				dstAccessMask = vk::AccessFlagBits::eShaderRead;
+				srcStageMask |= vk::PipelineStageFlagBits::eLateFragmentTests;
+				dstStageMask |= vk::PipelineStageFlagBits::eFragmentShader;
+			}
+			else
+			{
+				throw std::invalid_argument("Unsupported layout transition!");
+			}
 
+			barriers.push_back({
+				srcAccessMask, dstAccessMask,
+				transition.oldLayout, transition.newLayout,
+				VK_QUEUE_FAMILY_IGNORED,
+				VK_QUEUE_FAMILY_IGNORED,
+				transition.image,
+				vk::ImageSubresourceRange{
+					transition.aspectFlags,
+					0, 1,
+					0, 1
+				}
+			});
+		}
+		
+		return ImageMemoryBarrierSet{ barriers, srcStageMask, dstStageMask };
+	}
+
+	void transitionImageLayouts(
+		const vk::CommandBuffer& cmd,
+		const std::vector<ImageTransitionInfo>& transitions
+	)
+	{
+		const auto barrierSet = createImageMemoryBarriers(transitions);
+		cmd.pipelineBarrier(
+			barrierSet.srcStageMask, barrierSet.dstStageMask, {},
+			{},
+			{},
+			barrierSet.barriers
+		);
+	}
+
+	void transitionImageLayoutsImmediate(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+        const vk::Queue& graphicsQueue,
+		const std::vector<ImageTransitionInfo>& transitions
+	)
+	{
 		directExecuteCommands(
 			device, commandPool, graphicsQueue,
-			[&](vk::CommandBuffer& buffer)
+			[&](vk::CommandBuffer& cmd)
 			{
-				vk::ImageMemoryBarrier barrier{
-					srcAccessMask, dstAccessMask,
-					oldLayout, newLayout,
-					VK_QUEUE_FAMILY_IGNORED,
-					VK_QUEUE_FAMILY_IGNORED,
-					image,
-					vk::ImageSubresourceRange{
-						aspectFlags,
-						0, 1,
-						0, 1
-					}
-				};
-				buffer.pipelineBarrier(
-					srcStageMask, dstStageMask, {},
-					0, nullptr,
-					0, nullptr,
-					1, &barrier);
+				transitionImageLayouts(cmd, transitions);
 			}
 		);
+	}
+
+	vk::Format toVulkanFormat(const render::TextureFormat format)
+	{
+		switch (format)
+		{
+		case render::TextureFormat::R8G8B8A8_SRGB:
+			return vk::Format::eR8G8B8A8Srgb;
+		case render::TextureFormat::B8G8R8A8_SRGB:
+			return vk::Format::eB8G8R8A8Srgb;
+		case render::TextureFormat::D32SFLOAT_S8UINT:
+			return vk::Format::eD32SfloatS8Uint;
+		}
+		throw std::runtime_error("Invalid type.");
 	}
 }

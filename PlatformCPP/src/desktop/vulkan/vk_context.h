@@ -4,6 +4,7 @@
 #include <vulkan.h>
 
 #include "vk_buffer.h"
+#include "vk_image.h"
 #include "vk_staging_resource.h"
 #include "vk_util.h"
 
@@ -50,6 +51,24 @@ namespace digbuild::platform::desktop::vulkan
 			vk::Format format
 		) const;
 
+		[[nodiscard]] vk::UniqueSampler createTextureSampler(
+			vk::Filter minFilter, vk::Filter magFilter,
+			vk::SamplerAddressMode addressMode,
+			vk::SamplerMipmapMode mipmapMode, float mipLodBias,
+			float minLod, float maxLod,
+			bool enableAnisotropy, float anisotropyLevel,
+			bool enableCompare, vk::CompareOp compareOp,
+			vk::BorderColor borderColor,
+			bool unnormalizedCoords
+		) const;
+
+		[[nodiscard]] std::unique_ptr<VulkanImage> createImage(
+			uint32_t width, uint32_t height,
+			vk::Format format,
+			vk::ImageUsageFlags usageFlags,
+			vk::MemoryPropertyFlags memoryProperties
+		);
+
 		[[nodiscard]] vk::UniqueImageView createImageView(
 			const vk::Image& image,
 			vk::Format format,
@@ -66,6 +85,12 @@ namespace digbuild::platform::desktop::vulkan
 			const vk::RenderPass& pass,
 			const vk::Extent2D& extent,
 			const std::vector<vk::UniqueImageView>& images
+		) const;
+
+		[[nodiscard]] std::vector<vk::UniqueFramebuffer> createFramebuffers(
+			const vk::RenderPass& pass,
+			const vk::Extent2D& extent,
+			const std::vector<std::vector<vk::ImageView>>& images
 		) const;
 
 		[[nodiscard]] vk::UniqueRenderPass createSimpleRenderPass(
@@ -98,7 +123,8 @@ namespace digbuild::platform::desktop::vulkan
 		);
 		
 		[[nodiscard]] vk::UniqueDescriptorPool createDescriptorPool(
-			uint32_t maxSets
+			uint32_t maxSets,
+			vk::DescriptorType type
 		) const;
 
 		void updateDescriptorSets(
@@ -165,5 +191,6 @@ namespace digbuild::platform::desktop::vulkan
 		friend class VulkanBuffer;
 		friend class RenderPipeline;
 		friend class FramebufferFormat;
+		friend class Framebuffer;
 	};
 }

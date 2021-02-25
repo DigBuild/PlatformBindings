@@ -362,8 +362,11 @@ namespace digbuild::platform::desktop::vulkan
 		};
 
 		std::vector<vk::PipelineColorBlendAttachmentState> blendAttachments;
-		for (const auto& blendOption : blendOptions)
-			blendAttachments.push_back(toVulkan(blendOption));
+		for (auto i = 0u; i < m_format->getAttachmentCount(); ++i)
+		{
+			if (m_format->getAttachments()[i].type == render::FramebufferAttachmentType::COLOR)
+				blendAttachments.push_back(toVulkan(blendOptions[i]));
+		}
 		vk::PipelineColorBlendStateCreateInfo colorBlendStateCreateInfo{
 			{}, false, vk::LogicOp::eCopy,
 			blendAttachments,

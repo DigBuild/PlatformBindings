@@ -1,10 +1,8 @@
 #include "vk_command_buffer.h"
 
-#include <iostream>
-
-
 #include "vk_framebuffer_format.h"
 #include "vk_render_pipeline.h"
+#include "vk_texture_binding.h"
 #include "vk_uniform_buffer.h"
 #include "vk_vertex_buffer.h"
 
@@ -81,8 +79,31 @@ namespace digbuild::platform::desktop::vulkan
 			pipeline->getLayout(),
 			pipeline->getLayoutOffset(ub->getShader()) + ub->getBinding(),
 			{ ub->get() },
-			{ m_index * ub->getShader()->getBindings()[ub->getBinding()].size }
+			{ m_binding * ub->getShader()->getBindings()[ub->getBinding()].size }
 		);
+
+		resources.push_back(pipeline);
+		resources.push_back(ub);
+	}
+
+	void CBCmdBindTexture::record(
+		vk::CommandBuffer& cmd,
+		std::vector<std::shared_ptr<render::Resource>>& resources
+	)
+	{
+		auto pipeline = std::static_pointer_cast<RenderPipeline>(m_pipeline);
+		auto tb = std::static_pointer_cast<TextureBinding>(m_binding);
+
+		cmd.bindDescriptorSets(
+			vk::PipelineBindPoint::eGraphics,
+			pipeline->getLayout(),
+			pipeline->getLayoutOffset(tb->getShader()) + tb->getBinding(),
+			{ tb->get() },
+			{}
+		);
+
+		resources.push_back(pipeline);
+		resources.push_back(tb);
 	}
 
 	void CBCmdDraw::record(
@@ -190,10 +211,18 @@ namespace digbuild::platform::desktop::vulkan
 	void CommandBuffer::bindUniform(
 		std::shared_ptr<render::RenderPipeline> pipeline,
 		std::shared_ptr<render::UniformBuffer> uniformBuffer,
-		uint32_t index
+		uint32_t binding
 	)
 	{
-		m_commandQueue.push_back(std::make_unique<CBCmdBindUniform>(pipeline, uniformBuffer, index));
+		m_commandQueue.push_back(std::make_unique<CBCmdBindUniform>(pipeline, uniformBuffer, binding));
+	}
+
+	void CommandBuffer::bindTexture(
+		std::shared_ptr<render::RenderPipeline> pipeline,
+		std::shared_ptr<render::TextureBinding> binding
+	)
+	{
+		m_commandQueue.push_back(std::make_unique<CBCmdBindTexture>(pipeline, binding));
 	}
 
 	void CommandBuffer::draw(

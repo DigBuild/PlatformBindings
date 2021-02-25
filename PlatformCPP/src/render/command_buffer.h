@@ -5,6 +5,9 @@
 #include "render_pipeline.h"
 #include "render_target.h"
 #include "resource.h"
+#include "shader.h"
+#include "texture.h"
+#include "texture_binding.h"
 #include "uniform_buffer.h"
 #include "vertex_buffer.h"
 #include "../util/vecmath.h"
@@ -28,7 +31,11 @@ namespace digbuild::platform::render
 		virtual void bindUniform(
 			std::shared_ptr<RenderPipeline> pipeline,
 			std::shared_ptr<UniformBuffer> uniformBuffer,
-			uint32_t index
+			uint32_t binding
+		) = 0;
+		virtual void bindTexture(
+			std::shared_ptr<RenderPipeline> pipeline,
+			std::shared_ptr<TextureBinding> binding
 		) = 0;
 		virtual void draw(
 			std::shared_ptr<RenderPipeline> pipeline,

@@ -199,19 +199,67 @@ namespace digbuild::platform::desktop::vulkan
 	) const
 	{
 		const auto images = m_device->getSwapchainImagesKHR(swapChain);
-		// for (auto& image : images)
-		// 	util::transitionImageLayout(
-		// 		*m_device, *m_commandPool, m_graphicsQueue,
-		// 		image, vk::ImageAspectFlagBits::eColor,
-		// 		vk::ImageLayout::eUndefined,
-		// 		vk::ImageLayout::eColorAttachmentOptimal
-		// 	);
-		
 		std::vector<vk::UniqueImageView> views;
 		views.reserve(images.size());
 		for (const auto& image : images)
 			views.push_back(createImageView(image, format, vk::ImageAspectFlagBits::eColor));
 		return std::move(views);
+	}
+
+	vk::UniqueSampler VulkanContext::createTextureSampler(
+		const vk::Filter minFilter, const vk::Filter magFilter,
+		const vk::SamplerAddressMode addressMode,
+		const vk::SamplerMipmapMode mipmapMode, const float mipLodBias,
+		const float minLod, const float maxLod,
+		const bool enableAnisotropy, const float anisotropyLevel,
+		const bool enableCompare, const vk::CompareOp compareOp,
+		const vk::BorderColor borderColor,
+		const bool unnormalizedCoords
+	) const
+	{
+		return m_device->createSamplerUnique({
+			{},
+			magFilter,
+			minFilter,
+			mipmapMode,
+			addressMode, addressMode, addressMode,
+			mipLodBias,
+			enableAnisotropy, anisotropyLevel,
+			enableCompare, compareOp,
+			minLod, maxLod,
+			borderColor,
+			unnormalizedCoords
+		});
+	}
+
+	std::unique_ptr<VulkanImage> VulkanContext::createImage(
+		const uint32_t width, const uint32_t height,
+		const vk::Format format,
+		const vk::ImageUsageFlags usageFlags,
+		const vk::MemoryPropertyFlags memoryProperties
+	)
+	{
+		const auto queueIndex = m_familyIndices.graphicsFamily.value();
+		auto image = m_device->createImageUnique({
+			{}, vk::ImageType::e2D, format,
+			vk::Extent3D{width, height, 1}, 1, 1,
+			vk::SampleCountFlagBits::e1,
+			vk::ImageTiling::eOptimal,
+			usageFlags,
+			vk::SharingMode::eExclusive,
+			1, &queueIndex,
+			vk::ImageLayout::eUndefined
+			});
+
+		const auto memoryRequirements = m_device->getImageMemoryRequirements(*image);
+		auto memory = m_device->allocateMemoryUnique(vk::MemoryAllocateInfo{
+			memoryRequirements.size,
+			findMemoryType(m_physicalDevice, memoryRequirements.memoryTypeBits, memoryProperties)
+			});
+
+		m_device->bindImageMemory(*image, *memory, 0);
+
+		return std::make_unique<VulkanImage>(shared_from_this(), std::move(image), std::move(memory));
 	}
 
 	[[nodiscard]] vk::UniqueImageView VulkanContext::createImageView(
@@ -257,6 +305,19 @@ namespace digbuild::platform::desktop::vulkan
 		framebuffers.reserve(images.size());
 		for (auto i = 0u; i < images.size(); i++)
 			framebuffers.push_back(createFramebuffer(pass, extent, { *images[i] }));
+		return std::move(framebuffers);
+	}
+
+	std::vector<vk::UniqueFramebuffer> VulkanContext::createFramebuffers(
+		const vk::RenderPass& pass,
+		const vk::Extent2D& extent,
+		const std::vector<std::vector<vk::ImageView>>& images
+	) const
+	{
+		std::vector<vk::UniqueFramebuffer> framebuffers;
+		framebuffers.reserve(images.size());
+		for (auto i = 0u; i < images.size(); i++)
+			framebuffers.push_back(createFramebuffer(pass, extent, images[i]));
 		return std::move(framebuffers);
 	}
 
@@ -370,13 +431,14 @@ namespace digbuild::platform::desktop::vulkan
 	}
 
 	vk::UniqueDescriptorPool VulkanContext::createDescriptorPool(
-		const uint32_t maxSets
+		const uint32_t maxSets,
+		const vk::DescriptorType type
 	) const
 	{
 		return m_device->createDescriptorPoolUnique({
 			{}, maxSets, std::vector{
 				vk::DescriptorPoolSize{
-					vk::DescriptorType::eUniformBuffer,
+					type,
 					maxSets
 				}
 			}

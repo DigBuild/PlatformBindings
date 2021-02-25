@@ -13,14 +13,13 @@ namespace digbuild::platform::desktop::vulkan
 		m_shader(std::move(shader)),
 		m_binding(binding)
 	{
-		m_descriptorPool = m_context->createDescriptorPool(stages);
+		m_descriptorPool = m_context->createDescriptorPool(stages, vk::DescriptorType::eUniformBuffer);
 		m_descriptorSets = m_context->createDescriptorSets(
 			*m_descriptorPool,
 			m_shader->getDescriptorSetLayouts()[binding],
 			stages
 		);
 		
-		const auto bindingCount = m_shader->getBindings().size();
 		m_buffers.resize(stages);
 
 		if (!initialData.empty())

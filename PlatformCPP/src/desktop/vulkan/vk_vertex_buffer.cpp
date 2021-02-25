@@ -21,7 +21,7 @@ namespace digbuild::platform::desktop::vulkan
 		memcpy(memory, data.data(), data.size());
 		m_buffer->unmapMemory();
 		
-		m_size = data.size() / vertexSize;
+		m_size = static_cast<uint32_t>(data.size() / vertexSize);
 	}
 
 	DynamicVertexBuffer::DynamicVertexBuffer(
@@ -64,7 +64,7 @@ namespace digbuild::platform::desktop::vulkan
 		memcpy(memory, data.data(), data.size());
 		buf->unmapMemory();
 
-		m_sizes[writeIndex] = data.size() / m_vertexSize;
+		m_sizes[writeIndex] = static_cast<uint32_t>(data.size() / m_vertexSize);
 
 		m_advanceIndex = true;
 	}

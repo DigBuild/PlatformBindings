@@ -13,6 +13,7 @@ namespace digbuild::platform::render
 		SET_VIEWPORT,
 		SET_SCISSOR,
 		BIND_UNIFORM,
+		BIND_TEXTURE,
 		DRAW
 	};
 
@@ -32,7 +33,12 @@ namespace digbuild::platform::render
 	{
 		const util::native_handle pipeline;
 		const util::native_handle uniformBuffer;
-		const uint32_t index;
+		const uint32_t binding;
+	};
+	struct CommandBufferCmdBindTextureC
+	{
+		const util::native_handle pipeline;
+		const util::native_handle binding;
 	};
 	struct CommandBufferCmdDrawC
 	{
@@ -50,6 +56,7 @@ namespace digbuild::platform::render
 			const CommandBufferCmdSetViewportC cmdSetViewport;
 			const CommandBufferCmdSetScissorC cmdSetScissor;
 			const CommandBufferCmdBindUniformC cmdBindUniform;
+			const CommandBufferCmdBindTextureC cmdBindTexture;
 			const CommandBufferCmdDrawC cmdDraw;
 		};
 	};
@@ -92,7 +99,13 @@ extern "C" {
 				commandBuffer->bindUniform(
 					handle_share<RenderPipeline>(cmd.cmdBindUniform.pipeline),
 					handle_share<UniformBuffer>(cmd.cmdBindUniform.uniformBuffer),
-					cmd.cmdBindUniform.index
+					cmd.cmdBindUniform.binding
+				);
+				break;
+			case CommandBufferCmdTypeC::BIND_TEXTURE:
+				commandBuffer->bindTexture(
+					handle_share<RenderPipeline>(cmd.cmdBindTexture.pipeline),
+					handle_share<TextureBinding>(cmd.cmdBindTexture.binding)
 				);
 				break;
 			case CommandBufferCmdTypeC::DRAW:

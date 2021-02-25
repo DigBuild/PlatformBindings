@@ -13,6 +13,18 @@ namespace digbuild::platform::desktop::vulkan
 		}
 		throw std::runtime_error("Invalid type.");
 	}
+
+	vk::DescriptorType toVulkan(const render::ShaderBindingType type)
+	{
+		switch (type)
+		{
+		case render::ShaderBindingType::UNIFORM:
+			return vk::DescriptorType::eUniformBufferDynamic;
+		case render::ShaderBindingType::SAMPLER:
+			return vk::DescriptorType::eCombinedImageSampler;
+		}
+		throw std::runtime_error("Invalid type.");
+	}
 	
 	Shader::Shader(
 		std::shared_ptr<VulkanContext> context,
@@ -31,7 +43,7 @@ namespace digbuild::platform::desktop::vulkan
 		{
 			auto layout = m_context->createDescriptorSetLayout({
 				static_cast<uint32_t>(m_layoutDesc.size()),
-				vk::DescriptorType::eUniformBufferDynamic,
+				toVulkan(binding.type),
 				1,
 				m_stage
 			});

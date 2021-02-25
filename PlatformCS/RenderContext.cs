@@ -8,6 +8,14 @@ namespace DigBuildPlatformCS
     [NativeSymbols("dbp_render_context_", SymbolTransformationMethod.Underscore)]
     internal interface IRenderContextBindings
     {
+        IntPtr CreateFramebufferFormat(
+            IntPtr instance,
+            IntPtr attachments, uint attachmentCount,
+            IntPtr stages, uint stageCount,
+            IntPtr members,
+            IntPtr dependencies
+        );
+
         IntPtr CreateFramebuffer(IntPtr instance, IntPtr format, uint width, uint height);
 
         IntPtr CreateShader(
@@ -49,6 +57,22 @@ namespace DigBuildPlatformCS
             IntPtr data, uint dataLength,
             int vertexSize,
             bool writable
+        );
+
+        IntPtr CreateTextureSampler(
+            IntPtr instance,
+            TextureFiltering minFiltering,
+            TextureFiltering maxFiltering,
+            TextureWrapping wrapping,
+            TextureBorderColor borderColor,
+            bool enableAnisotropy,
+            uint anisotropyLevel
+        );
+        IntPtr CreateTextureBinding(
+            IntPtr instance,
+            IntPtr shader, uint binding,
+            IntPtr sampler,
+            IntPtr texture
         );
 
         IntPtr CreateCommandBuffer(IntPtr instance);
@@ -178,12 +202,24 @@ namespace DigBuildPlatformCS
         ) where TUniform : unmanaged, IUniform<TUniform>
             => CreateUniformBuffer(uniform, initialData.Unpooled);
 
+        public TextureSamplerBuilder CreateTextureSampler(
+            TextureFiltering minFiltering = TextureFiltering.Linear,
+            TextureFiltering maxFiltering = TextureFiltering.Linear,
+            TextureWrapping wrapping = TextureWrapping.Repeat,
+            TextureBorderColor borderColor = TextureBorderColor.OpaqueBlack
+        ) => new(this, minFiltering, maxFiltering, wrapping, borderColor);
+
+        public TextureBindingBuilder CreateTextureBinding(
+            ShaderSamplerHandle shaderSampler,
+            TextureSampler sampler,
+            Texture texture
+        ) => new(this, shaderSampler, sampler, texture);
+
         public Texture CreateTexture(
         ) => throw new NotImplementedException();
 
-        public CommandBufferBuilder CreateDrawCommand(
-            out CommandBufferWriter writer
-        ) => new(this, out writer);
+        public CommandBufferBuilder CreateCommandBuffer(
+        ) => new(this);
 
         public void Enqueue(
             IRenderTarget target,

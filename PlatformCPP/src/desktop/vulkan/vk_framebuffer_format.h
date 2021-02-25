@@ -12,13 +12,13 @@ namespace digbuild::platform::desktop::vulkan
 	public:
 		FramebufferFormat(
 			std::shared_ptr<VulkanContext> context,
-			const std::vector<render::FramebufferAttachmentDescriptor>& attachments,
+			std::vector<render::FramebufferAttachmentDescriptor> attachments,
 			const std::vector<render::FramebufferRenderStageDescriptor>& renderStages
 		);
 		FramebufferFormat(
 			std::shared_ptr<VulkanContext> context,
 			vk::UniqueRenderPass renderPass,
-			uint32_t attachmentCount
+			std::vector<render::FramebufferAttachmentDescriptor> attachments
 		);
 
 		[[nodiscard]] const vk::RenderPass& getPass() const
@@ -28,12 +28,17 @@ namespace digbuild::platform::desktop::vulkan
 
 		[[nodiscard]] uint32_t getAttachmentCount() const override
 		{
-			return m_attachmentCount;
+			return static_cast<uint32_t>(m_attachments.size());
+		}
+
+		[[nodiscard]] const std::vector<render::FramebufferAttachmentDescriptor>& getAttachments() const
+		{
+			return m_attachments;
 		}
 
 	private:
 		std::shared_ptr<VulkanContext> m_context;
 		vk::UniqueRenderPass m_renderPass;
-		uint32_t m_attachmentCount;
+		std::vector<render::FramebufferAttachmentDescriptor> m_attachments;
 	};
 }

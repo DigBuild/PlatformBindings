@@ -1,45 +1,43 @@
-﻿using DigBuildPlatformCS.Util;
+﻿using AdvancedDLSupport;
+using DigBuildPlatformCS.Util;
 using System;
 using System.Numerics;
 
 namespace DigBuildPlatformCS
 {
+    [NativeSymbols("dbp_texture_", SymbolTransformationMethod.Underscore)]
+    internal interface ITextureBindings
+    {
+        uint GetWidth(IntPtr instance);
+        uint GetHeight(IntPtr instance);
+    }
+
     public sealed class Texture
     {
-        private readonly NativeHandle _handle;
+        internal static readonly ITextureBindings Bindings = NativeLib.Get<ITextureBindings>();
+
+        internal readonly NativeHandle Handle;
 
         internal Texture(NativeHandle handle)
         {
-            _handle = handle;
+            Handle = handle;
         }
 
-        public void Dispose() => _handle.Dispose();
+        public void Dispose() => Handle.Dispose();
 
-        public uint Width => throw new NotImplementedException();
-        public uint Height => throw new NotImplementedException();
-        public TextureFormat Format => throw new NotImplementedException();
-    }
-    
-    public sealed class TextureUploader
-    {
-        public void Upload() => throw new NotImplementedException();
+        public uint Width => Bindings.GetWidth(Handle);
+        public uint Height => Bindings.GetHeight(Handle);
     }
 
-    public class TextureFormat
+    public sealed class TextureFormat
     {
-        public static readonly TextureFormat<Vector4> RGBA8 = new();
-        
-        internal TextureFormat()
+        public static readonly TextureFormat R8G8B8A8SRGB = new(0);
+
+        internal readonly byte Id;
+
+        private TextureFormat(byte id)
         {
+            Id = id;
         }
-    }
-
-    public sealed class TextureFormat<T> : TextureFormat where T : unmanaged
-    {
-        internal TextureFormat()
-        {
-        }
-
-        internal Vector4 ToVector4(T value) => throw new NotImplementedException();
     }
 }

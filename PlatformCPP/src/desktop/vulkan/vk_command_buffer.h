@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "vk_context.h"
 #include "../../render/command_buffer.h"
-#include "../../render/shader.h"
 #include "../../render/uniform_buffer.h"
 
 namespace digbuild::platform::desktop::vulkan
@@ -90,11 +89,11 @@ namespace digbuild::platform::desktop::vulkan
 		explicit CBCmdBindUniform(
 			std::shared_ptr<render::RenderPipeline> pipeline,
 			std::shared_ptr<render::UniformBuffer> uniformBuffer,
-			const uint32_t index
+			const uint32_t binding
 		) :
 			m_pipeline(std::move(pipeline)),
 			m_uniformBuffer(std::move(uniformBuffer)),
-			m_index(index)
+			m_binding(binding)
 		{ }
 
 		void record(
@@ -104,7 +103,26 @@ namespace digbuild::platform::desktop::vulkan
 	private:
 		std::shared_ptr<render::RenderPipeline> m_pipeline;
 		std::shared_ptr<render::UniformBuffer> m_uniformBuffer;
-		uint32_t m_index;
+		uint32_t m_binding;
+	};
+	class CBCmdBindTexture final : public CBCmd
+	{
+	public:
+		explicit CBCmdBindTexture(
+			std::shared_ptr<render::RenderPipeline> pipeline,
+			std::shared_ptr<render::TextureBinding> binding
+		) :
+			m_pipeline(std::move(pipeline)),
+			m_binding(std::move(binding))
+		{ }
+
+		void record(
+			vk::CommandBuffer& cmd,
+			std::vector<std::shared_ptr<render::Resource>>& resources
+		) override;
+	private:
+		std::shared_ptr<render::RenderPipeline> m_pipeline;
+		std::shared_ptr<render::TextureBinding> m_binding;
 	};
 	class CBCmdDraw final : public CBCmd
 	{
@@ -148,7 +166,11 @@ namespace digbuild::platform::desktop::vulkan
 		void bindUniform(
 			std::shared_ptr<render::RenderPipeline> pipeline,
 			std::shared_ptr<render::UniformBuffer> uniformBuffer,
-			uint32_t index
+			uint32_t binding
+		) override;
+		void bindTexture(
+			std::shared_ptr<render::RenderPipeline> pipeline,
+			std::shared_ptr<render::TextureBinding> binding
 		) override;
 		void draw(
 			std::shared_ptr<render::RenderPipeline> pipeline,

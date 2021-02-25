@@ -1,9 +1,8 @@
 ﻿#pragma once
-#include <memory>
 
 #include "framebuffer_format.h"
 #include "render_target.h"
-// #include "texture.h"
+#include "texture.h"
 
 namespace digbuild::platform::render
 {
@@ -21,9 +20,8 @@ namespace digbuild::platform::render
 		
 		[[nodiscard]] virtual uint32_t getWidth() const = 0;
 		[[nodiscard]] virtual uint32_t getHeight() const = 0;
-
-		// TODO: Shared pointers??
-		// [[nodiscard]] virtual std::vector<Texture*> getTextures() const = 0;
+		
+		[[nodiscard]] virtual std::shared_ptr<Texture> getTexture(uint32_t attachment) = 0;
 
 		[[nodiscard]] Framebuffer& getFramebuffer() override
 		{

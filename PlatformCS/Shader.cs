@@ -33,17 +33,17 @@ namespace DigBuildPlatformCS
         {
         }
     }
-    
+
     public interface IUniform<TUniform> where TUniform : unmanaged, IUniform<TUniform>
     {
     }
 
-    internal interface IUniformHandle
+    internal interface IBindingHandle
     {
         internal Shader Shader { set; }
     }
 
-    public sealed class UniformHandle<T> : IUniformHandle where T : unmanaged, IUniform<T>
+    public sealed class UniformHandle<T> : IBindingHandle where T : unmanaged, IUniform<T>
     {
         internal Shader Shader { get; private set; } = null!;
         internal readonly uint Binding;
@@ -53,7 +53,7 @@ namespace DigBuildPlatformCS
             Binding = binding;
         }
 
-        Shader IUniformHandle.Shader
+        Shader IBindingHandle.Shader
         {
             set => Shader = value;
         }
@@ -69,15 +69,68 @@ namespace DigBuildPlatformCS
         }
     }
 
+    [StructLayout(LayoutKind.Explicit)]
     internal readonly struct BindingData
     {
-        private readonly uint _memberOffset, _memberCount, _size;
+        [FieldOffset(0)]
+        private readonly Type _type;
 
-        internal BindingData(uint memberOffset, uint memberCount, uint size)
+        [FieldOffset(sizeof(Type))]
+        private readonly Uniform _uniform;
+        [FieldOffset(sizeof(Type))]
+        private readonly Sampler _sampler;
+
+        private BindingData(Uniform uniform) : this()
         {
-            _memberOffset = memberOffset;
-            _memberCount = memberCount;
-            _size = size;
+            _type = Type.Uniform;
+            _uniform = uniform;
+        }
+
+        private BindingData(Sampler sampler) : this()
+        {
+            _type = Type.Sampler;
+            _sampler = sampler;
+        }
+
+        public static implicit operator BindingData(Uniform uniform) => new(uniform);
+        public static implicit operator BindingData(Sampler sampler) => new(sampler);
+
+        internal enum Type : ulong
+        {
+            Uniform,
+            Sampler
+        }
+
+        internal readonly struct Uniform
+        {
+            private readonly uint _memberOffset, _memberCount, _size;
+
+            internal Uniform(uint memberOffset, uint memberCount, uint size)
+            {
+                _memberOffset = memberOffset;
+                _memberCount = memberCount;
+                _size = size;
+            }
+        }
+
+        internal readonly struct Sampler
+        {
+        }
+    }
+
+    public sealed class ShaderSamplerHandle : IBindingHandle
+    {
+        internal Shader Shader { get; private set; } = null!;
+        internal readonly uint Binding;
+
+        internal ShaderSamplerHandle(uint binding)
+        {
+            Binding = binding;
+        }
+
+        Shader IBindingHandle.Shader
+        {
+            set => Shader = value;
         }
     }
 
@@ -93,10 +146,10 @@ namespace DigBuildPlatformCS
             internal readonly IResource Resource;
             internal readonly ShaderType Type;
             internal readonly Func<NativeHandle, TShader> Factory;
-
-            internal readonly List<BindingData> UniformBindings = new();
+            
+            internal readonly List<BindingData> Bindings = new();
+            internal readonly List<IBindingHandle> BindingHandles = new();
             internal readonly List<UniformMember> UniformMembers = new();
-            internal readonly List<IUniformHandle> UniformHandles = new();
 
             public Data(IResource resource, ShaderType type, Func<NativeHandle, TShader> factory)
             {
@@ -122,19 +175,29 @@ namespace DigBuildPlatformCS
             var members = typeof(TUniform).GetFields(BindingFlags.NonPublic)
                 .Select(field => new UniformMember(field))
                 .ToList();
-            _data.UniformBindings.Add(new BindingData(
+
+            _data.Bindings.Add(new BindingData.Uniform(
                 (uint)_data.UniformMembers.Count,
                 (uint)members.Count,
                 (uint)Marshal.SizeOf<TUniform>()
             ));
+            _data.BindingHandles.Add(handle = new UniformHandle<TUniform>((uint)_data.BindingHandles.Count));
             _data.UniformMembers.AddRange(members);
-            _data.UniformHandles.Add(handle = new UniformHandle<TUniform>((uint) _data.UniformHandles.Count));
+            return this;
+        }
+
+        public ShaderBuilder<TShader> WithSampler(
+            out ShaderSamplerHandle handle
+        )
+        {
+            _data.Bindings.Add(new BindingData.Sampler());
+            _data.BindingHandles.Add(handle = new ShaderSamplerHandle((uint)_data.BindingHandles.Count));
             return this;
         }
 
         public static unsafe implicit operator TShader(ShaderBuilder<TShader> builder)
         {
-            var bindings = builder._data.UniformBindings.ToArray();
+            var bindings = builder._data.Bindings.ToArray();
             var members = builder._data.UniformMembers.ToArray();
 
             var bytes = builder._data.Resource.ReadAllBytes();
@@ -159,7 +222,7 @@ namespace DigBuildPlatformCS
                         )
                     )
                 );
-                foreach (var handle in builder._data.UniformHandles)
+                foreach (var handle in builder._data.BindingHandles)
                     handle.Shader = shader;
                 return shader;
             }

@@ -4,6 +4,8 @@
 #include <vector>
 #include <vulkan.h>
 
+#include "../../render/texture.h"
+
 namespace digbuild::platform::desktop::vulkan::util
 {
 	struct QueueFamilyIndices
@@ -33,6 +35,21 @@ namespace digbuild::platform::desktop::vulkan::util
 	{
 		vk::PhysicalDevice device;
 		QueueFamilyIndices familyIndices;
+	};
+
+	struct ImageTransitionInfo
+	{
+		vk::Image image;
+		vk::ImageAspectFlags aspectFlags;
+		vk::ImageLayout oldLayout;
+		vk::ImageLayout newLayout;
+	};
+
+	struct ImageMemoryBarrierSet
+	{
+		const std::vector<vk::ImageMemoryBarrier> barriers;
+		const vk::PipelineStageFlags srcStageMask;
+		const vk::PipelineStageFlags dstStageMask;
 	};
 
 	void initializeDispatcher();
@@ -72,13 +89,21 @@ namespace digbuild::platform::desktop::vulkan::util
 		const std::function<void(vk::CommandBuffer&)>& commands
 	);
 
-	void transitionImageLayout(
+	ImageMemoryBarrierSet createImageMemoryBarriers(
+		const std::vector<ImageTransitionInfo>& transitions
+	);
+	
+	void transitionImageLayouts(
+		const vk::CommandBuffer& cmd,
+		const std::vector<ImageTransitionInfo>& transitions
+	);
+
+	void transitionImageLayoutsImmediate(
 		const vk::Device& device,
 		const vk::CommandPool& commandPool,
 		const vk::Queue& graphicsQueue,
-		const vk::Image& image,
-		const vk::ImageAspectFlags& aspectFlags,
-		const vk::ImageLayout& oldLayout,
-		const vk::ImageLayout& newLayout
+		const std::vector<ImageTransitionInfo>& transitions
 	);
+
+	[[nodiscard]] vk::Format toVulkanFormat(render::TextureFormat format);
 }

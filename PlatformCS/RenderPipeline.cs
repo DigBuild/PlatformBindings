@@ -62,7 +62,7 @@ namespace DigBuildPlatformCS
                 VertexDescriptor = vertexDescriptor;
                 InstanceDescriptor = instanceDescriptor;
                 Factory = factory;
-                BlendOptions = new BlendOptions[renderStage.Format.StageCount];
+                BlendOptions = new BlendOptions[renderStage.Format.Attachments.Count];
                 for (var i = 0; i < BlendOptions.Length; i++)
                     BlendOptions[i] = new BlendOptions(true);
             }

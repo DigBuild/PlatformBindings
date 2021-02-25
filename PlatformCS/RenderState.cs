@@ -97,14 +97,14 @@ namespace DigBuildPlatformCS
     {
         public static readonly DepthBias Default = new(false, 0.0f, 0.0f, 0.0f);
 
-        public readonly bool Enabled;
+        public readonly byte Enabled;
         public readonly float Constant;
         public readonly float Clamp;
         public readonly float Slope;
 
         public DepthBias(bool enabled, float constant, float clamp, float slope)
         {
-            Enabled = enabled;
+            Enabled = enabled ? 1 : 0;
             Constant = constant;
             Clamp = clamp;
             Slope = slope;
@@ -115,15 +115,15 @@ namespace DigBuildPlatformCS
     {
         public static readonly DepthTest Default = new(false, CompareOperation.Always, false);
 
-        public readonly bool Enabled;
+        public readonly byte Enabled;
         public readonly CompareOperation Comparison;
-        public readonly bool Write;
+        public readonly byte Write;
 
         public DepthTest(bool enabled, CompareOperation comparison, bool write)
         {
-            Enabled = enabled;
+            Enabled = enabled ? 1 : 0;
             Comparison = comparison;
-            Write = write;
+            Write = write ? 1 : 0;
         }
     }
 
@@ -140,13 +140,13 @@ namespace DigBuildPlatformCS
     {
         public static readonly StencilTest Default = new(false, StencilFaceOperation.Default);
 
-        public readonly bool Enabled;
+        public readonly byte Enabled;
         public readonly StencilFaceOperation Front;
         public readonly StencilFaceOperation Back;
 
         public StencilTest(bool enabled, StencilFaceOperation front, StencilFaceOperation back)
         {
-            Enabled = enabled;
+            Enabled = enabled ? 1 : 0;
             Front = front;
             Back = back;
         }
@@ -195,7 +195,7 @@ namespace DigBuildPlatformCS
         }
     }
 
-    public enum StencilOperation
+    public enum StencilOperation : byte
     {
         Zero,
         Keep,

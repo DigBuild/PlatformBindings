@@ -2,7 +2,6 @@
 
 #include <stdexcept>
 
-
 #include "../util/native_handle.h"
 #include "../util/utils.h"
 
@@ -54,18 +53,18 @@ namespace digbuild::platform::render
 	};
 	struct FramebufferRenderStageDescriptorC
 	{
-		const uint32_t* colorAttachments;
-		const uint32_t colorAttachmentCount;
-		const uint32_t depthStencilAttachment;
-		const uint32_t* dependencies;
+		const uint32_t memberStart;
+		const uint32_t memberCount;
+		const uint32_t depthStencilId;
+		const uint32_t dependencyStart;
 		const uint32_t dependencyCount;
 
-		[[nodiscard]] FramebufferRenderStageDescriptor toCpp() const
+		[[nodiscard]] FramebufferRenderStageDescriptor toCpp(const uint32_t* allMembers, const uint32_t* allDependencies) const
 		{
 			return FramebufferRenderStageDescriptor{
-				std::vector<uint32_t>(colorAttachments, colorAttachments + colorAttachmentCount),
-				depthStencilAttachment,
-				std::vector<uint32_t>(dependencies, dependencies + dependencyCount)
+				std::vector(allMembers + memberStart, allMembers + memberStart + memberCount),
+				depthStencilId,
+				std::vector(allDependencies + dependencyStart, allDependencies + dependencyStart + dependencyCount)
 			};
 		}
 	};
@@ -81,7 +80,12 @@ namespace digbuild::platform::render
 			};
 		}
 	};
-	struct ShaderBindingC
+	enum class ShaderBindingTypeC : uint64_t
+	{
+		UNIFORM,
+		SAMPLER
+	};
+	struct ShaderBindingUniformC
 	{
 		const uint32_t memberOffset;
 		const uint32_t memberCount;
@@ -96,31 +100,65 @@ namespace digbuild::platform::render
 				propertyVector.push_back(prop);
 			}
 			return ShaderBinding{
+				ShaderBindingType::UNIFORM,
 				size,
 				propertyVector
 			};
 		}
 	};
+	struct ShaderBindingSamplerC
+	{
+		[[nodiscard]] ShaderBinding toCpp() const
+		{
+			return ShaderBinding{
+				ShaderBindingType::SAMPLER,
+				0,
+				{}
+			};
+		}
+	};
+	struct ShaderBindingC
+	{
+		const ShaderBindingTypeC type;
+
+		union
+		{
+			const ShaderBindingUniformC uniform;
+			const ShaderBindingSamplerC sampler;
+		};
+		
+		[[nodiscard]] ShaderBinding toCpp(const ShaderUniformMemberC* properties) const
+		{
+			switch (type)
+			{
+			case ShaderBindingTypeC::UNIFORM:
+				return uniform.toCpp(properties);
+			case ShaderBindingTypeC::SAMPLER:
+				return sampler.toCpp();
+			}
+			throw std::runtime_error("Invalid type.");
+		}
+	};
 
 	struct DepthBiasC
 	{
-		const bool enabled;
+		const uint8_t enabled;
 		const float constantFactor, clamp, slopeFactor;
 		
 		[[nodiscard]] DepthBias toCpp() const
 		{
-			return DepthBias{ enabled, constantFactor, clamp, slopeFactor };
+			return DepthBias{ enabled > 0, constantFactor, clamp, slopeFactor };
 		}
 	};
 	struct DepthTestC
 	{
-		const bool enabled;
+		const uint8_t enabled;
 		const CompareOperation comparison;
-		const bool write;
+		const uint8_t write;
 
 		[[nodiscard]] DepthTest toCpp() const
 		{
-			return DepthTest{ enabled, comparison, write };
+			return DepthTest{ enabled > 0, comparison, write > 0 };
 		}
 	};
 	struct StencilFaceOperationC
@@ -148,13 +186,13 @@ namespace digbuild::platform::render
 	};
 	struct StencilTestC
 	{
-		const bool enabled;
+		const uint8_t enabled;
 		const StencilFaceOperationC front;
 		const StencilFaceOperationC back;
 
 		[[nodiscard]] StencilTest toCpp() const
 		{
-			return StencilTest{ enabled, front.toCpp(), back.toCpp() };
+			return StencilTest{ enabled > 0, front.toCpp(), back.toCpp() };
 		}
 	};
 	struct VertexFormatElementC
@@ -170,7 +208,7 @@ namespace digbuild::platform::render
 	};
 	struct BlendOptionsC
 	{
-		const bool enabled;
+		const uint8_t enabled;
 		const BlendFactor srcColor, dstColor;
 		const BlendOperation colorOperation;
 		const BlendFactor srcAlpha, dstAlpha;
@@ -180,7 +218,7 @@ namespace digbuild::platform::render
 		[[nodiscard]] BlendOptions toCpp() const
 		{
 			return BlendOptions{
-				enabled,
+				enabled > 0,
 				srcColor, dstColor, colorOperation,
 				srcAlpha, dstAlpha, alphaOperation,
 				components
@@ -217,6 +255,34 @@ namespace digbuild::platform::render
 using namespace digbuild::platform::util;
 using namespace digbuild::platform::render;
 extern "C" {
+	DLLEXPORT native_handle dbp_render_context_create_framebuffer_format(
+		RenderContext* instance,
+		const FramebufferAttachmentDescriptorC* attachments,
+		const uint32_t attachmentCount,
+		const FramebufferRenderStageDescriptorC* stages,
+		const uint32_t stageCount,
+		const uint32_t* allMembers,
+		const uint32_t* allDependencies
+	)
+	{
+		std::vector<FramebufferAttachmentDescriptor> attachmentVector;
+		attachmentVector.reserve(attachmentCount);
+		for (auto i = 0u; i < attachmentCount; ++i)
+			attachmentVector.push_back(attachments[i].toCpp());
+
+		std::vector<FramebufferRenderStageDescriptor> stageVector;
+		stageVector.reserve(stageCount);
+		for (auto i = 0u; i < stageCount; ++i)
+			stageVector.push_back(stages[i].toCpp(allMembers, allDependencies));
+		
+		return make_native_handle(
+			instance->createFramebufferFormat(
+				attachmentVector,
+				stageVector
+			)
+		);
+	}
+	
 	DLLEXPORT native_handle dbp_render_context_create_framebuffer(
 		RenderContext* instance,
 		const native_handle format,
@@ -343,9 +409,46 @@ extern "C" {
 	{
 		return make_native_handle(
 			instance->createVertexBuffer(
-				std::vector(data, data + (vertexCount * vertexSize)),
+				std::vector(data, data + static_cast<uint32_t>(vertexCount * vertexSize)),
 				vertexSize,
 				writable
+			)
+		);
+	}
+
+	DLLEXPORT native_handle dbp_render_context_create_texture_binding(
+		RenderContext* instance,
+		const native_handle shader,
+		const uint32_t binding,
+		const native_handle sampler,
+		const native_handle texture
+	)
+	{
+		return make_native_handle(
+			instance->createTextureBinding(
+				handle_share<Shader>(shader),
+				binding,
+				handle_share<TextureSampler>(sampler),
+				handle_share<Texture>(texture)
+			)
+		);
+	}
+	
+	DLLEXPORT native_handle dbp_render_context_create_texture_sampler(
+		RenderContext* instance,
+		const TextureFiltering minFiltering,
+		const TextureFiltering magFiltering,
+		const TextureWrapping wrapping,
+		const TextureBorderColor borderColor,
+		const bool enableAnisotropy,
+		const uint32_t anisotropyLevel
+	)
+	{
+		return make_native_handle(
+			instance->createTextureSampler(
+				minFiltering, magFiltering,
+				wrapping, borderColor,
+				enableAnisotropy, anisotropyLevel
 			)
 		);
 	}

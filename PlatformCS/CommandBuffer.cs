@@ -16,17 +16,12 @@ namespace DigBuildPlatformCS
         internal static readonly ICommandBufferBindings Bindings = NativeLib.Get<ICommandBufferBindings>();
 
         internal readonly NativeHandle Handle;
+        internal bool Recording;
 
         internal CommandBuffer(NativeHandle handle)
         {
             Handle = handle;
         }
-    }
-
-    public sealed class CommandBufferWriter
-    {
-        internal NativeHandle? Handle;
-        internal bool Recording;
 
         public CommandBufferRecorder BeginRecording(FramebufferFormat format, NativeBufferPool bufferPool)
         {
@@ -41,18 +36,18 @@ namespace DigBuildPlatformCS
 
     public sealed class CommandBufferRecorder
     {
-        private readonly CommandBufferWriter _writer;
+        private readonly CommandBuffer _parent;
         private readonly FramebufferFormat _format;
         private readonly PooledNativeBuffer<CommandBufferCmd> _commands;
         private bool _committed;
 
         internal CommandBufferRecorder(
-            CommandBufferWriter writer,
+            CommandBuffer parent,
             FramebufferFormat format,
             NativeBufferPool bufferPool
         )
         {
-            _writer = writer;
+            _parent = parent;
             _format = format;
             _commands = bufferPool.Request<CommandBufferCmd>();
         }
@@ -83,7 +78,7 @@ namespace DigBuildPlatformCS
                 throw new RecordingAlreadyCommittedException();
             _commands.Add(new CommandBufferCmd.SetScissor(extents));
         }
-        
+
         public void Using<TUniform>(
             IRenderPipeline pipeline,
             UniformBuffer<TUniform> uniformBuffer,
@@ -93,6 +88,19 @@ namespace DigBuildPlatformCS
             if (_committed)
                 throw new RecordingAlreadyCommittedException();
             _commands.Add(new CommandBufferCmd.BindUniform(pipeline.Handle, uniformBuffer.Handle, index));
+        }
+
+        public void Using(
+            IRenderPipeline pipeline,
+            TextureBinding binding
+        )
+        {
+            if (_committed)
+                throw new RecordingAlreadyCommittedException();
+            _commands.Add(new CommandBufferCmd.BindTexture(
+                pipeline.Handle,
+                binding.Handle
+            ));
         }
 
         public void Draw<TVertex>(
@@ -122,10 +130,10 @@ namespace DigBuildPlatformCS
             if (_committed)
                 throw new RecordingAlreadyCommittedException();
             _committed = true;
-            _writer.Recording = false;
+            _parent.Recording = false;
 
             var unpooled = _commands.Unpooled;
-            CommandBuffer.Bindings.Commit(_writer.Handle!, context.Ptr, _format.Handle, unpooled.Ptr, unpooled.Count);
+            CommandBuffer.Bindings.Commit(_parent.Handle!, context.Ptr, _format.Handle, unpooled.Ptr, unpooled.Count);
             _commands.Dispose();
         }
     }
@@ -139,6 +147,7 @@ namespace DigBuildPlatformCS
         [FieldOffset(sizeof(Type))] private readonly SetViewport _setViewport;
         [FieldOffset(sizeof(Type))] private readonly SetScissor _setScissor;
         [FieldOffset(sizeof(Type))] private readonly BindUniform _bindUniform;
+        [FieldOffset(sizeof(Type))] private readonly BindTexture _bindTexture;
         [FieldOffset(sizeof(Type))] private readonly Draw _draw;
 
         private CommandBufferCmd(SetViewportScissor setViewportScissor) : this()
@@ -165,6 +174,12 @@ namespace DigBuildPlatformCS
             _bindUniform = bindUniform;
         }
 
+        private CommandBufferCmd(BindTexture bindTexture) : this()
+        {
+            _type = Type.BindTexture;
+            _bindTexture = bindTexture;
+        }
+
         private CommandBufferCmd(Draw draw) : this()
         {
             _type = Type.Draw;
@@ -175,6 +190,7 @@ namespace DigBuildPlatformCS
         public static implicit operator CommandBufferCmd(SetViewport cmd) => new(cmd);
         public static implicit operator CommandBufferCmd(SetScissor cmd) => new(cmd);
         public static implicit operator CommandBufferCmd(BindUniform cmd) => new(cmd);
+        public static implicit operator CommandBufferCmd(BindTexture cmd) => new(cmd);
         public static implicit operator CommandBufferCmd(Draw cmd) => new(cmd);
 
         internal enum Type : ulong
@@ -183,6 +199,7 @@ namespace DigBuildPlatformCS
             SetViewport,
             SetScissor,
             BindUniform,
+            BindTexture,
             Draw
         }
 
@@ -220,13 +237,25 @@ namespace DigBuildPlatformCS
         {
             private readonly IntPtr _pipeline;
             private readonly IntPtr _uniformBuffer;
-            private readonly uint _index;
+            private readonly uint _binding;
 
-            internal BindUniform(IntPtr pipeline, IntPtr uniformBuffer, uint index)
+            internal BindUniform(IntPtr pipeline, IntPtr uniformBuffer, uint binding)
             {
                 _pipeline = pipeline;
                 _uniformBuffer = uniformBuffer;
-                _index = index;
+                _binding = binding;
+            }
+        }
+
+        internal readonly struct BindTexture
+        {
+            private readonly IntPtr _pipeline;
+            private readonly IntPtr _binding;
+
+            internal BindTexture(IntPtr pipeline, IntPtr binding)
+            {
+                _pipeline = pipeline;
+                _binding = binding;
             }
         }
 
@@ -249,25 +278,19 @@ namespace DigBuildPlatformCS
     public readonly ref struct CommandBufferBuilder
     {
         private readonly RenderContext _context;
-        private readonly CommandBufferWriter? _writer;
 
         internal CommandBufferBuilder(RenderContext context) : this()
         {
             _context = context;
         }
 
-        internal CommandBufferBuilder(RenderContext context, out CommandBufferWriter writer)
-        {
-            _context = context;
-            _writer = writer = new CommandBufferWriter();
-        }
-
         public static implicit operator CommandBuffer(CommandBufferBuilder builder)
         {
-            var handle = new NativeHandle(RenderContext.Bindings.CreateCommandBuffer(builder._context.Ptr));
-            if (builder._writer != null)
-                builder._writer.Handle = handle;
-            return new CommandBuffer(handle);
+            return new(
+                new NativeHandle(
+                    RenderContext.Bindings.CreateCommandBuffer(builder._context.Ptr)
+                )
+            );
         }
     }
 }

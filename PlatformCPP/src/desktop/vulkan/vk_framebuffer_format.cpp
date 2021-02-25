@@ -4,15 +4,6 @@
 
 namespace digbuild::platform::desktop::vulkan
 {
-	vk::Format toVulkan(const render::TextureFormat format)
-	{
-		switch (format)
-		{
-			
-		}
-		throw std::runtime_error("Invalid type.");
-	}
-	
 	vk::AttachmentDescription toVulkan(const render::FramebufferAttachmentDescriptor& attachment)
 	{
 		vk::ImageLayout layout = {};
@@ -29,7 +20,7 @@ namespace digbuild::platform::desktop::vulkan
 		}
 		return vk::AttachmentDescription{
 			{},
-			toVulkan(attachment.format),
+			util::toVulkanFormat(attachment.format),
 			vk::SampleCountFlagBits::e1,
 			vk::AttachmentLoadOp::eClear,
 			vk::AttachmentStoreOp::eStore,
@@ -42,18 +33,18 @@ namespace digbuild::platform::desktop::vulkan
 
 	FramebufferFormat::FramebufferFormat(
 		std::shared_ptr<VulkanContext> context,
-		const std::vector<render::FramebufferAttachmentDescriptor>& attachments,
+		std::vector<render::FramebufferAttachmentDescriptor> attachments,
 		const std::vector<render::FramebufferRenderStageDescriptor>& renderStages
 	) :
 		m_context(std::move(context)),
-		m_attachmentCount(static_cast<uint32_t>(attachments.size()))
+		m_attachments(std::move(attachments))
 	{
 		std::vector<vk::AttachmentDescription> attachmentDescriptions;
 		std::vector<vk::AttachmentReference> attachmentReferences;
 		std::vector<uint32_t> allAttachments;
-		attachmentDescriptions.reserve(attachments.size());
-		attachmentReferences.reserve(attachments.size());
-		for (const auto& attachment : attachments)
+		attachmentDescriptions.reserve(m_attachments.size());
+		attachmentReferences.reserve(m_attachments.size());
+		for (const auto& attachment : m_attachments)
 		{
 			const auto i = static_cast<uint32_t>(attachmentDescriptions.size());
 			const auto description = toVulkan(attachment);
@@ -64,36 +55,42 @@ namespace digbuild::platform::desktop::vulkan
 
 		std::vector<vk::SubpassDescription> subpassDescriptions;
 		std::vector<vk::SubpassDependency> subpassDependencies;
-		auto i = 0u;
+		std::vector<std::vector<vk::AttachmentReference>> colorAttachments;
+		std::vector<std::vector<uint32_t>> otherAttachments;
+		colorAttachments.resize(renderStages.size());
+		otherAttachments.resize(renderStages.size());
+		
+		auto stageID = 0u;
 		for (const auto& renderStage : renderStages)
-		{	
-			std::vector<vk::AttachmentReference> colorAttachments;
+		{
 			for (auto attachment : renderStage.colorAttachments)
-				colorAttachments.push_back(attachmentReferences[attachment]);
+				colorAttachments[stageID].push_back(attachmentReferences[attachment]);
 				
 			const auto* depthStencilAttachment =
 				renderStage.depthStencilAttachment != UINT32_MAX ?
 					&attachmentReferences[renderStage.depthStencilAttachment] :
 					nullptr;
 
-			std::vector<uint32_t> otherAttachments;
+			auto& other = otherAttachments[stageID];
 			std::set_difference(
+				allAttachments.begin(), allAttachments.end(),
 				renderStage.colorAttachments.begin(), renderStage.colorAttachments.end(),
-				renderStage.colorAttachments.begin(), renderStage.colorAttachments.end(),
-				std::back_inserter(otherAttachments)
+				std::back_inserter(other)
 			);
+			
+			other.erase(std::remove(other.begin(), other.end(), renderStage.depthStencilAttachment), other.end());
 			
 			subpassDescriptions.push_back({
 				{}, vk::PipelineBindPoint::eGraphics,
 				{},
-				colorAttachments,
+				colorAttachments[stageID],
 				{},
 				depthStencilAttachment,
-				otherAttachments
+				otherAttachments[stageID]
 			});
 
 			subpassDependencies.push_back({
-				i, i,
+				VK_SUBPASS_EXTERNAL, stageID,
 				vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
 				vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests,
 				{},
@@ -102,14 +99,14 @@ namespace digbuild::platform::desktop::vulkan
 			for (auto dependency : renderStage.dependencies)
 			{
 				subpassDependencies.push_back({
-					dependency, i,
+					dependency, stageID,
 					vk::PipelineStageFlagBits::eBottomOfPipe,
 					vk::PipelineStageFlagBits::eTopOfPipe,
 					{}, {}
 				});
 			}
 			
-			i++;
+			stageID++;
 		}
 		
 		m_renderPass = m_context->m_device->createRenderPassUnique({
@@ -123,11 +120,11 @@ namespace digbuild::platform::desktop::vulkan
 	FramebufferFormat::FramebufferFormat(
 		std::shared_ptr<VulkanContext> context,
 		vk::UniqueRenderPass renderPass,
-		const uint32_t attachmentCount
+		std::vector<render::FramebufferAttachmentDescriptor> attachments
 	) :
 		m_context(std::move(context)),
 		m_renderPass(std::move(renderPass)),
-		m_attachmentCount(attachmentCount)
+		m_attachments(std::move(attachments))
 	{
 	}
 }
