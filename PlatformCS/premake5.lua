@@ -12,7 +12,10 @@ project "DigBuildPlatformCS"
 
     dependson { "DigBuildPlatformCPP" }
 
-    nuget { "AdvancedDLSupport:3.2.0" }
+    nuget {
+        "AdvancedDLSupport:3.2.0",
+        "System.Drawing.Common:5.0.1"
+    }
 
     filter "configurations:Debug"
         defines { "DB_DEBUG" }

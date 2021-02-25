@@ -345,7 +345,20 @@ namespace digbuild::platform::desktop::vulkan
 		);
 	}
 
-
+	std::shared_ptr<render::Texture> RenderContext::createTexture(
+		const uint32_t width, 
+		const uint32_t height,
+		const std::vector<uint8_t>& data
+	)
+	{
+		return std::make_shared<StaticTexture>(
+			m_context,
+			width, height,
+			render::TextureFormat::B8G8R8A8_SRGB,
+			data
+		);
+	}
+	
 	std::shared_ptr<render::CommandBuffer> RenderContext::createCommandBuffer()
 	{
 		auto cmd = std::make_shared<CommandBuffer>(

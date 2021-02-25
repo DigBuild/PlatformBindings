@@ -32,6 +32,7 @@ namespace DigBuildPlatformCS
     public sealed class TextureFormat
     {
         public static readonly TextureFormat R8G8B8A8SRGB = new(0);
+        public static readonly TextureFormat B8G8R8A8SRGB = new(1);
 
         internal readonly byte Id;
 

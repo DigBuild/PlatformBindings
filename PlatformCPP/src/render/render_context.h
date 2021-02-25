@@ -281,6 +281,12 @@ namespace digbuild::platform::render
 			uint32_t anisotropyLevel
 		) = 0;
 
+		[[nodiscard]] virtual std::shared_ptr<Texture> createTexture(
+			uint32_t width,
+			uint32_t height,
+			const std::vector<uint8_t>& data
+		) = 0;
+
 		[[nodiscard]] virtual std::shared_ptr<CommandBuffer> createCommandBuffer(
 		) = 0;
 

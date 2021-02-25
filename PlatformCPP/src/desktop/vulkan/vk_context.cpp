@@ -249,13 +249,13 @@ namespace digbuild::platform::desktop::vulkan
 			vk::SharingMode::eExclusive,
 			1, &queueIndex,
 			vk::ImageLayout::eUndefined
-			});
+		});
 
 		const auto memoryRequirements = m_device->getImageMemoryRequirements(*image);
 		auto memory = m_device->allocateMemoryUnique(vk::MemoryAllocateInfo{
 			memoryRequirements.size,
 			findMemoryType(m_physicalDevice, memoryRequirements.memoryTypeBits, memoryProperties)
-			});
+		});
 
 		m_device->bindImageMemory(*image, *memory, 0);
 

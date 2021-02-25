@@ -365,6 +365,41 @@ namespace digbuild::platform::desktop::vulkan::util
 		);
 	}
 
+	void copyBufferToImage(
+		const vk::CommandBuffer& cmd,
+		const vk::Buffer& buffer,
+		const vk::Image& image,
+		const uint32_t width,
+		const uint32_t height
+	)
+	{
+		cmd.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, {{
+			0, width, height,
+			{ vk::ImageAspectFlagBits::eColor, 0, 0, 1 },
+			{ 0, 0, 0 },
+			{ width, height, 1}
+		}});
+	}
+
+	void copyBufferToImageImmediate(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+		const vk::Queue& graphicsQueue,
+		const vk::Buffer& buffer,
+		const vk::Image& image,
+		const uint32_t width,
+		const uint32_t height
+	)
+	{
+		directExecuteCommands(
+			device, commandPool, graphicsQueue,
+			[&](vk::CommandBuffer& cmd)
+			{
+				copyBufferToImage(cmd, buffer, image, width, height);
+			}
+		);
+	}
+
 	vk::Format toVulkanFormat(const render::TextureFormat format)
 	{
 		switch (format)

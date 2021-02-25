@@ -15,7 +15,6 @@ namespace digbuild::platform::render
 	class Texture : public Resource, public std::enable_shared_from_this<Texture>
 	{
 	public:
-		[[nodiscard]] virtual TextureFormat getFormat() = 0;
 		[[nodiscard]] virtual uint32_t getWidth() = 0;
 		[[nodiscard]] virtual uint32_t getHeight() = 0;
 	};

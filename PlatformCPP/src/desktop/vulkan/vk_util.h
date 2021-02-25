@@ -105,5 +105,23 @@ namespace digbuild::platform::desktop::vulkan::util
 		const std::vector<ImageTransitionInfo>& transitions
 	);
 
+	void copyBufferToImage(
+		const vk::CommandBuffer& cmd,
+		const vk::Buffer& buffer,
+		const vk::Image& image,
+		uint32_t width,
+		uint32_t height
+	);
+
+	void copyBufferToImageImmediate(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+		const vk::Queue& graphicsQueue,
+		const vk::Buffer& buffer,
+		const vk::Image& image,
+		uint32_t width,
+		uint32_t height
+	);
+
 	[[nodiscard]] vk::Format toVulkanFormat(render::TextureFormat format);
 }

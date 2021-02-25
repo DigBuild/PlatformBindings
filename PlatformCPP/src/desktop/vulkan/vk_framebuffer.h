@@ -11,22 +11,15 @@ namespace digbuild::platform::desktop::vulkan
 			std::shared_ptr<VulkanContext> context,
 			std::vector<std::unique_ptr<VulkanImage>> images,
 			std::vector<vk::UniqueImageView> imageViews,
-			const render::TextureFormat format,
 			const uint32_t width,
 			const uint32_t height
 		) :
 			m_context(std::move(context)),
 			m_images(std::move(images)),
 			m_imageViews(std::move(imageViews)),
-			m_format(format),
 			m_width(width),
 			m_height(height)
 		{
-		}
-		
-		[[nodiscard]] render::TextureFormat getFormat() override
-		{
-			return m_format;
 		}
 
 		[[nodiscard]] uint32_t getWidth() override
@@ -48,7 +41,6 @@ namespace digbuild::platform::desktop::vulkan
 		std::shared_ptr<VulkanContext> m_context;
 		std::vector<std::unique_ptr<VulkanImage>> m_images;
 		std::vector<vk::UniqueImageView> m_imageViews;
-		render::TextureFormat m_format;
 		uint32_t m_width, m_height;
 		uint32_t m_readIndex = 0;
 

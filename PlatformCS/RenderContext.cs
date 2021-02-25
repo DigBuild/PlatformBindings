@@ -2,6 +2,9 @@
 using DigBuildPlatformCS.Resource;
 using DigBuildPlatformCS.Util;
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 
 namespace DigBuildPlatformCS
 {
@@ -73,6 +76,11 @@ namespace DigBuildPlatformCS
             IntPtr shader, uint binding,
             IntPtr sampler,
             IntPtr texture
+        );
+        IntPtr CreateTexture(
+            IntPtr instance,
+            uint width, uint height,
+            IntPtr dataStart, uint dataLength
         );
 
         IntPtr CreateCommandBuffer(IntPtr instance);
@@ -216,7 +224,28 @@ namespace DigBuildPlatformCS
         ) => new(this, shaderSampler, sampler, texture);
 
         public Texture CreateTexture(
-        ) => throw new NotImplementedException();
+            Bitmap image
+        )
+        {
+            var data = image.LockBits(
+                new Rectangle(0, 0, image.Width, image.Height),
+                ImageLockMode.ReadOnly,
+                PixelFormat.Format32bppArgb
+            );
+            var length = (uint) (Math.Abs(data.Stride) * image.Height);
+
+            var texture = new Texture(new NativeHandle(
+                Bindings.CreateTexture(
+                    Ptr,
+                    (uint) image.Width, (uint)image.Height,
+                    data.Scan0, length
+                )
+            ));
+            
+            image.UnlockBits(data);
+
+            return texture;
+        }
 
         public CommandBufferBuilder CreateCommandBuffer(
         ) => new(this);

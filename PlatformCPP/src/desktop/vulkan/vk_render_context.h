@@ -103,6 +103,12 @@ namespace digbuild::platform::desktop::vulkan
 			bool enableAnisotropy,
 			uint32_t anisotropyLevel
 		) override;
+
+		[[nodiscard]] std::shared_ptr<render::Texture> createTexture(
+			uint32_t width,
+			uint32_t height,
+			const std::vector<uint8_t>& data
+		) override;
 		
 		[[nodiscard]] std::shared_ptr<render::CommandBuffer> createCommandBuffer(
 		) override;

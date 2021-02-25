@@ -433,7 +433,7 @@ extern "C" {
 			)
 		);
 	}
-	
+
 	DLLEXPORT native_handle dbp_render_context_create_texture_sampler(
 		RenderContext* instance,
 		const TextureFiltering minFiltering,
@@ -449,6 +449,22 @@ extern "C" {
 				minFiltering, magFiltering,
 				wrapping, borderColor,
 				enableAnisotropy, anisotropyLevel
+			)
+		);
+	}
+
+	DLLEXPORT native_handle dbp_render_context_create_texture(
+		RenderContext* instance,
+		const uint32_t width,
+		const uint32_t height,
+		const uint8_t* data,
+		const uint32_t dataLength
+	)
+	{
+		return make_native_handle(
+			instance->createTexture(
+				width, height,
+				std::vector(data, data + dataLength)
 			)
 		);
 	}

@@ -4,6 +4,7 @@ using DigBuildPlatformCS.Util;
 using DigBuildPlatformTest.GeneratedUniforms;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -95,7 +96,7 @@ namespace DigBuildPlatformTest
                 vsComp, fsComp,
                 surface.RenderStage,
                 Topology.Triangles
-            );
+            ).WithStandardBlending(surface.ColorAttachment);
 
             float s = MathF.Cos(MathF.PI / 3);
             float c = MathF.Sin(MathF.PI / 3);
@@ -128,10 +129,19 @@ namespace DigBuildPlatformTest
 
             // Create sampler and texture binding
             TextureSampler sampler = context.CreateTextureSampler();
-            TextureBinding textureBinding = context.CreateTextureBinding(
+            TextureBinding fbTextureBinding = context.CreateTextureBinding(
                 colorTextureHandle,
                 sampler,
                 Framebuffer.Get(colorAttachment)
+            );
+
+            // Create overlay texture and binding
+            IResource overlayTextureResource = resourceManager.GetResource(new ResourceName("test", "textures/overlay_thing.png"))!;
+            Texture overlayTexture = context.CreateTexture(new Bitmap(overlayTextureResource.OpenStream()));
+            TextureBinding overlayTextureBinding = context.CreateTextureBinding(
+                colorTextureHandle,
+                sampler,
+                overlayTexture
             );
 
             // Record commandBuffers
@@ -145,7 +155,9 @@ namespace DigBuildPlatformTest
             CompCommandBuffer = context.CreateCommandBuffer();
             var ccmd = CompCommandBuffer.BeginRecording(surface.Format, bufferPool);
             ccmd.SetViewportAndScissor(surface);
-            ccmd.Using(compPipeline, textureBinding);
+            ccmd.Using(compPipeline, fbTextureBinding); // Framebuffer
+            ccmd.Draw(compPipeline, compVertexBuffer);
+            ccmd.Using(compPipeline, overlayTextureBinding); // Overlay
             ccmd.Draw(compPipeline, compVertexBuffer);
             ccmd.Commit(context);
         }

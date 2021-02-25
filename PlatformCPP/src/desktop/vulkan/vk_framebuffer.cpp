@@ -78,7 +78,6 @@ namespace digbuild::platform::desktop::vulkan
 				m_context,
 				std::move(images),
 				std::move(views),
-				attachment.format,
 				width, height
 			));
 		}
@@ -105,7 +104,6 @@ namespace digbuild::platform::desktop::vulkan
 			m_context,
 			std::vector<std::unique_ptr<VulkanImage>>{},
 			std::move(imageViews),
-			m_format->getAttachments()[0].format,
 			width, height
 		));
 	}

@@ -192,5 +192,6 @@ namespace digbuild::platform::desktop::vulkan
 		friend class RenderPipeline;
 		friend class FramebufferFormat;
 		friend class Framebuffer;
+		friend class StaticTexture;
 	};
 }
