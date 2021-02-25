@@ -83,7 +83,6 @@ namespace DigBuildPlatformTest
                 vsMain, fsMain,
                 mainRenderStage,
                 Topology.Triangles,
-                frontFace: FrontFace.CounterClockwise,
                 depthTest: new DepthTest(true, CompareOperation.LessOrEqual, true)
             ).WithStandardBlending(colorAttachment);
 
@@ -97,9 +96,6 @@ namespace DigBuildPlatformTest
                 surface.RenderStage,
                 Topology.Triangles
             ).WithStandardBlending(surface.ColorAttachment);
-
-            float s = MathF.Cos(MathF.PI / 3);
-            float c = MathF.Sin(MathF.PI / 3);
 
             // Main vertex buffer w/ external writer
             VertexBuffer<Vertex> mainVertexBuffer = context.CreateVertexBuffer(out MainVertexBuffer);
@@ -197,7 +193,8 @@ namespace DigBuildPlatformTest
             // Update the uniform transformation matrix on the GPU
             var unb = _resources.UniformNativeBuffer;
             unb[0].Matrix = Matrix4x4.CreateRotationY(angle * 2 * MathF.PI)
-                            * Matrix4x4.CreateTranslation(0, 1f, -3f)
+                            * Matrix4x4.CreateTranslation(0, -1f, -3f)
+                            * Matrix4x4.CreateScale(1, -1, 1)
                             * Matrix4x4.CreatePerspectiveFieldOfView(MathF.PI / 2f,
                                 surface.Width / (float) surface.Height, 0.01f, 1000f);
             _resources.UniformBuffer.Write(unb);
