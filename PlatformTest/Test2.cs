@@ -63,7 +63,7 @@ namespace DigBuildPlatformTest
                 .CreateFramebufferFormat()
                 .WithDepthStencilAttachment(out var depthStencilAttachment)
                 .WithColorAttachment(out var colorAttachment, TextureFormat.R8G8B8A8SRGB, new Vector4(0, 0, 0, 1))
-                .WithStage(out var mainRenderStage, depthStencilAttachment);
+                .WithStage(out var mainRenderStage, depthStencilAttachment, colorAttachment);
 
             // Framebuffer for preliminary rendering
             Framebuffer = context.CreateFramebuffer(framebufferFormat, surface.Width, surface.Height);
