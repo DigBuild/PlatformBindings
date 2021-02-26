@@ -2,7 +2,7 @@
 using DigBuildPlatformCS.Util;
 using System;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     [NativeSymbols("dbp_texture_binding_", SymbolTransformationMethod.Underscore)]
     internal interface ITextureBindingBindings

@@ -4,7 +4,7 @@ using System;
 using System.Numerics;
 using System.Threading.Tasks;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     [NativeSymbols("dbp_render_surface_", SymbolTransformationMethod.Underscore)]
     internal interface IRenderSurfaceBindings

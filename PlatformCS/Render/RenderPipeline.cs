@@ -1,7 +1,7 @@
 ﻿using DigBuildPlatformCS.Util;
 using System;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     public sealed class RenderPipeline<TVertex> : IRenderPipeline
         where TVertex : unmanaged

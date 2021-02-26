@@ -3,7 +3,7 @@ using DigBuildPlatformCS.Util;
 using System;
 using System.Runtime.InteropServices;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     [NativeSymbols("dbp_uniform_buffer_", SymbolTransformationMethod.Underscore)]
     internal interface IUniformBufferBindings

@@ -9,7 +9,7 @@ namespace DigBuildPlatformSourceGen
     [Generator]
     public class UniformSourceGenerator : ISourceGenerator
     {
-        private const string UniformType = "DigBuildPlatformCS.IUniform";
+        private const string UniformType = "DigBuildPlatformCS.Render.IUniform";
 
         public void Initialize(GeneratorInitializationContext context)
         {

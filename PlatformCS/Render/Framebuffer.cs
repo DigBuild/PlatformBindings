@@ -3,7 +3,7 @@ using DigBuildPlatformCS.Util;
 using System;
 using System.Collections.Generic;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     [NativeSymbols("dbp_framebuffer_", SymbolTransformationMethod.Underscore)]
     internal interface IFramebufferBindings

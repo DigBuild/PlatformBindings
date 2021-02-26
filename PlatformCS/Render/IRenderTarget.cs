@@ -1,6 +1,6 @@
 ﻿using DigBuildPlatformCS.Util;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     public interface IRenderTarget
     {

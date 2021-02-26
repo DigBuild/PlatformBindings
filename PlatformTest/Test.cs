@@ -1,4 +1,5 @@
 // using DigBuildPlatformCS;
+// using DigBuildPlatformCS.Render;
 // using DigBuildPlatformCS.Resource;
 // using DigBuildPlatformCS.Util;
 // using DigBuildPlatformTest.GeneratedUniforms;

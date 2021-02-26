@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     public sealed class FramebufferFormat : IDisposable
     {

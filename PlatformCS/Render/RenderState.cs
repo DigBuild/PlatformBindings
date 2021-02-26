@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     internal readonly struct RenderState
     {
@@ -30,11 +30,11 @@ namespace DigBuildPlatformCS
             RasterMode = rasterMode;
             DiscardRaster = discardRaster;
             LineWidth = lineWidth ?? 1.0f;
-            DepthBias = depthBias ?? DigBuildPlatformCS.DepthBias.Default;
-            DepthTest = depthTest ?? DigBuildPlatformCS.DepthTest.Default;
-            StencilTest = stencilTest ?? DigBuildPlatformCS.StencilTest.Default;
-            CullingMode = cullingMode ?? DigBuildPlatformCS.CullingMode.Back;
-            FrontFace = frontFace ?? DigBuildPlatformCS.FrontFace.Clockwise;
+            DepthBias = depthBias ?? Render.DepthBias.Default;
+            DepthTest = depthTest ?? Render.DepthTest.Default;
+            StencilTest = stencilTest ?? Render.StencilTest.Default;
+            CullingMode = cullingMode ?? Render.CullingMode.Back;
+            FrontFace = frontFace ?? Render.FrontFace.Clockwise;
         }
     }
     

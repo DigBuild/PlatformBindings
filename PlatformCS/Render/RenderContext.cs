@@ -4,9 +4,8 @@ using DigBuildPlatformCS.Util;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
 
-namespace DigBuildPlatformCS
+namespace DigBuildPlatformCS.Render
 {
     [NativeSymbols("dbp_render_context_", SymbolTransformationMethod.Underscore)]
     internal interface IRenderContextBindings
