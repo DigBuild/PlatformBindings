@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <memory>
 
+#include "input/global_input_context.h"
 #include "render/render_surface.h"
 
 namespace digbuild::platform
@@ -40,7 +41,8 @@ namespace digbuild::platform
 		Platform(Platform&& other) noexcept = delete;
 		Platform& operator=(const Platform& other) = delete;
 		Platform& operator=(Platform&& other) noexcept = delete;
-
+		
+		[[nodiscard]] virtual input::GlobalInputContext& getGlobalInputContext() = 0;
 		[[nodiscard]] virtual RenderManager& getRenderManager() = 0;
 	};
 }

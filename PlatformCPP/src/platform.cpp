@@ -15,6 +15,11 @@ namespace digbuild::platform
 
 using namespace digbuild::platform;
 extern "C" {
+	DLLEXPORT void* dbp_platform_get_global_input_context()
+	{
+		return &Platform::getInstance().getGlobalInputContext();
+	}
+	
 	DLLEXPORT bool dbp_platform_supports_multiple_render_surfaces()
 	{
 		return Platform::getInstance().getRenderManager().supportsMultipleRenderSurfaces();

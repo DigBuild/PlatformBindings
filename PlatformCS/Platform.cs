@@ -4,12 +4,15 @@ using DigBuildPlatformCS.Util;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using DigBuildPlatformCS.Input;
 
 namespace DigBuildPlatformCS
 {
     [NativeSymbols("dbp_platform_", SymbolTransformationMethod.Underscore)]
     internal interface IPlatformBindings
     {
+        IntPtr GetGlobalInputContext();
+
         bool SupportsMultipleRenderSurfaces();
 
         IntPtr RequestRenderSurface(
@@ -22,6 +25,8 @@ namespace DigBuildPlatformCS
     public static class Platform
     {
         internal static readonly IPlatformBindings Bindings = NativeLib.Get<IPlatformBindings>();
+
+        public static GlobalInputContext InputContext { get; } = new(Bindings.GetGlobalInputContext());
 
         public static bool SupportsMultipleRenderSurfaces => Bindings.SupportsMultipleRenderSurfaces();
 

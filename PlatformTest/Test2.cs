@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using DigBuildPlatformCS.Input;
 
 namespace DigBuildPlatformTest
 {
@@ -172,6 +173,7 @@ namespace DigBuildPlatformTest
             )
         );
         private static RenderResources? _resources;
+        private static Controller? _controller;
 
         private static void Update(RenderSurfaceContext surface, RenderContext context)
         {
