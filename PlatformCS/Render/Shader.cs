@@ -172,7 +172,7 @@ namespace DigBuildPlatformCS.Render
             out UniformHandle<TUniform> handle
         ) where TUniform : unmanaged, IUniform<TUniform>
         {
-            var members = typeof(TUniform).GetFields(BindingFlags.NonPublic)
+            var members = typeof(TUniform).GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
                 .Select(field => new UniformMember(field))
                 .ToList();
 

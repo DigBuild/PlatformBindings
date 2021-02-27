@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace DigBuildPlatformCS.Util
@@ -19,7 +20,7 @@ namespace DigBuildPlatformCS.Util
 
         internal static FormatDescriptor Get<T>() where T : unmanaged
         {
-            var fields = typeof(T).GetFields();
+            var fields = typeof(T).GetFields(BindingFlags.Instance | BindingFlags.Public);
             Element[] elements = new Element[fields.Length];
 
             uint i = 0;
