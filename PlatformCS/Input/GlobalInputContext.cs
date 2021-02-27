@@ -16,12 +16,15 @@ namespace DigBuildPlatformCS.Input
             string guid
         );
         public delegate void ControllerStateCallback(
+            bool connected,
             IntPtr buttonStates, uint buttonCount,
             IntPtr joystickStates, uint joystickCount,
             IntPtr hatStates, uint hatCount
         );
 
         void Initialize(IntPtr instance, InitializeCallback callback);
+
+        void Update(IntPtr instance);
 
         void GetControllerGuid(IntPtr controller, GetControllerGuidCallback callback);
 
@@ -66,8 +69,9 @@ namespace DigBuildPlatformCS.Input
             {
                 Bindings.GetControllerState(
                     controller.Handle,
-                    (buttonStates, buttonCount, joystickStates, joystickCount, hatStates, hatCount) =>
+                    (connected, buttonStates, buttonCount, joystickStates, joystickCount, hatStates, hatCount) =>
                     {
+                        controller.Connected = connected;
                         controller.Buttons.States = new Span<byte>(buttonStates.ToPointer(), (int)buttonCount).ToArray()
                             .Select(b => b > 0).ToArray();
                         controller.Joysticks.States = new Span<float>(joystickStates.ToPointer(), (int)joystickCount).ToArray();
@@ -75,6 +79,10 @@ namespace DigBuildPlatformCS.Input
                     }
                 );
             }
+
+            _controllers.RemoveWhere(c => !c.Connected);
+
+            Bindings.Update(_ptr);
         }
     }
 }

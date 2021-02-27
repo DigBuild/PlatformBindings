@@ -16,5 +16,7 @@ namespace digbuild::platform::input
 		GlobalInputContext& operator=(GlobalInputContext&& other) noexcept = delete;
 		
 		[[nodiscard]] virtual std::vector<std::shared_ptr<Controller>> getControllers() = 0;
+		
+		virtual void update() = 0;
 	};
 }

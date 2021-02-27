@@ -4,7 +4,12 @@
 
 namespace digbuild::platform::desktop
 {
-	std::vector<bool> Controller::getButtonStates()
+	bool Controller::isConnected() const
+	{
+		return glfwJoystickPresent(m_id);
+	}
+
+	std::vector<bool> Controller::getButtonStates() const
 	{
 		if (!glfwJoystickPresent(m_id))
 			return std::vector<bool>();
@@ -20,7 +25,7 @@ namespace digbuild::platform::desktop
 		return vector;
 	}
 
-	std::vector<float> Controller::getJoysticks()
+	std::vector<float> Controller::getJoysticks() const
 	{
 		if (!glfwJoystickPresent(m_id))
 			return std::vector<float>();
@@ -30,7 +35,7 @@ namespace digbuild::platform::desktop
 		return std::vector(joystickStates, joystickStates + count);
 	}
 
-	std::vector<std::bitset<4>> Controller::getHatStates()
+	std::vector<std::bitset<4>> Controller::getHatStates() const
 	{
 		if (!glfwJoystickPresent(m_id))
 			return std::vector<std::bitset<4>>();

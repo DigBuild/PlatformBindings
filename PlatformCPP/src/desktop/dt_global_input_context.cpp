@@ -7,6 +7,29 @@ namespace digbuild::platform::desktop
 {
 	std::vector<std::shared_ptr<input::Controller>> GlobalInputContext::getControllers()
 	{
+		initialize();
+		return m_controllers;
+	}
+
+	void GlobalInputContext::update()
+	{
+		initialize();
+		
+		// Remove disconnected controllers
+		m_controllers.erase(
+			std::remove_if(
+				m_controllers.begin(), m_controllers.end(),
+				[](const std::shared_ptr<input::Controller>& c)
+				{
+					return !std::static_pointer_cast<Controller>(c)->isConnected();
+				}
+			),
+			m_controllers.end()
+		);
+	}
+
+	void GlobalInputContext::initialize()
+	{
 		if (!m_initialized)
 		{
 			m_initialized = true;
@@ -20,6 +43,5 @@ namespace digbuild::platform::desktop
 				}
 			}
 		}
-		return m_controllers;
 	}
 }

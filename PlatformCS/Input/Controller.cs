@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using DigBuildPlatformCS.Util;
 
 namespace DigBuildPlatformCS.Input
@@ -17,7 +15,7 @@ namespace DigBuildPlatformCS.Input
 
         public Guid Id { get; }
 
-        // public bool Connected { get; internal set; } = true;
+        public bool Connected { get; internal set; } = true;
         public ButtonStates Buttons { get; } = new();
         public JoystickStates Joysticks { get; } = new();
         public HatStates Hats { get; } = new();

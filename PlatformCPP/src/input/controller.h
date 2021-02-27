@@ -14,11 +14,13 @@ namespace digbuild::platform::input
 		Controller(Controller&& other) noexcept = delete;
 		Controller& operator=(const Controller& other) = delete;
 		Controller& operator=(Controller&& other) noexcept = delete;
-
-		[[nodiscard]] virtual std::string getGUID() = 0;
 		
-		[[nodiscard]] virtual std::vector<bool> getButtonStates() = 0;
-		[[nodiscard]] virtual std::vector<float> getJoysticks() = 0;
-		[[nodiscard]] virtual std::vector<std::bitset<4>> getHatStates() = 0;
+		[[nodiscard]] virtual bool isConnected() const = 0;
+
+		[[nodiscard]] virtual std::string getGUID() const = 0;
+		
+		[[nodiscard]] virtual std::vector<bool> getButtonStates() const = 0;
+		[[nodiscard]] virtual std::vector<float> getJoysticks() const = 0;
+		[[nodiscard]] virtual std::vector<std::bitset<4>> getHatStates() const = 0;
 	};
 }
