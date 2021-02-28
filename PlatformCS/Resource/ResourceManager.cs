@@ -34,6 +34,9 @@ namespace DigBuildPlatformCS.Resource
             return GetDelegate(0)();
         }
 
+        public IResource? GetResource(string domain, string path)
+            => GetResource(new ResourceName(domain, path));
+
         public IResource? GetResource(ResourceName name)
         {
             GetResourceDelegate GetDelegate(int i)
@@ -49,16 +52,25 @@ namespace DigBuildPlatformCS.Resource
             return GetDelegate(0)(name);
         }
 
+        public bool TryGetResource(string domain, string path, [NotNullWhen(true)] out IResource? resource)
+            => TryGetResource(new ResourceName(domain, path), out resource);
+
         public bool TryGetResource(ResourceName name, [NotNullWhen(true)] out IResource? resource)
         {
             resource = GetResource(name);
             return resource != null;
         }
+        
+        public T? Get<T>(string domain, string path) where T : class, ICustomResource
+            => Get<T>(new ResourceName(domain, path));
 
         public T? Get<T>(ResourceName name) where T : class, ICustomResource
         {
             return CustomResource<T>.Load(name, this);
         }
+        
+        public bool TryGet<T>(string domain, string path, [NotNullWhen(true)] out T? resource) where T : class, ICustomResource
+            => TryGet(new ResourceName(domain, path), out resource);
 
         public bool TryGet<T>(ResourceName name, [NotNullWhen(true)] out T? resource) where T : class, ICustomResource
         {
