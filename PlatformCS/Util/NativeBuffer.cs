@@ -12,12 +12,12 @@ namespace DigBuildPlatformCS.Util
 
         void Reserve(IntPtr instance, uint minCapacity, ref IntPtr ptr, ref uint capacity);
     }
-    
+
     internal sealed class NativeBuffer : IDisposable
     {
         private const uint GrowthRate = 16;
 
-        internal static readonly INativeBufferBindings Native = NativeLib.Get<INativeBufferBindings>();
+        internal static readonly INativeBufferBindings Bindings = NativeLib.Get<INativeBufferBindings>();
 
         internal static uint CalculateCapacity(uint capacity)
         {
@@ -35,7 +35,7 @@ namespace DigBuildPlatformCS.Util
             var ptr = IntPtr.Zero;
             var capacity = 0u;
             _instance = new NativeHandle(
-                NativeBuffer.Native.Create(
+                Bindings.Create(
                     initialCapacity,
                     ref ptr, ref capacity
                 )
@@ -50,7 +50,7 @@ namespace DigBuildPlatformCS.Util
                 throw new ObjectDisposedException(nameof(NativeBuffer));
             var ptr = IntPtr.Zero;
             var capacity = 0u;
-            NativeBuffer.Native.Reserve(_instance, minCapacity, ref ptr, ref capacity);
+            Bindings.Reserve(_instance, minCapacity, ref ptr, ref capacity);
             Ptr = ptr;
             Capacity = capacity;
         }
@@ -69,7 +69,26 @@ namespace DigBuildPlatformCS.Util
         }
     }
 
-    public sealed unsafe class NativeBuffer<T> : IEnumerable<T>, IDisposable where T : unmanaged
+    public interface INativeBuffer<T> : IEnumerable<T> where T : unmanaged
+    {
+        public uint Capacity { get; }
+        public uint Count { get; }
+
+        public void Add(T value);
+        public void Add(params T[] values);
+        public void Add(IEnumerable<T> values);
+
+        public void Set(uint index, T value);
+        public void Set(uint index, params T[] values);
+
+        public void Clear();
+
+        public void Reserve(uint minCapacity);
+
+        public ref T this[uint i] { get; }
+    }
+    
+    public sealed unsafe class NativeBuffer<T> : INativeBuffer<T>, IDisposable where T : unmanaged
     {
         private readonly NativeBuffer _buf;
         private readonly bool _borrowed;
@@ -140,6 +159,20 @@ namespace DigBuildPlatformCS.Util
             for (var i = 0; i < values.Length; i++)
                 TypedPtr[_count + i] = values[i];
             _count += (uint) values.Length;
+        }
+
+        public void Add(IEnumerable<T> values)
+        {
+            if (!_valid)
+                throw new ObjectDisposedException(nameof(NativeBuffer<T>));
+
+            foreach (var v in values)
+            {
+                if (_count + 1 >= _capacity)
+                    Reserve(_capacity + 1);
+                TypedPtr[_count] = v;
+                _count++;
+            }
         }
 
         public void Set(uint index, T value)
@@ -245,7 +278,7 @@ namespace DigBuildPlatformCS.Util
         }
     }
 
-    public sealed class PooledNativeBuffer<T> : IDisposable where T : unmanaged
+    public sealed class PooledNativeBuffer<T> : INativeBuffer<T>, IDisposable where T : unmanaged
     {
         private readonly NativeBuffer _backingBuffer;
         private readonly Queue<NativeBuffer> _queue;
@@ -312,6 +345,13 @@ namespace DigBuildPlatformCS.Util
             _buffer.Add(values);
         }
 
+        public void Add(IEnumerable<T> values)
+        {
+            if (!_valid)
+                throw new ObjectDisposedException(nameof(PooledNativeBuffer<T>));
+            _buffer.Add(values);
+        }
+
         public void Set(uint index, T value)
         {
             if (!_valid)
@@ -349,5 +389,8 @@ namespace DigBuildPlatformCS.Util
                 return ref _buffer[i];
             }
         }
+
+        public IEnumerator<T> GetEnumerator() => _buffer.GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
