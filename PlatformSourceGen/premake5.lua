@@ -1,10 +1,8 @@
-project "DigBuildPlatformSourceGen"
+project "DigBuild.Platform.SourceGen"
     kind "SharedLib"
     framework "netstandard2.0"
     language "C#"
     csversion "9.0"
-	packageid "DigBuild.Platform.SourceGen"
-	targetname "DigBuild.Platform.SourceGen"
     enabledefaultcompileitems(true)
     allownullable(true)
     noframeworktag(true)

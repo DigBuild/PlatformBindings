@@ -1,9 +1,8 @@
-project "DigBuildPlatformCPP"
+project "DigBuild.Platform.Native"
     kind "SharedLib"
     language "C++"
     cppdialect "C++17"
     architecture "x64"
-	targetname "DigBuild.Platform.Native"
     targetdir "../bin/%{cfg.buildcfg}"
     objdir "../bin-int/%{cfg.buildcfg}"
 

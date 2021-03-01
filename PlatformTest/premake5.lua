@@ -1,4 +1,4 @@
-project "DigBuildPlatformTest"
+project "DigBuild.Platform.Test"
     kind "ConsoleApp"
     framework "net5.0"
     language "C#"
@@ -11,14 +11,14 @@ project "DigBuildPlatformTest"
     -- resourcesdir "Resources"
 
     dependson {
-		"DigBuildPlatformCS",
-		"DigBuildPlatformSourceGen"
+		"DigBuild.Platform",
+		"DigBuild.Platform.SourceGen"
 	}
     links {
-		"DigBuildPlatformCS"
+		"DigBuild.Platform"
 	}
 	analyzer {
-		"DigBuildPlatformSourceGen"
+		"DigBuild.Platform.SourceGen"
 	}
 
     filter "configurations:Debug"

@@ -1,10 +1,8 @@
-project "DigBuildPlatformCS"
+project "DigBuild.Platform"
     kind "SharedLib"
     framework "net5.0"
     language "C#"
     csversion "9.0"
-	packageid "DigBuild.Platform"
-	targetname "DigBuild.Platform"
     enabledefaultcompileitems(true)
     allownullable(true)
     noframeworktag(true)
@@ -12,7 +10,7 @@ project "DigBuildPlatformCS"
     targetdir "../bin/%{cfg.buildcfg}"
     objdir "../bin-int/%{cfg.buildcfg}"
 
-    dependson { "DigBuildPlatformCPP" }
+    dependson { "DigBuild.Platform.Native" }
 
     nuget {
         "AdvancedDLSupport:3.2.0",
