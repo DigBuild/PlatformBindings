@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using AdvancedDLSupport;
-using DigBuildPlatformCS.Util;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Input
+namespace DigBuild.Platform.Input
 {
     [NativeSymbols("dbp_global_input_context_", SymbolTransformationMethod.Underscore)]
     internal interface IGlobalInputContextBindings

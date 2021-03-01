@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace DigBuildPlatformCS.Util
+namespace DigBuild.Platform.Util
 {
     public static class StreamUtils
     {

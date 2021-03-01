@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DigBuildPlatformCS.Resource
+namespace DigBuild.Platform.Resource
 {
     public readonly struct ResourceName : IEquatable<ResourceName>
     {

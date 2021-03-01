@@ -3,6 +3,8 @@ project "DigBuildPlatformCS"
     framework "net5.0"
     language "C#"
     csversion "9.0"
+	packageid "DigBuild.Platform"
+	targetname "DigBuild.Platform"
     enabledefaultcompileitems(true)
     allownullable(true)
     noframeworktag(true)

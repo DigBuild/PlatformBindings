@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace DigBuildPlatformCS.Util
+namespace DigBuild.Platform.Util
 {
     internal static class FormatDescriptor<T> where T : unmanaged
     {

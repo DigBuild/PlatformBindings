@@ -1,9 +1,9 @@
-﻿using AdvancedDLSupport;
-using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using AdvancedDLSupport;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     [NativeSymbols("dbp_framebuffer_", SymbolTransformationMethod.Underscore)]
     internal interface IFramebufferBindings

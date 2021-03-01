@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DigBuildPlatformCS.Util
+namespace DigBuild.Platform.Util
 {
     public class PlatformException : Exception
     {

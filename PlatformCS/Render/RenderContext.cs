@@ -1,11 +1,11 @@
-﻿using AdvancedDLSupport;
-using DigBuildPlatformCS.Resource;
-using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using AdvancedDLSupport;
+using DigBuild.Platform.Resource;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     [NativeSymbols("dbp_render_context_", SymbolTransformationMethod.Underscore)]
     internal interface IRenderContextBindings

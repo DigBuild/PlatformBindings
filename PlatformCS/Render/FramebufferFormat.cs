@@ -1,9 +1,9 @@
-﻿using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     public sealed class FramebufferFormat : IDisposable
     {

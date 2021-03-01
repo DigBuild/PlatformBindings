@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 
-namespace DigBuildPlatformCS.Resource
+namespace DigBuild.Platform.Resource
 {
     public sealed class FileSystemResourceProvider : IResourceProvider, IDisposable
     {

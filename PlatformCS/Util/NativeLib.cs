@@ -1,9 +1,9 @@
-﻿using AdvancedDLSupport;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+using AdvancedDLSupport;
 
 [assembly: InternalsVisibleTo("DLSupportDynamicAssembly")]
 
-namespace DigBuildPlatformCS.Util
+namespace DigBuild.Platform.Util
 {
     internal static class NativeLib
     {
@@ -11,7 +11,7 @@ namespace DigBuildPlatformCS.Util
 
         internal static T Get<T>() where T : class
         {
-            return Builder.ActivateInterface<T>("DigBuildPlatformCPP");
+            return Builder.ActivateInterface<T>("DigBuild.Platform.Native");
         }
     }
 }

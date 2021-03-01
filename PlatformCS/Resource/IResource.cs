@@ -1,7 +1,7 @@
-﻿using DigBuildPlatformCS.Util;
-using System.IO;
+﻿using System.IO;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Resource
+namespace DigBuild.Platform.Resource
 {
     public interface IResource
     {

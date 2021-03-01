@@ -1,6 +1,6 @@
-﻿using DigBuildPlatformCS.Util;
+﻿using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     public sealed class TextureSampler
     {

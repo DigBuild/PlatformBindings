@@ -1,9 +1,9 @@
-﻿using AdvancedDLSupport;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using AdvancedDLSupport;
 
-namespace DigBuildPlatformCS.Util
+namespace DigBuild.Platform.Util
 {
     [NativeSymbols(Prefix = "dbp_native_buffer_", SymbolTransformationMethod = SymbolTransformationMethod.Underscore)]
     internal interface INativeBufferBindings

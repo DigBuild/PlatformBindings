@@ -1,12 +1,12 @@
-﻿using AdvancedDLSupport;
-using DigBuildPlatformCS.Render;
-using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using DigBuildPlatformCS.Input;
+using AdvancedDLSupport;
+using DigBuild.Platform.Input;
+using DigBuild.Platform.Render;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS
+namespace DigBuild.Platform
 {
     [NativeSymbols("dbp_platform_", SymbolTransformationMethod.Underscore)]
     internal interface IPlatformBindings

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace DigBuildPlatformCS.Util
+namespace DigBuild.Platform.Util
 {
     public enum NumericType : byte
     {

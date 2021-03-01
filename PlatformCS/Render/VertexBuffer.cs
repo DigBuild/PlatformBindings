@@ -1,9 +1,9 @@
-﻿using AdvancedDLSupport;
-using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
+using AdvancedDLSupport;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     [NativeSymbols("dbp_vertex_buffer_", SymbolTransformationMethod.Underscore)]
     internal interface IVertexBufferBindings

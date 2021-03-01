@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     internal readonly struct RenderState
     {

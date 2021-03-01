@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DigBuildPlatformCS.Resource
+namespace DigBuild.Platform.Resource
 {
     public delegate IReadOnlySet<ResourceName> GetAndClearModifiedResourcesDelegate();
     public delegate IResource? GetResourceDelegate(ResourceName name);

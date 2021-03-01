@@ -1,8 +1,8 @@
-﻿using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
 using System.Reflection;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Resource
+namespace DigBuild.Platform.Resource
 {
     public interface ICustomResource
     {

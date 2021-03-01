@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace DigBuildPlatformSourceGen
+namespace DigBuild.Platform.SourceGen
 {
     [Generator]
     public class UniformSourceGenerator : ISourceGenerator
     {
-        private const string UniformType = "DigBuildPlatformCS.Render.IUniform";
+        private const string UniformType = "DigBuild.Platform.Render.IUniform";
 
         public void Initialize(GeneratorInitializationContext context)
         {

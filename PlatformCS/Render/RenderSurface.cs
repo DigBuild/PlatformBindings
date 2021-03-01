@@ -1,10 +1,10 @@
-﻿using AdvancedDLSupport;
-using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
 using System.Numerics;
 using System.Threading.Tasks;
+using AdvancedDLSupport;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     [NativeSymbols("dbp_render_surface_", SymbolTransformationMethod.Underscore)]
     internal interface IRenderSurfaceBindings

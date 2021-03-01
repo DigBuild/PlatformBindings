@@ -1,12 +1,12 @@
-﻿using DigBuildPlatformCS.Resource;
-using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using DigBuild.Platform.Resource;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     public abstract class Shader
     {

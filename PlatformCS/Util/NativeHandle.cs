@@ -1,7 +1,7 @@
-﻿using AdvancedDLSupport;
-using System;
+﻿using System;
+using AdvancedDLSupport;
 
-namespace DigBuildPlatformCS.Util
+namespace DigBuild.Platform.Util
 {
     [NativeSymbols("dbp_native_handle_", SymbolTransformationMethod.Underscore)]
     internal interface INativeHandleBindings

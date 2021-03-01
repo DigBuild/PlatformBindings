@@ -1,8 +1,8 @@
-﻿using AdvancedDLSupport;
-using DigBuildPlatformCS.Util;
-using System;
+﻿using System;
+using AdvancedDLSupport;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Render
+namespace DigBuild.Platform.Render
 {
     [NativeSymbols("dbp_texture_binding_", SymbolTransformationMethod.Underscore)]
     internal interface ITextureBindingBindings

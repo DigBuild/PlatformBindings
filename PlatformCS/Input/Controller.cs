@@ -1,7 +1,7 @@
 ﻿using System;
-using DigBuildPlatformCS.Util;
+using DigBuild.Platform.Util;
 
-namespace DigBuildPlatformCS.Input
+namespace DigBuild.Platform.Input
 {
     public sealed class Controller
     {
