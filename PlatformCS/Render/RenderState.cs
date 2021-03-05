@@ -104,7 +104,7 @@ namespace DigBuild.Platform.Render
 
         public DepthBias(bool enabled, float constant, float clamp, float slope)
         {
-            Enabled = enabled ? 1 : 0;
+            Enabled = (byte) (enabled ? 1 : 0);
             Constant = constant;
             Clamp = clamp;
             Slope = slope;
@@ -121,9 +121,9 @@ namespace DigBuild.Platform.Render
 
         public DepthTest(bool enabled, CompareOperation comparison, bool write)
         {
-            Enabled = enabled ? 1 : 0;
+            Enabled = (byte) (enabled ? 1 : 0);
             Comparison = comparison;
-            Write = write ? 1 : 0;
+            Write = (byte) (write ? 1 : 0);
         }
     }
 
@@ -146,7 +146,7 @@ namespace DigBuild.Platform.Render
 
         public StencilTest(bool enabled, StencilFaceOperation front, StencilFaceOperation back)
         {
-            Enabled = enabled ? 1 : 0;
+            Enabled = (byte) (enabled ? 1 : 0);
             Front = front;
             Back = back;
         }
