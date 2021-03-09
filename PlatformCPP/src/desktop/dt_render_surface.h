@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <deque>
 #include <GLFW.h>
 #include <mutex>
 #include <thread>
@@ -10,6 +11,37 @@
 
 namespace digbuild::platform::desktop
 {
+	struct KeyboardEvent
+	{
+		const uint32_t scanconde;
+		const input::KeyboardAction action;
+	};
+	struct MouseEvent
+	{
+		const uint32_t button;
+		const input::MouseAction action;
+	};
+	struct CursorEvent
+	{
+		const uint32_t x, y;
+		const input::CursorAction action;
+	};
+	
+	class InputContext final : public input::SurfaceInputContext
+	{
+	public:
+		void consumeKeyboardEvents(input::KeyboardEventConsumer consumer) override;
+		void consumeMouseEvents(input::MouseEventConsumer consumer) override;
+		void consumeCursorEvents(input::CursorEventConsumer consumer) override;
+	
+	private:
+		std::deque<KeyboardEvent> m_keyboardEvents;
+		std::deque<MouseEvent> m_mouseEvents;
+		std::deque<CursorEvent> m_cursorEvents;
+
+		friend class RenderSurface;
+	};
+	
 	class RenderSurface final : public render::RenderSurface
 	{
 	public:
@@ -22,6 +54,11 @@ namespace digbuild::platform::desktop
 			const std::string& title,
 			bool fullscreen
 		);
+
+		[[nodiscard]] input::SurfaceInputContext& getInputContext() override
+		{
+			return m_inputContext;
+		}
 
 		[[nodiscard]] uint32_t getWidth() const override
 		{
@@ -68,6 +105,7 @@ namespace digbuild::platform::desktop
 	private:
 		const GLFWContext& m_glfwContext;
 		const std::shared_ptr<RenderSurface> m_parent;
+		InputContext m_inputContext;
 		std::unique_ptr<RenderContext> m_context;
 		uint32_t m_width, m_height;
 		std::string m_title;

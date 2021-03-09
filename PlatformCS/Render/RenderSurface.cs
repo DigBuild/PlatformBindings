@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Threading.Tasks;
 using AdvancedDLSupport;
+using DigBuild.Platform.Input;
 using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Render
@@ -10,6 +11,8 @@ namespace DigBuild.Platform.Render
     internal interface IRenderSurfaceBindings
     {
         public delegate void GetTitleDelegate(string title);
+        
+        IntPtr GetInputContext(IntPtr handle);
 
         uint GetWidth(IntPtr handle);
         uint GetHeight(IntPtr handle);
@@ -65,6 +68,8 @@ namespace DigBuild.Platform.Render
         }
 
         NativeHandle IRenderTarget.Handle => _handle;
+
+        public SurfaceInputContext InputContext => new(RenderSurface.Bindings.GetInputContext(_handle));
 
         public FramebufferFormat Format => FormatS;
         public FramebufferAttachment ColorAttachment => AttachmentS;

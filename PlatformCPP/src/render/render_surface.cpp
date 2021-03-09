@@ -3,9 +3,15 @@
 #include "../util/native_handle.h"
 #include "../util/utils.h"
 
+using namespace digbuild::platform::input;
 using namespace digbuild::platform::util;
 using namespace digbuild::platform::render;
 extern "C" {
+	DLLEXPORT SurfaceInputContext* dbp_render_surface_get_input_context(const native_handle instance)
+	{
+		return &handle_cast<RenderSurface>(instance)->getInputContext();
+	}
+	
 	DLLEXPORT uint32_t dbp_render_surface_get_width(const native_handle instance)
 	{
 		return handle_cast<RenderSurface>(instance)->getWidth();

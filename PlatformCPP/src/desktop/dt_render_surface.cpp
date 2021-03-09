@@ -2,6 +2,36 @@
 
 namespace digbuild::platform::desktop
 {
+	void InputContext::consumeKeyboardEvents(input::KeyboardEventConsumer consumer)
+	{
+		while (!m_keyboardEvents.empty())
+		{
+			auto& evt = m_keyboardEvents.front();
+			consumer(evt.scanconde, evt.action);
+			m_keyboardEvents.pop_front();
+		}
+	}
+
+	void InputContext::consumeMouseEvents(input::MouseEventConsumer consumer)
+	{
+		while (!m_mouseEvents.empty())
+		{
+			auto& evt = m_mouseEvents.front();
+			consumer(evt.button, evt.action);
+			m_mouseEvents.pop_front();
+		}
+	}
+
+	void InputContext::consumeCursorEvents(input::CursorEventConsumer consumer)
+	{
+		while (!m_cursorEvents.empty())
+		{
+			auto& evt = m_cursorEvents.front();
+			consumer(evt.x, evt.y, evt.action);
+			m_cursorEvents.pop_front();
+		}
+	}
+
 	RenderSurface::RenderSurface(
 		const GLFWContext& glfwContext,
 		std::shared_ptr<RenderSurface>&& parent,
@@ -50,6 +80,54 @@ namespace digbuild::platform::desktop
 						window->m_visible = width != 0 && height != 0;
 					}
 				);
+
+				glfwSetKeyCallback(
+					m_window,
+					[](GLFWwindow* win, int, const int scancode, const int action, int)
+					{
+						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+						window->m_inputContext.m_keyboardEvents.push_back({
+							static_cast<uint32_t>(scancode),
+							static_cast<input::KeyboardAction>(action)
+						});
+					}
+				);
+				
+				glfwSetMouseButtonCallback(
+					m_window,
+					[](GLFWwindow* win, const int button, const int action, int)
+					{
+						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+						window->m_inputContext.m_mouseEvents.push_back({
+							static_cast<uint32_t>(button),
+							static_cast<input::MouseAction>(action)
+						});
+					}
+				);
+
+				glfwSetCursorPosCallback(
+					m_window,
+					[](GLFWwindow* win, const double x, const double y)
+					{
+						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+						window->m_inputContext.m_cursorEvents.push_back({
+							static_cast<uint32_t>(x),
+							static_cast<uint32_t>(y),
+							input::CursorAction::MOVE
+						});
+					}
+				);
+
+				// TODO: Support IME and alternative input methods
+				// glfwSetCharCallback(
+				// 	m_window,
+				// 	[](GLFWwindow* win, unsigned int character)
+				// 	{
+				// 	}
+				// );
 
 				ready = true;
 				

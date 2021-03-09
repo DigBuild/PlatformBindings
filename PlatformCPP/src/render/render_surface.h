@@ -2,6 +2,7 @@
 #include <functional>
 
 #include "render_context.h"
+#include "../input/surface_input_context.h"
 
 namespace digbuild::platform::render
 {
@@ -18,6 +19,8 @@ namespace digbuild::platform::render
 		RenderSurface(RenderSurface&& other) noexcept = delete;
 		RenderSurface& operator=(const RenderSurface& other) = delete;
 		RenderSurface& operator=(RenderSurface&& other) noexcept = delete;
+
+		[[nodiscard]] virtual input::SurfaceInputContext& getInputContext() = 0;
 
 		[[nodiscard]] virtual uint32_t getWidth() const = 0;
 		[[nodiscard]] virtual uint32_t getHeight() const = 0;
