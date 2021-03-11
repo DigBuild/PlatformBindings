@@ -4,7 +4,7 @@ using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Input
 {
-    public delegate void KeyboardEventConsumerDelegate(uint scancode, KeyboardAction action);
+    public delegate void KeyboardEventConsumerDelegate(uint code, KeyboardAction action);
     public delegate void MouseEventConsumerDelegate(uint button, MouseAction action);
     public delegate void CursorEventConsumerDelegate(uint x, uint y, CursorAction action);
 
@@ -48,6 +48,7 @@ namespace DigBuild.Platform.Input
         Release,
         Press,
         Repeat,
+        Character
     }
 
     public enum MouseAction : byte

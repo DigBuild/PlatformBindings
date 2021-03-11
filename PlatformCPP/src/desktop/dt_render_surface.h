@@ -13,7 +13,7 @@ namespace digbuild::platform::desktop
 {
 	struct KeyboardEvent
 	{
-		const uint32_t scanconde;
+		const uint32_t code;
 		const input::KeyboardAction action;
 	};
 	struct MouseEvent

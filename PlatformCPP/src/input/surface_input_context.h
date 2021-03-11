@@ -7,7 +7,8 @@ namespace digbuild::platform::input
 	{
 		RELEASE,
 		PRESS,
-		REPEAT
+		REPEAT,
+		CHARACTER
 	};
 	enum class MouseAction : uint8_t
 	{
@@ -19,7 +20,7 @@ namespace digbuild::platform::input
 		MOVE,
 	};
 	
-	using KeyboardEventConsumer = std::function<void(uint32_t scancode, KeyboardAction action)>;
+	using KeyboardEventConsumer = std::function<void(uint32_t code, KeyboardAction action)>;
 	using MouseEventConsumer = std::function<void(uint32_t button, MouseAction action)>;
 	using CursorEventConsumer = std::function<void(uint32_t x, uint32_t y, CursorAction action)>;
 	

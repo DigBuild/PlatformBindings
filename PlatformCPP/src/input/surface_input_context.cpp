@@ -6,7 +6,7 @@ using namespace digbuild::platform::input;
 extern "C" {
 	DLLEXPORT void dbp_surface_input_context_consume_keyboard_events(
 		SurfaceInputContext* instance,
-		void(*callback)(uint32_t scancode, KeyboardAction action)
+		void(*callback)(uint32_t code, KeyboardAction action)
 	)
 	{
 		instance->consumeKeyboardEvents(callback);

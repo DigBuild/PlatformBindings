@@ -7,7 +7,7 @@ namespace digbuild::platform::desktop
 		while (!m_keyboardEvents.empty())
 		{
 			auto& evt = m_keyboardEvents.front();
-			consumer(evt.scanconde, evt.action);
+			consumer(evt.code, evt.action);
 			m_keyboardEvents.pop_front();
 		}
 	}
@@ -90,6 +90,19 @@ namespace digbuild::platform::desktop
 						window->m_inputContext.m_keyboardEvents.push_back({
 							static_cast<uint32_t>(scancode),
 							static_cast<input::KeyboardAction>(action)
+						});
+					}
+				);
+				
+				glfwSetCharCallback(
+					m_window,
+					[](GLFWwindow* win, const unsigned int c)
+					{
+						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+						window->m_inputContext.m_keyboardEvents.push_back({
+							c,
+							input::KeyboardAction::CHARACTER
 						});
 					}
 				);
