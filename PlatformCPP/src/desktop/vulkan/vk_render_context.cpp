@@ -11,7 +11,7 @@
 
 namespace digbuild::platform::desktop::vulkan
 {
-	const vk::Fence NULL_FENCE = static_cast<vk::Fence>(nullptr);
+	const vk::Fence NULL_FENCE = nullptr;
 
 	void RenderQueue::clear()
 	{
@@ -41,7 +41,7 @@ namespace digbuild::platform::desktop::vulkan
 			for (const auto& attachment : format.getAttachments())
 			{
 				if (attachment.type == render::FramebufferAttachmentType::COLOR)
-					clearValues.push_back(vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 1.0f } });
+					clearValues.push_back(vk::ClearColorValue{ std::array<float, 4>{ 0.0f, 0.0f, 0.0f, 0.0f } });
 				else
 					clearValues.push_back(vk::ClearDepthStencilValue{ 1.0f, 0 });
 			}
