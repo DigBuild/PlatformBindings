@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using AdvancedDLSupport;
 using DigBuild.Platform.Util;
@@ -23,32 +23,35 @@ namespace DigBuild.Platform.Render
             Handle = handle;
         }
 
-        public CommandBufferRecorder BeginRecording(FramebufferFormat format, NativeBufferPool bufferPool)
+        public CommandBufferRecorder Record(RenderContext context, FramebufferFormat format, NativeBufferPool bufferPool)
         {
             if (Handle == null)
                 throw new InvalidOperationException("Not initialized.");
             if (Recording)
                 throw new AlreadyRecordingException();
             Recording = true;
-            return new CommandBufferRecorder(this, format, bufferPool);
+            return new CommandBufferRecorder(this, format, context, bufferPool);
         }
     }
 
-    public sealed class CommandBufferRecorder
+    public sealed class CommandBufferRecorder : IDisposable
     {
         private readonly CommandBuffer _parent;
         private readonly FramebufferFormat _format;
+        private readonly IntPtr _contextPtr;
         private readonly PooledNativeBuffer<CommandBufferCmd> _commands;
         private bool _committed;
 
         internal CommandBufferRecorder(
             CommandBuffer parent,
             FramebufferFormat format,
+            RenderContext context,
             NativeBufferPool bufferPool
         )
         {
             _parent = parent;
             _format = format;
+            _contextPtr = context.Ptr;
             _commands = bufferPool.Request<CommandBufferCmd>();
         }
 
@@ -125,7 +128,7 @@ namespace DigBuild.Platform.Render
             _commands.Add(new CommandBufferCmd.Draw(pipeline.Handle, vertexBuffer.Handle, instanceBuffer.Handle));
         }
         
-        public void Commit(RenderContext context)
+        public void Commit()
         {
             if (_committed)
                 throw new RecordingAlreadyCommittedException();
@@ -133,9 +136,11 @@ namespace DigBuild.Platform.Render
             _parent.Recording = false;
 
             var unpooled = _commands.Unpooled;
-            CommandBuffer.Bindings.Commit(_parent.Handle!, context.Ptr, _format.Handle, unpooled.Ptr, unpooled.Count);
+            CommandBuffer.Bindings.Commit(_parent.Handle!, _contextPtr, _format.Handle, unpooled.Ptr, unpooled.Count);
             _commands.Dispose();
         }
+
+        void IDisposable.Dispose() => Commit();
     }
 
     [StructLayout(LayoutKind.Explicit)]
