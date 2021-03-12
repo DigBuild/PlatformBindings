@@ -15,10 +15,12 @@ namespace DigBuild.Platform.Render
         internal static readonly ITextureBindingBindings Bindings = NativeLib.Get<ITextureBindingBindings>();
 
         internal readonly NativeHandle Handle;
+        internal readonly ShaderSamplerHandle SamplerHandle;
 
-        internal TextureBinding(NativeHandle handle)
+        internal TextureBinding(NativeHandle handle, ShaderSamplerHandle samplerHandle)
         {
             Handle = handle;
+            SamplerHandle = samplerHandle;
         }
 
         public void Update(TextureSampler sampler, Texture texture)
@@ -58,7 +60,8 @@ namespace DigBuild.Platform.Render
                         builder._sampler.Handle,
                         builder._texture.Handle
                     )
-                )
+                ),
+                builder._shaderSampler
             );
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using AdvancedDLSupport;
 using DigBuild.Platform.Util;
@@ -40,6 +41,8 @@ namespace DigBuild.Platform.Render
         private readonly FramebufferFormat _format;
         private readonly IntPtr _contextPtr;
         private readonly PooledNativeBuffer<CommandBufferCmd> _commands;
+        private readonly Dictionary<IBindingHandle, (IUniformBuffer, uint)> _uniformBindings = new();
+        private readonly Dictionary<ShaderSamplerHandle, TextureBinding> _textureBindings = new();
         private bool _committed;
 
         internal CommandBufferRecorder(
@@ -90,6 +93,11 @@ namespace DigBuild.Platform.Render
         {
             if (_committed)
                 throw new RecordingAlreadyCommittedException();
+
+            if (_uniformBindings.TryGetValue(uniformBuffer.UniformHandle, out var current) && current.Item1 == uniformBuffer && current.Item2 == index)
+                return;
+            _uniformBindings[uniformBuffer.UniformHandle] = (uniformBuffer, index);
+
             _commands.Add(new CommandBufferCmd.BindUniform(pipeline.Handle, uniformBuffer.Handle, index));
         }
 
@@ -100,6 +108,11 @@ namespace DigBuild.Platform.Render
         {
             if (_committed)
                 throw new RecordingAlreadyCommittedException();
+
+            if (_textureBindings.TryGetValue(binding.SamplerHandle, out var currentBinding) && currentBinding == binding)
+                return;
+            _textureBindings[binding.SamplerHandle] = binding;
+
             _commands.Add(new CommandBufferCmd.BindTexture(
                 pipeline.Handle,
                 binding.Handle
