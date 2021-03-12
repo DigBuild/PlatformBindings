@@ -120,23 +120,13 @@ namespace DigBuild.Platform.Render
             RenderStage renderStage,
             Topology topology,
             RasterMode rasterMode = RasterMode.Fill,
-            bool discardRaster = false,
-            MaybeDynamic<float>? lineWidth = null!,
-            MaybeDynamic<DepthBias>? depthBias = null!,
-            MaybeDynamic<DepthTest>? depthTest = null!,
-            MaybeDynamic<StencilTest>? stencilTest = null!,
-            MaybeDynamic<CullingMode>? cullingMode = null!,
-            MaybeDynamic<FrontFace>? frontFace = null!
+            bool discardRaster = false
         ) where TVertex : unmanaged
             => new(
                 this,
                 vertexShader, fragmentShader,
                 renderStage,
-                new RenderState(
-                    topology, rasterMode, discardRaster,
-                    lineWidth, depthBias, depthTest, stencilTest,
-                    cullingMode, frontFace
-                ),
+                topology, rasterMode, discardRaster,
                 FormatDescriptor<TVertex>.Instance,
                 null,
                 handle => new RenderPipeline<TVertex>(handle)
@@ -148,23 +138,13 @@ namespace DigBuild.Platform.Render
             RenderStage renderStage,
             Topology topology,
             RasterMode rasterMode = RasterMode.Fill,
-            bool discardRaster = false,
-            MaybeDynamic<float>? lineWidth = null!,
-            MaybeDynamic<DepthBias>? depthBias = null!,
-            MaybeDynamic<DepthTest>? depthTest = null!,
-            MaybeDynamic<StencilTest>? stencilTest = null!,
-            MaybeDynamic<CullingMode>? cullingMode = null!,
-            MaybeDynamic<FrontFace>? frontFace = null!
+            bool discardRaster = false
         ) where TVertex : unmanaged where TInstance : unmanaged
             => new(
                 this,
                 vertexShader, fragmentShader,
                 renderStage,
-                new RenderState(
-                    topology, rasterMode, discardRaster,
-                    lineWidth, depthBias, depthTest, stencilTest,
-                    cullingMode, frontFace
-                ),
+                topology, rasterMode, discardRaster,
                 FormatDescriptor<TVertex>.Instance,
                 FormatDescriptor<TInstance>.Instance,
                 handle => new RenderPipeline<TVertex, TInstance>(handle)

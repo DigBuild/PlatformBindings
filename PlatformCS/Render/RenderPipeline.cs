@@ -39,7 +39,17 @@ namespace DigBuild.Platform.Render
             internal readonly VertexShader VertexShader;
             internal readonly FragmentShader FragmentShader;
             internal readonly RenderStage RenderStage;
-            internal readonly RenderState RenderState;
+
+            internal readonly Topology Topology;
+            internal readonly RasterMode RasterMode;
+            internal readonly bool DiscardRaster;
+            internal MaybeDynamic<float> LineWidth = 1.0f;
+            internal MaybeDynamic<DepthBias> DepthBias = Render.DepthBias.Default;
+            internal MaybeDynamic<DepthTest> DepthTest = Render.DepthTest.Default;
+            internal MaybeDynamic<StencilTest> StencilTest = Render.StencilTest.Default;
+            internal MaybeDynamic<CullingMode> CullingMode = Render.CullingMode.Back;
+            internal MaybeDynamic<FrontFace> FrontFace = Render.FrontFace.Clockwise;
+
             internal readonly FormatDescriptor VertexDescriptor;
             internal readonly FormatDescriptor? InstanceDescriptor;
             internal readonly Func<NativeHandle, TPipeline> Factory;
@@ -49,7 +59,9 @@ namespace DigBuild.Platform.Render
                 VertexShader vertexShader,
                 FragmentShader fragmentShader,
                 RenderStage renderStage,
-                RenderState renderState,
+                Topology topology,
+                RasterMode rasterMode,
+                bool discardRaster,
                 FormatDescriptor vertexDescriptor,
                 FormatDescriptor? instanceDescriptor,
                 Func<NativeHandle, TPipeline> factory
@@ -58,7 +70,9 @@ namespace DigBuild.Platform.Render
                 VertexShader = vertexShader;
                 FragmentShader = fragmentShader;
                 RenderStage = renderStage;
-                RenderState = renderState;
+                Topology = topology;
+                RasterMode = rasterMode;
+                DiscardRaster = discardRaster;
                 VertexDescriptor = vertexDescriptor;
                 InstanceDescriptor = instanceDescriptor;
                 Factory = factory;
@@ -76,7 +90,9 @@ namespace DigBuild.Platform.Render
             VertexShader vertexShader,
             FragmentShader fragmentShader,
             RenderStage renderStage,
-            RenderState renderState,
+            Topology topology,
+            RasterMode rasterMode,
+            bool discardRaster,
             FormatDescriptor vertexDescriptor,
             FormatDescriptor? instanceDescriptor,
             Func<NativeHandle, TPipeline> factory
@@ -85,10 +101,81 @@ namespace DigBuild.Platform.Render
             _context = context;
             _data = new Data(
                 vertexShader, fragmentShader,
-                renderStage, renderState,
+                renderStage,
+                topology, rasterMode, discardRaster,
                 vertexDescriptor, instanceDescriptor,
                 factory
             );
+        }
+
+        public RenderPipelineBuilder<TPipeline> WithLineWidth(float lineWidth)
+        {
+            _data.LineWidth = lineWidth;
+            return this;
+        }
+        public RenderPipelineBuilder<TPipeline> WithDynamicLineWidth()
+        {
+            _data.LineWidth = MaybeDynamic<float>.Dynamic;
+            return this;
+        }
+
+        public RenderPipelineBuilder<TPipeline> WithDepthBias(float constant, float clamp, float slope)
+        {
+            _data.DepthBias = new DepthBias(true, constant, clamp, slope);
+            return this;
+        }
+        public RenderPipelineBuilder<TPipeline> WithDynamicDepthBias()
+        {
+            _data.DepthBias = MaybeDynamic<DepthBias>.Dynamic;
+            return this;
+        }
+
+        public RenderPipelineBuilder<TPipeline> WithDepthTest(CompareOperation comparison, bool write)
+        {
+            _data.DepthTest = new DepthTest(true, comparison, write);
+            return this;
+        }
+        public RenderPipelineBuilder<TPipeline> WithDynamicDepthTest()
+        {
+            _data.DepthTest = MaybeDynamic<DepthTest>.Dynamic;
+            return this;
+        }
+        
+        public RenderPipelineBuilder<TPipeline> WithStencilTest(StencilFaceOperation operation)
+        {
+            return WithStencilTest(operation, operation);
+        }
+        public RenderPipelineBuilder<TPipeline> WithStencilTest(StencilFaceOperation front, StencilFaceOperation back)
+        {
+            _data.StencilTest = new StencilTest(true, front, back);
+            return this;
+        }
+        public RenderPipelineBuilder<TPipeline> WithDynamicStencilTest()
+        {
+            _data.StencilTest = MaybeDynamic<StencilTest>.Dynamic;
+            return this;
+        }
+
+        public RenderPipelineBuilder<TPipeline> WithCullingMode(CullingMode cullingMode)
+        {
+            _data.CullingMode = cullingMode;
+            return this;
+        }
+        public RenderPipelineBuilder<TPipeline> WithDynamicCullingMode()
+        {
+            _data.CullingMode = MaybeDynamic<CullingMode>.Dynamic;
+            return this;
+        }
+
+        public RenderPipelineBuilder<TPipeline> WithFrontFace(FrontFace frontFace)
+        {
+            _data.FrontFace = frontFace;
+            return this;
+        }
+        public RenderPipelineBuilder<TPipeline> WithDynamicFrontFace()
+        {
+            _data.FrontFace = MaybeDynamic<FrontFace>.Dynamic;
+            return this;
         }
 
         public RenderPipelineBuilder<TPipeline> WithStandardBlending(
@@ -170,21 +257,21 @@ namespace DigBuild.Platform.Render
                         new IntPtr(p3),
                         data.VertexShader.Handle,
                         data.FragmentShader.Handle,
-                        data.RenderState.Topology,
-                        data.RenderState.RasterMode,
-                        data.RenderState.DiscardRaster,
-                        data.RenderState.LineWidth.HasValue,
-                        data.RenderState.LineWidth.Value,
-                        data.RenderState.DepthBias.HasValue,
-                        data.RenderState.DepthBias.Value,
-                        data.RenderState.DepthTest.HasValue,
-                        data.RenderState.DepthTest.Value,
-                        data.RenderState.StencilTest.HasValue,
-                        data.RenderState.StencilTest.Value,
-                        data.RenderState.CullingMode.HasValue,
-                        data.RenderState.CullingMode.Value,
-                        data.RenderState.FrontFace.HasValue,
-                        data.RenderState.FrontFace.Value
+                        data.Topology,
+                        data.RasterMode,
+                        data.DiscardRaster,
+                        data.LineWidth.HasValue,
+                        data.LineWidth.Value,
+                        data.DepthBias.HasValue,
+                        data.DepthBias.Value,
+                        data.DepthTest.HasValue,
+                        data.DepthTest.Value,
+                        data.StencilTest.HasValue,
+                        data.StencilTest.Value,
+                        data.CullingMode.HasValue,
+                        data.CullingMode.Value,
+                        data.FrontFace.HasValue,
+                        data.FrontFace.Value
                     )
                 );
                 return data.Factory(handle);

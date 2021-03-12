@@ -2,43 +2,7 @@
 
 namespace DigBuild.Platform.Render
 {
-    internal readonly struct RenderState
-    {
-        internal readonly Topology Topology;
-        internal readonly RasterMode RasterMode;
-        internal readonly bool DiscardRaster;
-        internal readonly MaybeDynamic<float> LineWidth;
-        internal readonly MaybeDynamic<DepthBias> DepthBias;
-        internal readonly MaybeDynamic<DepthTest> DepthTest;
-        internal readonly MaybeDynamic<StencilTest> StencilTest;
-        internal readonly MaybeDynamic<CullingMode> CullingMode;
-        internal readonly MaybeDynamic<FrontFace> FrontFace;
-
-        internal RenderState(
-            Topology topology,
-            RasterMode rasterMode,
-            bool discardRaster,
-            MaybeDynamic<float>? lineWidth,
-            MaybeDynamic<DepthBias>? depthBias,
-            MaybeDynamic<DepthTest>? depthTest,
-            MaybeDynamic<StencilTest>? stencilTest,
-            MaybeDynamic<CullingMode>? cullingMode,
-            MaybeDynamic<FrontFace>? frontFace
-        )
-        {
-            Topology = topology;
-            RasterMode = rasterMode;
-            DiscardRaster = discardRaster;
-            LineWidth = lineWidth ?? 1.0f;
-            DepthBias = depthBias ?? Render.DepthBias.Default;
-            DepthTest = depthTest ?? Render.DepthTest.Default;
-            StencilTest = stencilTest ?? Render.StencilTest.Default;
-            CullingMode = cullingMode ?? Render.CullingMode.Back;
-            FrontFace = frontFace ?? Render.FrontFace.Clockwise;
-        }
-    }
-    
-    public readonly struct MaybeDynamic<T> where T : unmanaged
+    internal readonly struct MaybeDynamic<T> where T : unmanaged
     {
         public static readonly MaybeDynamic<T> Dynamic = default;
         
@@ -93,7 +57,7 @@ namespace DigBuild.Platform.Render
         }
     }
 
-    public readonly struct DepthBias
+    internal readonly struct DepthBias
     {
         public static readonly DepthBias Default = new(false, 0.0f, 0.0f, 0.0f);
 
@@ -111,7 +75,7 @@ namespace DigBuild.Platform.Render
         }
     }
 
-    public readonly struct DepthTest
+    internal readonly struct DepthTest
     {
         public static readonly DepthTest Default = new(false, CompareOperation.Always, false);
 
@@ -136,7 +100,7 @@ namespace DigBuild.Platform.Render
         Always
     }
 
-    public readonly struct StencilTest
+    internal readonly struct StencilTest
     {
         public static readonly StencilTest Default = new(false, StencilFaceOperation.Default);
 
