@@ -67,6 +67,14 @@ namespace DigBuild.Platform.Input
         }
     }
 
+    public static class ControllerHatStateExtensions
+    {
+        public static bool Has(this Controller.HatState state, Controller.HatState value)
+        {
+            return state.HasFlag(value);
+        }
+    }
+
     // public static class ControllerExtensions
     // {
     //     public static Controller? Find(this IEnumerable<Controller> src, Guid id)
