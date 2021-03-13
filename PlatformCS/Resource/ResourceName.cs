@@ -39,7 +39,7 @@ namespace DigBuild.Platform.Resource
 
         public override string ToString()
         {
-            return $"ResourceName({Domain}:{Path})";
+            return $"{Domain}:{Path}";
         }
     }
 }
