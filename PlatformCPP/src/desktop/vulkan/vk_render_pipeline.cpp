@@ -380,17 +380,16 @@ namespace digbuild::platform::desktop::vulkan
 		});
 		vk::PipelineDynamicStateCreateInfo dynamicStateCreateInfo{ {}, dynamicStates };
 		
-		std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
 		uint32_t descriptorOffset = 0;
 		for (const auto& shader : m_shaders)
 		{
 			auto& layouts = shader->getDescriptorSetLayouts();
-			descriptorSetLayouts.insert(descriptorSetLayouts.end(), layouts.begin(), layouts.end());
+			m_descriptorSetLayouts.insert(m_descriptorSetLayouts.end(), layouts.begin(), layouts.end());
 			
 			m_shaderLayoutOffsets.emplace(shader.get(), descriptorOffset);
 			descriptorOffset += static_cast<uint32_t>(layouts.size());
 		}
-		m_layout = m_context->m_device->createPipelineLayoutUnique({ {}, descriptorSetLayouts });
+		m_layout = m_context->m_device->createPipelineLayoutUnique({ {}, m_descriptorSetLayouts });
 
 		// TODO: Other layout / uniform stuff
 

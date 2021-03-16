@@ -436,7 +436,7 @@ namespace digbuild::platform::desktop::vulkan
 	) const
 	{
 		return m_device->createDescriptorPoolUnique({
-			{}, maxSets, std::vector{
+			vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, maxSets, std::vector{
 				vk::DescriptorPoolSize{
 					type,
 					maxSets

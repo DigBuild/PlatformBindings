@@ -41,6 +41,7 @@ namespace digbuild::platform::desktop::vulkan
 		std::shared_ptr<FramebufferFormat> m_format;
 		std::vector<std::shared_ptr<Shader>> m_shaders;
 		std::unordered_map<Shader*, uint32_t> m_shaderLayoutOffsets;
+		std::vector<vk::DescriptorSetLayout> m_descriptorSetLayouts;
 		vk::UniquePipelineLayout m_layout;
 		vk::UniquePipeline m_pipeline;
 	};
