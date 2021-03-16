@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Input
@@ -69,9 +70,19 @@ namespace DigBuild.Platform.Input
 
     public static class ControllerHatStateExtensions
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Has(this Controller.HatState state, Controller.HatState value)
         {
             return state.HasFlag(value);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Deconstruct(this Controller.HatState state, out bool up, out bool right, out bool down, out bool left)
+        {
+            up = state.Has(Controller.HatState.Up);
+            right = state.Has(Controller.HatState.Right);
+            down = state.Has(Controller.HatState.Down);
+            left = state.Has(Controller.HatState.Left);
         }
     }
 
