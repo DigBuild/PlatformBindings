@@ -362,12 +362,14 @@ namespace digbuild::platform::desktop::vulkan
 			{},
 			vk::AccessFlagBits::eColorAttachmentWrite
 		};
-		
+
+		auto subpasses = std::vector{subpass};
+		auto subpassDeps = std::vector{subpassDependency};
 		return m_device->createRenderPassUnique({
 			{},
 			attachments,
-			std::vector{subpass},
-			std::vector{subpassDependency}
+			subpasses,
+			subpassDeps
 		});
 	}
 
@@ -427,7 +429,8 @@ namespace digbuild::platform::desktop::vulkan
 		const vk::DescriptorSetLayoutBinding& binding
 	)
 	{
-		return m_device->createDescriptorSetLayoutUnique({ {}, std::vector{ binding } });
+		auto bindings = std::vector{ binding };
+		return m_device->createDescriptorSetLayoutUnique({ {}, bindings });
 	}
 
 	vk::UniqueDescriptorPool VulkanContext::createDescriptorPool(
@@ -435,13 +438,14 @@ namespace digbuild::platform::desktop::vulkan
 		const vk::DescriptorType type
 	) const
 	{
-		return m_device->createDescriptorPoolUnique({
-			vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, maxSets, std::vector{
-				vk::DescriptorPoolSize{
-					type,
-					maxSets
-				}
+		auto poolSizes = std::vector{
+			vk::DescriptorPoolSize{
+				type,
+				maxSets
 			}
+		};
+		return m_device->createDescriptorPoolUnique({
+			vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, maxSets, poolSizes
 		});
 	}
 

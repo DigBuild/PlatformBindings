@@ -1,4 +1,4 @@
-﻿#include "vk_util.h"
+#include "vk_util.h"
 
 #include <map>
 #include <vulkan.h>
@@ -248,9 +248,8 @@ namespace digbuild::platform::desktop::vulkan::util
 		commands(buffer);
 		buffer.end();
 
-		queue.submit({
-			             {{}, {}, std::vector{buffer}, {}}
-		             }, nullptr);
+		auto buffers2 = std::vector{buffer};
+		queue.submit({{{}, {}, buffers2, {}}}, nullptr);
 		queue.waitIdle();
 	}
 	
