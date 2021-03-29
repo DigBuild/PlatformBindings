@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using AdvancedDLSupport;
 
@@ -269,11 +270,12 @@ namespace DigBuild.Platform.Util
 
     public sealed class NativeBufferPool
     {
-        private readonly Queue<NativeBuffer> _buffers = new();
+        private readonly ConcurrentQueue<NativeBuffer> _buffers = new();
 
         public PooledNativeBuffer<T> Request<T>() where T : unmanaged
         {
-            var backingBuffer = _buffers.Count > 0 ? _buffers.Dequeue() : new NativeBuffer();
+            if (!_buffers.TryDequeue(out var backingBuffer))
+                backingBuffer = new NativeBuffer();
             return new PooledNativeBuffer<T>(backingBuffer, _buffers);
         }
     }
@@ -281,11 +283,11 @@ namespace DigBuild.Platform.Util
     public sealed class PooledNativeBuffer<T> : INativeBuffer<T>, IDisposable where T : unmanaged
     {
         private readonly NativeBuffer _backingBuffer;
-        private readonly Queue<NativeBuffer> _queue;
+        private readonly ConcurrentQueue<NativeBuffer> _queue;
         private readonly NativeBuffer<T> _buffer;
         private bool _valid = true;
 
-        internal PooledNativeBuffer(NativeBuffer backingBuffer, Queue<NativeBuffer> queue)
+        internal PooledNativeBuffer(NativeBuffer backingBuffer, ConcurrentQueue<NativeBuffer> queue)
         {
             _backingBuffer = backingBuffer;
             _queue = queue;
