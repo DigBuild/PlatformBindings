@@ -69,7 +69,7 @@ namespace DigBuild.Platform.Resource
                     name.Path
                 );
                 if (File.Exists(fullPath))
-                    return new Resource(fullPath, name);
+                    return new Resource(fullPath, name, File.GetLastWriteTime(fullPath));
             }
 
             return parent(name);
@@ -79,11 +79,13 @@ namespace DigBuild.Platform.Resource
         {
             private readonly string _path;
             public override ResourceName Name { get; }
+            public override DateTime LastEdited { get; }
 
-            public Resource(string path, ResourceName name)
+            public Resource(string path, ResourceName name, DateTime lastEdited)
             {
                 _path = path;
                 Name = name;
+                LastEdited = lastEdited;
             }
 
             public override Stream OpenStream()

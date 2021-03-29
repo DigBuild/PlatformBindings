@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Resource
@@ -7,6 +8,8 @@ namespace DigBuild.Platform.Resource
     {
         ResourceName Name { get; }
 
+        DateTime LastEdited { get; }
+
         Stream OpenStream();
         byte[] ReadAllBytes();
     }
@@ -14,6 +17,8 @@ namespace DigBuild.Platform.Resource
     public abstract class ResourceBase : IResource
     {
         public abstract ResourceName Name { get; }
+
+        public abstract DateTime LastEdited { get; }
 
         public abstract Stream OpenStream();
 
