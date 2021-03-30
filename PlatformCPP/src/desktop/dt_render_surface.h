@@ -80,6 +80,18 @@ namespace digbuild::platform::desktop
 		{
 			return m_visible;
 		}
+		[[nodiscard]] bool isResized() const override
+		{
+			return m_resized;
+		}
+		[[nodiscard]] bool wasJustResized() const
+		{
+			return m_justResized;
+		}
+		void resetResized()
+		{
+			m_resized = false;
+		}
 		
 		void setWidth(uint32_t width) override;
 		void setHeight(uint32_t height) override;
@@ -93,7 +105,7 @@ namespace digbuild::platform::desktop
 		{
 			return *m_context;
 		}
-
+		
 		vk::UniqueSurfaceKHR createVulkanSurface(const vk::Instance& instance) const;
 		static std::vector<const char*> getSurfaceExtensions();
 
@@ -109,7 +121,7 @@ namespace digbuild::platform::desktop
 		std::unique_ptr<RenderContext> m_context;
 		uint32_t m_width, m_height;
 		std::string m_title;
-		bool m_fullscreen, m_visible = false;
+		bool m_fullscreen, m_visible, m_justResized, m_resized = false;
 
 		bool m_close = false;
 

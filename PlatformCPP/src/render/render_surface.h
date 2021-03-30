@@ -27,6 +27,7 @@ namespace digbuild::platform::render
 		[[nodiscard]] virtual std::string getTitle() const = 0;
 		[[nodiscard]] virtual bool isFullscreen() const = 0;
 		[[nodiscard]] virtual bool isVisible() const = 0;
+		[[nodiscard]] virtual bool isResized() const = 0;
 
 		virtual void setWidth(uint32_t width) { }
 		virtual void setHeight(uint32_t height) { }

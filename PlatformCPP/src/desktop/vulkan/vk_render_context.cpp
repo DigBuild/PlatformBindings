@@ -71,7 +71,7 @@ namespace digbuild::platform::desktop::vulkan
 	}
 
 	RenderContext::RenderContext(
-		const RenderSurface& surface, 
+		RenderSurface& surface, 
 		std::shared_ptr<VulkanContext>&& context,
 		vk::UniqueSurfaceKHR&& vkSurface,
 		render::RenderSurfaceUpdateFunction update
@@ -171,9 +171,10 @@ namespace digbuild::platform::desktop::vulkan
 		m_context->wait(m_inFlightFence[m_currentFrame]);
 
 		const auto acquireResult = m_context->acquireNextImage(*m_swapChain, m_imageAvailableSemaphore[m_currentFrame]);
-		if (acquireResult.result == vk::Result::eErrorOutOfDateKHR)
+		if (acquireResult.result == vk::Result::eErrorOutOfDateKHR || m_surface.wasJustResized())
 		{
-			// TODO: recreate live resources
+			m_context->waitIdle();
+			createSwapchain();
 			return;
 		}
 		m_imageIndex = acquireResult.value;
@@ -183,8 +184,9 @@ namespace digbuild::platform::desktop::vulkan
 
 		// Call user-provided update function
 		m_update(m_surface, *this);
-
+		
 		visitTicking();
+		m_surface.resetResized();
 
 		if (m_inFlightImages[m_imageIndex] != NULL_FENCE)
 			m_context->wait(m_inFlightImages[m_imageIndex]);
@@ -206,7 +208,11 @@ namespace digbuild::platform::desktop::vulkan
 			m_imageIndex
 		);
 
-		// TODO: Check present result and potentially recreate all live resources
+		if (presentResult == vk::Result::eErrorOutOfDateKHR || presentResult == vk::Result::eSuboptimalKHR || m_surface.wasJustResized())
+		{
+			m_context->waitIdle();
+			createSwapchain();
+		}
 
 		m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
 	}

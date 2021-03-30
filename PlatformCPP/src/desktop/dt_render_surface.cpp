@@ -78,6 +78,8 @@ namespace digbuild::platform::desktop
 						window->m_width = width;
 						window->m_height = height;
 						window->m_visible = width != 0 && height != 0;
+						window->m_justResized = true;
+						window->m_resized = true;
 					}
 				);
 
@@ -157,6 +159,8 @@ namespace digbuild::platform::desktop
 						continue;
 					
 					m_context->update();
+
+					m_justResized = false;
 				}
 
 				// Manually terminate the context before the window closes

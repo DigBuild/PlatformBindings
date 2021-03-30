@@ -29,7 +29,7 @@ namespace digbuild::platform::desktop::vulkan
 	{
 	public:
 		explicit RenderContext(
-			const RenderSurface& surface,
+			RenderSurface& surface,
 			std::shared_ptr<VulkanContext>&& context,
 			vk::UniqueSurfaceKHR&& vkSurface,
 			render::RenderSurfaceUpdateFunction update
@@ -130,7 +130,7 @@ namespace digbuild::platform::desktop::vulkan
 		void addTicking(std::weak_ptr<CommandBuffer> resource);
 		void visitTicking();
 		
-		const RenderSurface& m_surface;
+		RenderSurface& m_surface;
 		const std::shared_ptr<VulkanContext> m_context;
 		const vk::UniqueSurfaceKHR m_vkSurface;
 		const render::RenderSurfaceUpdateFunction m_update;
@@ -141,6 +141,7 @@ namespace digbuild::platform::desktop::vulkan
 		std::shared_ptr<Framebuffer> m_framebuffer;
 		util::StagingResource<vk::CommandBuffer> m_commandBuffer;
 		std::vector<RenderQueue> m_renderQueues;
+		bool m_resized = false;
 
 		uint32_t m_maxFramesInFlight;
 		util::StagingResource<vk::Semaphore> m_imageAvailableSemaphore;

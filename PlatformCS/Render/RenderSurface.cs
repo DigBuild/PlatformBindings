@@ -19,6 +19,7 @@ namespace DigBuild.Platform.Render
         void GetTitle(IntPtr handle, GetTitleDelegate del);
         bool IsFullscreen(IntPtr handle);
         bool IsVisible(IntPtr handle);
+        bool IsResized(IntPtr handle);
 
         void SetWidth(IntPtr handle, uint width);
         void SetHeight(IntPtr handle, uint height);
@@ -105,5 +106,6 @@ namespace DigBuild.Platform.Render
         }
 
         public bool Visible => RenderSurface.Bindings.IsVisible(_handle);
+        public bool Resized => RenderSurface.Bindings.IsResized(_handle);
     }
 }

@@ -37,6 +37,11 @@ extern "C" {
 		return handle_cast<RenderSurface>(instance)->isVisible();
 	}
 
+	DLLEXPORT bool dbp_render_surface_is_resized(const native_handle instance)
+	{
+		return handle_cast<RenderSurface>(instance)->isResized();
+	}
+
 	DLLEXPORT void dbp_render_surface_set_width(const native_handle instance, const uint32_t width)
 	{
 		handle_cast<RenderSurface>(instance)->setWidth(width);
