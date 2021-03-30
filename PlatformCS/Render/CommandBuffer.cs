@@ -149,7 +149,7 @@ namespace DigBuild.Platform.Render
             _parent.Recording = false;
 
             var unpooled = _commands.Unpooled;
-            CommandBuffer.Bindings.Commit(_parent.Handle!, _contextPtr, _format.Handle, unpooled.Ptr, unpooled.Count);
+            CommandBuffer.Bindings.Commit(_parent.Handle!, _contextPtr, _format.Handle, ((INativeBuffer<CommandBufferCmd>)unpooled).Ptr, unpooled.Count);
             _commands.Dispose();
         }
 

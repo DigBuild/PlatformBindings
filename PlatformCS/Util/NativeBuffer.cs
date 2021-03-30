@@ -72,6 +72,8 @@ namespace DigBuild.Platform.Util
 
     public interface INativeBuffer<T> : IEnumerable<T> where T : unmanaged
     {
+        internal IntPtr Ptr { get; }
+
         public uint Capacity { get; }
         public uint Count { get; }
 
@@ -96,8 +98,8 @@ namespace DigBuild.Platform.Util
         private uint _capacity, _count;
         private bool _valid = true;
 
-        internal IntPtr Ptr => _buf.Ptr;
-        private T* TypedPtr => (T*) Ptr.ToPointer();
+        IntPtr INativeBuffer<T>.Ptr => _buf.Ptr;
+        private T* TypedPtr => (T*) _buf.Ptr.ToPointer();
 
         internal NativeBuffer(NativeBuffer buf, bool borrowed)
         {
@@ -286,6 +288,8 @@ namespace DigBuild.Platform.Util
         private readonly ConcurrentQueue<NativeBuffer> _queue;
         private readonly NativeBuffer<T> _buffer;
         private bool _valid = true;
+
+        IntPtr INativeBuffer<T>.Ptr => _backingBuffer.Ptr;
 
         internal PooledNativeBuffer(NativeBuffer backingBuffer, ConcurrentQueue<NativeBuffer> queue)
         {

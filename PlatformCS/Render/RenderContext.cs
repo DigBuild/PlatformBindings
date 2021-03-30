@@ -151,26 +151,15 @@ namespace DigBuild.Platform.Render
             );
 
         public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
-            NativeBuffer<TVertex> initialData
+            INativeBuffer<TVertex> initialData
         ) where TVertex : unmanaged
             => new(this, initialData);
 
         public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
             out VertexBufferWriter<TVertex> writer,
-            NativeBuffer<TVertex>? initialData = null
+            INativeBuffer<TVertex>? initialData = null
         ) where TVertex : unmanaged
             => new(this, initialData, out writer);
-
-        public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
-            PooledNativeBuffer<TVertex> initialData
-        ) where TVertex : unmanaged
-            => CreateVertexBuffer(initialData.Unpooled);
-
-        public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
-            out VertexBufferWriter<TVertex> writer,
-            PooledNativeBuffer<TVertex> initialData
-        ) where TVertex : unmanaged
-            => CreateVertexBuffer(out writer, initialData.Unpooled);
 
         public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
             UniformHandle<TUniform> uniform
@@ -179,15 +168,9 @@ namespace DigBuild.Platform.Render
 
         public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
             UniformHandle<TUniform> uniform,
-            NativeBuffer<TUniform> initialData
+            INativeBuffer<TUniform> initialData
         ) where TUniform : unmanaged, IUniform<TUniform>
             => new UniformBufferBuilder<TUniform>(this, uniform, initialData);
-
-        public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
-            UniformHandle<TUniform> uniform,
-            PooledNativeBuffer<TUniform> initialData
-        ) where TUniform : unmanaged, IUniform<TUniform>
-            => CreateUniformBuffer(uniform, initialData.Unpooled);
 
         public TextureSamplerBuilder CreateTextureSampler(
             TextureFiltering minFiltering = TextureFiltering.Linear,

@@ -30,7 +30,7 @@ namespace DigBuild.Platform.Render
     {
         internal NativeHandle Handle = null!;
 
-        public void Write(NativeBuffer<TVertex> buffer)
+        public void Write(INativeBuffer<TVertex> buffer)
         {
             VertexBuffer.Bindings.Write(
                 Handle,
@@ -45,16 +45,16 @@ namespace DigBuild.Platform.Render
     public readonly ref struct VertexBufferBuilder<TVertex> where TVertex : unmanaged
     {
         private readonly RenderContext _ctx;
-        private readonly NativeBuffer<TVertex>? _initialData;
+        private readonly INativeBuffer<TVertex>? _initialData;
         private readonly VertexBufferWriter<TVertex>? _writer;
 
-        internal VertexBufferBuilder(RenderContext ctx, NativeBuffer<TVertex>? initialData)
+        internal VertexBufferBuilder(RenderContext ctx, INativeBuffer<TVertex>? initialData)
         {
             _ctx = ctx;
             _initialData = initialData;
             _writer = null;
         }
-        internal VertexBufferBuilder(RenderContext ctx, NativeBuffer<TVertex>? initialData, out VertexBufferWriter<TVertex> writer)
+        internal VertexBufferBuilder(RenderContext ctx, INativeBuffer<TVertex>? initialData, out VertexBufferWriter<TVertex> writer)
         {
             _ctx = ctx;
             _initialData = initialData;
