@@ -19,19 +19,12 @@ namespace DigBuild.Platform.Resource
         {
         }
 
-        IReadOnlySet<ResourceName> GetAndClearModifiedResources()
+        public IReadOnlySet<ResourceName> GetAndClearModifiedResources()
         {
-            GetAndClearModifiedResourcesDelegate GetDelegate(int i)
-            {
-                return () =>
-                {
-                    if (i >= _resourceProviders.Count)
-                        return ImmutableHashSet<ResourceName>.Empty;
-                    return _resourceProviders[i].GetAndClearModifiedResources(GetDelegate(i + 1));
-                };
-            }
-
-            return GetDelegate(0)();
+            var resources = new HashSet<ResourceName>();
+            for (var i = _resourceProviders.Count - 1; i >= 0; i--)
+                _resourceProviders[i].AddAndClearModifiedResources(resources);
+            return resources;
         }
 
         public IResource? GetResource(string domain, string path)

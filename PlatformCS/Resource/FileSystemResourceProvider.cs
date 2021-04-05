@@ -9,7 +9,7 @@ namespace DigBuild.Platform.Resource
     {
         private readonly IReadOnlyDictionary<string, string> _contentRoots;
         private readonly ImmutableList<FileSystemWatcher> _watchers;
-        private HashSet<ResourceName> _modifiedResources = new();
+        private readonly HashSet<ResourceName> _modifiedResources = new();
 
         public FileSystemResourceProvider(IReadOnlyDictionary<string, string> contentRoots, bool watch = false)
         {
@@ -26,16 +26,31 @@ namespace DigBuild.Platform.Resource
             {
                 var watcher = new FileSystemWatcher(rootDir)
                 {
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.CreationTime | NotifyFilters.Attributes,
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.CreationTime | NotifyFilters.FileName | NotifyFilters.Attributes,
                     IncludeSubdirectories = true,
                     EnableRaisingEvents = true
                 };
                 watchers.Add(watcher);
-                watcher.Changed += (_, args) =>
+
+                void OnEvent(object _, FileSystemEventArgs args)
                 {
-                    if (args.Name == null) return;
-                    _modifiedResources.Add(new ResourceName(domain, args.Name));
-                };
+                    if (args.Name == null || args.Name.Contains('~')) return;
+                    if (Directory.Exists(args.FullPath)) return;
+                    _modifiedResources.Add(new ResourceName(domain, args.Name.Replace('\\', '/')));
+                }
+                void OnRenamed(object _, RenamedEventArgs args)
+                {
+                    if (args.OldName == null || args.Name == null) return;
+                    if (!args.OldName.Contains('~'))
+                        _modifiedResources.Add(new ResourceName(domain, args.OldName.Replace('\\', '/')));
+                    if (!args.Name.Contains('~'))
+                        _modifiedResources.Add(new ResourceName(domain, args.Name.Replace('\\', '/')));
+                }
+
+                watcher.Created += OnEvent;
+                watcher.Changed += OnEvent;
+                watcher.Renamed += OnRenamed;
+                watcher.Deleted += OnEvent;
             }
             _watchers = watchers.ToImmutableList();
         }
@@ -51,26 +66,25 @@ namespace DigBuild.Platform.Resource
             GC.SuppressFinalize(this);
         }
 
-        public IReadOnlySet<ResourceName> GetAndClearModifiedResources(GetAndClearModifiedResourcesDelegate parent)
+        public void AddAndClearModifiedResources(ISet<ResourceName> resources)
         {
-            HashSet<ResourceName> names;
-            (names, _modifiedResources) = (_modifiedResources, new HashSet<ResourceName>());
-            names.UnionWith(parent());
-            return names.ToImmutableHashSet();
+            foreach (var resource in _modifiedResources)
+                resources.Add(resource);
+            _modifiedResources.Clear();
         }
 
         public IResource? GetResource(ResourceName name, GetResourceDelegate parent)
         {
-            if (_contentRoots.TryGetValue(name.Domain, out var rootDir))
-            {
-                var fullPath = Path.GetFullPath(
-                    Path.TrimEndingDirectorySeparator(rootDir) +
-                    Path.DirectorySeparatorChar +
-                    name.Path
-                );
-                if (File.Exists(fullPath))
-                    return new Resource(fullPath, name, File.GetLastWriteTime(fullPath));
-            }
+            if (!_contentRoots.TryGetValue(name.Domain, out var rootDir))
+                return parent(name);
+
+            var fullPath = Path.GetFullPath(
+                Path.TrimEndingDirectorySeparator(rootDir) +
+                Path.DirectorySeparatorChar +
+                name.Path
+            );
+            if (File.Exists(fullPath))
+                return new Resource(fullPath, name, File.GetLastWriteTime(fullPath));
 
             return parent(name);
         }

@@ -2,12 +2,11 @@
 
 namespace DigBuild.Platform.Resource
 {
-    public delegate IReadOnlySet<ResourceName> GetAndClearModifiedResourcesDelegate();
     public delegate IResource? GetResourceDelegate(ResourceName name);
 
     public interface IResourceProvider
     {
-        IReadOnlySet<ResourceName> GetAndClearModifiedResources(GetAndClearModifiedResourcesDelegate parent);
+        void AddAndClearModifiedResources(ISet<ResourceName> resources);
         IResource? GetResource(ResourceName name, GetResourceDelegate parent);
     }
 }
