@@ -87,19 +87,14 @@ namespace digbuild::platform::desktop::vulkan
 			return *m_framebuffers[getWriteIndex()];
 		}
 
-		void advance()
-		{
-			m_readIndex = getWriteIndex();
-			for (auto& texture : m_textures)
-				texture->m_readIndex = m_readIndex;
-		}
+		void advance();
 
 		void transitionTexturesPost(const vk::CommandBuffer& cmd);
 
 	private:
 		[[nodiscard]] uint32_t getWriteIndex() const
 		{
-			return (m_readIndex + 1) % m_framebuffers.size();
+			return (m_writeIndex + 1) % m_framebuffers.size();
 		}
 		
 		std::shared_ptr<VulkanContext> m_context;
@@ -109,7 +104,7 @@ namespace digbuild::platform::desktop::vulkan
 
 		std::vector<vk::UniqueFramebuffer> m_framebuffers;
 		std::vector<std::shared_ptr<FramebufferTexture>> m_textures;
-		uint32_t m_readIndex = 0;
+		uint32_t m_writeIndex = 0;
 		bool m_shouldTransition;
 	};
 }

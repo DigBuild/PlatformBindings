@@ -97,7 +97,7 @@ namespace digbuild::platform::desktop::vulkan
 		m_width(width),
 		m_height(height),
 		m_framebuffers(std::move(framebuffers)),
-		m_readIndex(static_cast<uint32_t>(imageViews.size() - 1)),
+		m_writeIndex(static_cast<uint32_t>(imageViews.size() - 1)),
 		m_shouldTransition(false)
 	{
 		m_textures.push_back(std::make_shared<FramebufferTexture>(
@@ -106,6 +106,13 @@ namespace digbuild::platform::desktop::vulkan
 			std::move(imageViews),
 			width, height
 		));
+	}
+
+	void Framebuffer::advance()
+	{
+		m_writeIndex = getWriteIndex();
+		for (auto& texture : m_textures)
+			texture->m_readIndex = (m_writeIndex + 1) % m_framebuffers.size();
 	}
 
 	void Framebuffer::transitionTexturesPost(const vk::CommandBuffer& cmd)
