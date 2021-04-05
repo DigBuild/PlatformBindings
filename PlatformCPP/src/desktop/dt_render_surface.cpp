@@ -2,7 +2,7 @@
 
 namespace digbuild::platform::desktop
 {
-	void InputContext::consumeKeyboardEvents(input::KeyboardEventConsumer consumer)
+	void InputContext::consumeKeyboardEvents(const input::KeyboardEventConsumer consumer)
 	{
 		while (!m_keyboardEvents.empty())
 		{
@@ -12,7 +12,7 @@ namespace digbuild::platform::desktop
 		}
 	}
 
-	void InputContext::consumeMouseEvents(input::MouseEventConsumer consumer)
+	void InputContext::consumeMouseEvents(const input::MouseEventConsumer consumer)
 	{
 		while (!m_mouseEvents.empty())
 		{
@@ -22,7 +22,7 @@ namespace digbuild::platform::desktop
 		}
 	}
 
-	void InputContext::consumeCursorEvents(input::CursorEventConsumer consumer)
+	void InputContext::consumeCursorEvents(const input::CursorEventConsumer consumer)
 	{
 		while (!m_cursorEvents.empty())
 		{
@@ -30,6 +30,23 @@ namespace digbuild::platform::desktop
 			consumer(evt.x, evt.y, evt.action);
 			m_cursorEvents.pop_front();
 		}
+	}
+
+	void InputContext::setCursorMode(const input::CursorMode mode)
+	{
+		m_cursorMode = mode;
+		glfwSetInputMode(
+			m_surface->m_window,
+			GLFW_CURSOR, 
+			mode == input::CursorMode::HIDDEN ? GLFW_CURSOR_HIDDEN :
+			mode == input::CursorMode::RAW ? GLFW_CURSOR_DISABLED :
+			GLFW_CURSOR_NORMAL
+		);
+	}
+
+	void InputContext::centerCursor()
+	{
+		glfwSetCursorPos(m_surface->m_window, m_surface->m_width / 2, m_surface->m_height / 2);
 	}
 
 	RenderSurface::RenderSurface(
@@ -43,6 +60,7 @@ namespace digbuild::platform::desktop
 	) :
 		m_glfwContext(glfwContext),
 		m_parent(std::move(parent)),
+		m_inputContext(InputContext(this)),
 		m_width(width),
 		m_height(height),
 		m_title(title),
@@ -66,6 +84,9 @@ namespace digbuild::platform::desktop
 
 				// Create the context once we have a window
 				m_context = contextFactory(*this, m_parent.get());
+
+				if (glfwRawMouseMotionSupported())
+					glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
 				glfwSetFramebufferSizeCallback(
 					m_window,

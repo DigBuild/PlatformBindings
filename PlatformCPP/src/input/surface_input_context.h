@@ -19,6 +19,12 @@ namespace digbuild::platform::input
 	{
 		MOVE,
 	};
+	enum CursorMode : uint8_t
+	{
+		NORMAL,
+		HIDDEN,
+		RAW
+	};
 	
 	using KeyboardEventConsumer = std::function<void(uint32_t code, KeyboardAction action)>;
 	using MouseEventConsumer = std::function<void(uint32_t button, MouseAction action)>;
@@ -37,5 +43,9 @@ namespace digbuild::platform::input
 		virtual void consumeKeyboardEvents(KeyboardEventConsumer consumer) = 0;
 		virtual void consumeMouseEvents(MouseEventConsumer consumer) = 0;
 		virtual void consumeCursorEvents(CursorEventConsumer consumer) = 0;
+		
+		[[nodiscard]] virtual CursorMode getCursorMode() const = 0;
+		virtual void setCursorMode(CursorMode mode) = 0;
+		virtual void centerCursor() = 0;
 	};
 }

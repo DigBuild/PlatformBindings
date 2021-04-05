@@ -27,5 +27,27 @@ extern "C" {
 	{
 		instance->consumeCursorEvents(callback);
 	}
+
+	DLLEXPORT CursorMode dbp_surface_input_context_get_cursor_mode(
+		SurfaceInputContext* instance
+	)
+	{
+		return instance->getCursorMode();
+	}
+
+	DLLEXPORT void dbp_surface_input_context_set_cursor_mode(
+		SurfaceInputContext* instance,
+		const CursorMode mode
+	)
+	{
+		instance->setCursorMode(mode);
+	}
+
+	DLLEXPORT void dbp_surface_input_context_center_cursor(
+		SurfaceInputContext* instance
+	)
+	{
+		instance->centerCursor();
+	}
 }
 

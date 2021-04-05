@@ -30,14 +30,29 @@ namespace digbuild::platform::desktop
 	class InputContext final : public input::SurfaceInputContext
 	{
 	public:
+		explicit InputContext(RenderSurface* surface) :
+			m_surface(surface)
+		{
+		}
+		
 		void consumeKeyboardEvents(input::KeyboardEventConsumer consumer) override;
 		void consumeMouseEvents(input::MouseEventConsumer consumer) override;
 		void consumeCursorEvents(input::CursorEventConsumer consumer) override;
+
+		
+		[[nodiscard]] input::CursorMode getCursorMode() const override
+		{
+			return m_cursorMode;
+		}
+		void setCursorMode(input::CursorMode mode) override;
+		void centerCursor() override;
 	
 	private:
+		RenderSurface* m_surface;
 		std::deque<KeyboardEvent> m_keyboardEvents;
 		std::deque<MouseEvent> m_mouseEvents;
 		std::deque<CursorEvent> m_cursorEvents;
+		input::CursorMode m_cursorMode = input::NORMAL;
 
 		friend class RenderSurface;
 	};
@@ -131,5 +146,6 @@ namespace digbuild::platform::desktop
 		std::mutex m_renderLock;
 
 		friend class GLFWContext;
+		friend class InputContext;
 	};
 }

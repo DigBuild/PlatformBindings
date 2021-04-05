@@ -14,9 +14,14 @@ namespace DigBuild.Platform.Input
         public void ConsumeKeyboardEvents(IntPtr ptr, KeyboardEventConsumerDelegate del);
         public void ConsumeMouseEvents(IntPtr ptr, MouseEventConsumerDelegate del);
         public void ConsumeCursorEvents(IntPtr ptr, CursorEventConsumerDelegate del);
+
+        CursorMode GetCursorMode(IntPtr ptr);
+        void SetCursorMode(IntPtr ptr, CursorMode mode);
+
+        void CenterCursor(IntPtr ptr);
     }
 
-    public readonly ref struct SurfaceInputContext
+    public sealed class SurfaceInputContext
     {
         private static readonly ISurfaceInputContextBindings Bindings = NativeLib.Get<ISurfaceInputContextBindings>();
         
@@ -41,6 +46,17 @@ namespace DigBuild.Platform.Input
         {
             Bindings.ConsumeCursorEvents(_ptr, del);
         }
+
+        public CursorMode CursorMode
+        {
+            get => Bindings.GetCursorMode(_ptr);
+            set => Bindings.SetCursorMode(_ptr, value);
+        }
+
+        public void CenterCursor()
+        {
+            Bindings.CenterCursor(_ptr);
+        }
     }
 
     public enum KeyboardAction : byte
@@ -60,5 +76,12 @@ namespace DigBuild.Platform.Input
     public enum CursorAction : byte
     {
         Move,
+    }
+
+    public enum CursorMode : byte
+    {
+        Normal,
+        Hidden,
+        Raw
     }
 }
