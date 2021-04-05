@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using AdvancedDLSupport;
 
 namespace DigBuild.Platform.Util
@@ -230,44 +231,22 @@ namespace DigBuild.Platform.Util
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private T GetUnsafe(uint i)
+        {
+            return TypedPtr[i];
+        }
+
         public IEnumerator<T> GetEnumerator()
         {
             if (!_valid)
                 throw new ObjectDisposedException(nameof(NativeBuffer<T>));
-            return new Enumerator(this);
+            
+            for (var i = 0u; i < Count; i++)
+                yield return GetUnsafe(i);
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        private class Enumerator : IEnumerator<T>
-        {
-            private readonly NativeBuffer<T> _buffer;
-            private uint _index;
-
-            public Enumerator(NativeBuffer<T> buffer)
-            {
-                _buffer = buffer;
-            }
-
-            public bool MoveNext()
-            {
-                _index++;
-                return _index >= _buffer.Count;
-            }
-
-            public void Reset()
-            {
-                _index = 0;
-            }
-
-            public T Current => _buffer[_index];
-
-            object IEnumerator.Current => Current;
-
-            public void Dispose()
-            {
-            }
-        }
     }
 
     public sealed class NativeBufferPool
