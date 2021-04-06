@@ -59,7 +59,7 @@ namespace DigBuild.Platform.Resource
 
         public T? Get<T>(ResourceName name) where T : class, ICustomResource
         {
-            return CustomResource<T>.Load(name, this);
+            return CustomResource<T>.Load(this, name);
         }
         
         public bool TryGet<T>(string domain, string path, [NotNullWhen(true)] out T? resource) where T : class, ICustomResource

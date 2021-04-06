@@ -8,26 +8,26 @@ using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Render
 {
-    public abstract class Shader
+    public abstract class ShaderBase
     {
         internal readonly NativeHandle Handle;
         internal readonly ShaderType ShaderType;
 
-        internal Shader(NativeHandle handle, ShaderType shaderType)
+        internal ShaderBase(NativeHandle handle, ShaderType shaderType)
         {
             Handle = handle;
             ShaderType = shaderType;
         }
     }
 
-    public sealed class VertexShader : Shader
+    public sealed class VertexShader : ShaderBase
     {
         internal VertexShader(NativeHandle handle) : base(handle, ShaderType.Vertex)
         {
         }
     }
 
-    public sealed class FragmentShader : Shader
+    public sealed class FragmentShader : ShaderBase
     {
         internal FragmentShader(NativeHandle handle) : base(handle, ShaderType.Fragment)
         {
@@ -40,12 +40,12 @@ namespace DigBuild.Platform.Render
 
     internal interface IBindingHandle
     {
-        internal Shader Shader { set; }
+        internal ShaderBase Shader { set; }
     }
 
     public sealed class UniformHandle<T> : IBindingHandle where T : unmanaged, IUniform<T>
     {
-        internal Shader Shader { get; private set; } = null!;
+        internal ShaderBase Shader { get; private set; } = null!;
         internal readonly uint Binding;
 
         internal UniformHandle(uint binding)
@@ -53,7 +53,7 @@ namespace DigBuild.Platform.Render
             Binding = binding;
         }
 
-        Shader IBindingHandle.Shader
+        ShaderBase IBindingHandle.Shader
         {
             set => Shader = value;
         }
@@ -120,7 +120,7 @@ namespace DigBuild.Platform.Render
 
     public sealed class ShaderSamplerHandle : IBindingHandle
     {
-        internal Shader Shader { get; private set; } = null!;
+        internal ShaderBase Shader { get; private set; } = null!;
         internal readonly uint Binding;
 
         internal ShaderSamplerHandle(uint binding)
@@ -128,7 +128,7 @@ namespace DigBuild.Platform.Render
             Binding = binding;
         }
 
-        Shader IBindingHandle.Shader
+        ShaderBase IBindingHandle.Shader
         {
             set => Shader = value;
         }
@@ -139,7 +139,7 @@ namespace DigBuild.Platform.Render
         Vertex, Fragment
     }
 
-    public readonly ref struct ShaderBuilder<TShader> where TShader : Shader
+    public readonly ref struct ShaderBuilder<TShader> where TShader : ShaderBase
     {
         private sealed class Data
         {

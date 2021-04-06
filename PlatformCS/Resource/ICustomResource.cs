@@ -9,11 +9,11 @@ namespace DigBuild.Platform.Resource
         public ResourceName Name { get; }
     }
 
-    public static class CustomResource<T> where T : class, ICustomResource
+    internal static class CustomResource<T> where T : class, ICustomResource
     {
-        public delegate T LoadDelegate(ResourceName name, ResourceManager manager);
+        internal delegate T? LoadDelegate(ResourceManager manager, ResourceName name);
 
-        public static readonly LoadDelegate Load;
+        internal static readonly LoadDelegate Load;
 
         static CustomResource()
         {
