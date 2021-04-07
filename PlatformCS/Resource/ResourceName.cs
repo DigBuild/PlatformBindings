@@ -41,5 +41,15 @@ namespace DigBuild.Platform.Resource
         {
             return $"{Domain}:{Path}";
         }
+
+        public static ResourceName? Parse(string str)
+        {
+            var firstColon = str.IndexOf(':');
+            if (firstColon == -1) return null;
+            var lastColon = str.LastIndexOf(':');
+            if (lastColon != firstColon) return null;
+
+            return new ResourceName(str[..firstColon], str[(firstColon + 1)..]);
+        }
     }
 }
