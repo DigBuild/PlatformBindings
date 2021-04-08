@@ -12,20 +12,31 @@ project "DigBuild.Platform.Native"
     includedirs {
         "vendor/glfw/include",
         "vendor/glad/include",
-        "vendor/vulkan/include",
-        os.getenv("VK_SDK_PATH") .. "/include" -- TODO: Change this to something that won't be relative
+        "vendor/vulkan/include"
     }
     libdirs {
-        "vendor/glfw/lib/lib-vc2019",
-        os.getenv("VK_SDK_PATH") .. "/lib" -- TODO: Change this to something that won't be relative
-    }
-    links {
-        "glfw3",
-        "vulkan-1",
+        "vendor/glfw/lib/lib-vc2019"
     }
     files {
         "vendor/glad/src/**.c"
     }
+
+    filter "system:windows"
+        includedirs {
+            (os.getenv("VK_SDK_PATH") or '') .. "/include"
+        }
+        libdirs {
+            (os.getenv("VK_SDK_PATH") or '') .. "/lib"
+        }
+        links {
+            "glfw3",
+            "vulkan-1"
+        }
+    filter "not system:windows"
+        links {
+            "glfw",
+            "vulkan"
+        }
     
     filter "configurations:Debug"
         links {
