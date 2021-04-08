@@ -1,17 +1,16 @@
-using DigBuildPlatformCS;
-using DigBuildPlatformCS.Render;
-using DigBuildPlatformCS.Resource;
-using DigBuildPlatformCS.Util;
-using DigBuildPlatformTest.GeneratedUniforms;
+using DigBuild.Platform.Render;
+using DigBuild.Platform.Resource;
+using DigBuild.Platform.Util;
+using DigBuild.Platform.Test.GeneratedUniforms;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using DigBuildPlatformCS.Input;
+using DigBuild.Platform.Input;
 
-namespace DigBuildPlatformTest
+namespace DigBuild.Platform.Test
 {
     public struct Vertex
     {
@@ -84,9 +83,10 @@ namespace DigBuildPlatformTest
             RenderPipeline<Vertex> mainPipeline = context.CreatePipeline<Vertex>(
                 vsMain, fsMain,
                 mainRenderStage,
-                Topology.Triangles,
-                depthTest: new DepthTest(true, CompareOperation.LessOrEqual, true)
-            ).WithStandardBlending(colorAttachment);
+                Topology.Triangles
+            )
+                .WithStandardBlending(colorAttachment)
+                .WithDepthTest(CompareOperation.LessOrEqual, true);
 
             // Secondary geometry pipeline for compositing
             VertexShader vsComp = context.CreateVertexShader(vsCompResource);
@@ -144,20 +144,22 @@ namespace DigBuildPlatformTest
 
             // Record commandBuffers
             MainCommandBuffer = context.CreateCommandBuffer();
-            var mcmd = MainCommandBuffer.BeginRecording(framebufferFormat, bufferPool);
-            mcmd.SetViewportAndScissor(Framebuffer);
-            mcmd.Using(mainPipeline, UniformBuffer, 0);
-            mcmd.Draw(mainPipeline, mainVertexBuffer);
-            mcmd.Commit(context);
+            using (var cmd = MainCommandBuffer.Record(context, framebufferFormat, bufferPool))
+            {
+                cmd.SetViewportAndScissor(Framebuffer);
+                cmd.Using(mainPipeline, UniformBuffer, 0);
+                cmd.Draw(mainPipeline, mainVertexBuffer);
+            }
 
             CompCommandBuffer = context.CreateCommandBuffer();
-            var ccmd = CompCommandBuffer.BeginRecording(surface.Format, bufferPool);
-            ccmd.SetViewportAndScissor(surface);
-            ccmd.Using(compPipeline, fbTextureBinding); // Framebuffer
-            ccmd.Draw(compPipeline, compVertexBuffer);
-            ccmd.Using(compPipeline, overlayTextureBinding); // Overlay
-            ccmd.Draw(compPipeline, compVertexBuffer);
-            ccmd.Commit(context);
+            using (var cmd = CompCommandBuffer.Record(context, surface.Format, bufferPool))
+            {
+                cmd.SetViewportAndScissor(surface);
+                cmd.Using(compPipeline, fbTextureBinding); // Framebuffer
+                cmd.Draw(compPipeline, compVertexBuffer);
+                cmd.Using(compPipeline, overlayTextureBinding); // Overlay
+                cmd.Draw(compPipeline, compVertexBuffer);
+            }
         }
     }
 
