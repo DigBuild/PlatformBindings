@@ -1,4 +1,5 @@
 ﻿#include "dt_render_surface.h"
+#include <atomic>
 
 namespace digbuild::platform::desktop
 {

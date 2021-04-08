@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "vk_context.h"
+#include "vk_framebuffer_format.h"
 #include "../../render/command_buffer.h"
 #include "../../render/uniform_buffer.h"
 

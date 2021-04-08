@@ -1,4 +1,5 @@
 ﻿#include "dt_global_input_context.h"
+#include <algorithm>
 #include <GLFW.h>
 
 #include "dt_controller.h"
