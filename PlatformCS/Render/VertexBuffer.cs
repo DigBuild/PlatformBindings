@@ -38,8 +38,6 @@ namespace DigBuild.Platform.Render
                 buffer.Count
             );
         }
-
-        public void Write(PooledNativeBuffer<TVertex> buffer) => Write(buffer.Unpooled);
     }
 
     public readonly ref struct VertexBufferBuilder<TVertex> where TVertex : unmanaged

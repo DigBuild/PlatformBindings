@@ -82,6 +82,8 @@ namespace DigBuild.Platform.Util
         public void Add(params T[] values);
         public void Add(IEnumerable<T> values);
 
+        public Span<T> Add(uint amount);
+
         public void Set(uint index, T value);
         public void Set(uint index, params T[] values);
 
@@ -177,6 +179,18 @@ namespace DigBuild.Platform.Util
                 TypedPtr[_count] = v;
                 _count++;
             }
+        }
+
+        public Span<T> Add(uint amount)
+        {
+            if (!_valid)
+                throw new ObjectDisposedException(nameof(NativeBuffer<T>));
+            if (_count + amount >= _capacity)
+                Reserve(_capacity + amount);
+
+            var span = new Span<T>(TypedPtr + _count, (int) amount);
+            _count += amount;
+            return span;
         }
 
         public void Set(uint index, T value)
@@ -335,6 +349,13 @@ namespace DigBuild.Platform.Util
             if (!_valid)
                 throw new ObjectDisposedException(nameof(PooledNativeBuffer<T>));
             _buffer.Add(values);
+        }
+
+        public Span<T> Add(uint amount)
+        {
+            if (!_valid)
+                throw new ObjectDisposedException(nameof(PooledNativeBuffer<T>));
+            return _buffer.Add(amount);
         }
 
         public void Set(uint index, T value)
