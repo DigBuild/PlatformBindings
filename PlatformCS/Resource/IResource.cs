@@ -10,6 +10,8 @@ namespace DigBuild.Platform.Resource
 
         DateTime LastEdited { get; }
 
+        string? FileSystemPath { get; }
+
         Stream OpenStream();
         byte[] ReadAllBytes();
     }
@@ -19,6 +21,8 @@ namespace DigBuild.Platform.Resource
         public abstract ResourceName Name { get; }
 
         public abstract DateTime LastEdited { get; }
+
+        public virtual string? FileSystemPath => null;
 
         public abstract Stream OpenStream();
 

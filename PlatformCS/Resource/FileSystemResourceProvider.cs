@@ -102,6 +102,8 @@ namespace DigBuild.Platform.Resource
                 LastEdited = lastEdited;
             }
 
+            public override string? FileSystemPath => _path;
+
             public override Stream OpenStream()
             {
                 return File.OpenRead(_path);
