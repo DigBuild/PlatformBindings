@@ -86,6 +86,12 @@ namespace digbuild::platform::desktop::vulkan
 
 		m_leftoverWrites--;
 		m_readIndex = writeIndex;
+
+		if (m_leftoverWrites == 0)
+		{
+			m_uniformData.clear();
+			m_uniformData.shrink_to_fit();
+		}
 	}
 
 	void UniformBuffer::write(const std::vector<uint8_t>& data)
