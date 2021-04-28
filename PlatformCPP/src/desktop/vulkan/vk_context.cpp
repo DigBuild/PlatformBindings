@@ -41,19 +41,6 @@ namespace digbuild::platform::desktop::vulkan
 		};
 	}
 
-	uint32_t findMemoryType(const vk::PhysicalDevice& device, const uint32_t memoryTypeBits, const vk::MemoryPropertyFlags memoryProperties)
-	{
-		const auto properties = device.getMemoryProperties();
-		for (uint32_t i = 0; i < properties.memoryTypeCount; i++)
-		{
-			if ((memoryTypeBits & (1 << i)) && (properties.memoryTypes[i].propertyFlags & memoryProperties) == memoryProperties)
-			{
-				return i;
-			}
-		}
-		throw std::runtime_error("Failed to find suitable memory type.");
-	}
-
 	VKAPI_ATTR VkBool32 VKAPI_CALL logDebugMessage(
 		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 		const VkDebugUtilsMessageTypeFlagsEXT messageTypes,
@@ -112,6 +99,7 @@ namespace digbuild::platform::desktop::vulkan
 	VulkanContext::~VulkanContext()
 	{
 		waitIdle();
+		m_memoryAllocator.destroy();
 	}
 
 	bool VulkanContext::initializeOrValidateDeviceCompatibility(const vk::SurfaceKHR& surface)
@@ -142,6 +130,13 @@ namespace digbuild::platform::desktop::vulkan
 		
 		m_commandPool = util::createCommandPool(*m_device, m_familyIndices.graphicsFamily.value());
 		m_pipelineCache = util::createPipelineCache(*m_device);
+		
+		m_memoryAllocator = vma::createAllocator({
+			{}, m_physicalDevice, *m_device,
+			0, nullptr, nullptr,
+			0, nullptr, nullptr, nullptr,
+			*m_instance, VK_API_VERSION_1_0
+		});
 
 		m_deviceInitialized = true;
 		return true;
@@ -251,15 +246,14 @@ namespace digbuild::platform::desktop::vulkan
 			vk::ImageLayout::eUndefined
 		});
 
-		const auto memoryRequirements = m_device->getImageMemoryRequirements(*image);
-		auto memory = m_device->allocateMemoryUnique(vk::MemoryAllocateInfo{
-			memoryRequirements.size,
-			findMemoryType(m_physicalDevice, memoryRequirements.memoryTypeBits, memoryProperties)
+		const auto memoryAllocation = m_memoryAllocator.allocateMemoryForImage(*image, {
+			{},
+			vma::MemoryUsage::eGpuOnly,
+			memoryProperties
 		});
+		m_memoryAllocator.bindImageMemory(memoryAllocation, *image);
 
-		m_device->bindImageMemory(*image, *memory, 0);
-
-		return std::make_unique<VulkanImage>(shared_from_this(), std::move(image), std::move(memory));
+		return std::make_unique<VulkanImage>(shared_from_this(), std::move(image), memoryAllocation);
 	}
 
 	[[nodiscard]] vk::UniqueImageView VulkanContext::createImageView(
@@ -406,13 +400,38 @@ namespace digbuild::platform::desktop::vulkan
 	)
 	{
 		auto buffer = m_device->createBufferUnique({ {}, size, usage, sharingMode });
-		const auto memRequirements = m_device->getBufferMemoryRequirements(*buffer);
-		auto memory = m_device->allocateMemoryUnique({
-			memRequirements.size,
-			findMemoryType(m_physicalDevice, memRequirements.memoryTypeBits, memoryProperties)
+		const auto memoryAllocation = m_memoryAllocator.allocateMemoryForBuffer(*buffer, {
+			{},
+			vma::MemoryUsage::eGpuOnly,
+			memoryProperties
 		});
-		m_device->bindBufferMemory(*buffer, *memory, 0);
-		return std::make_unique<VulkanBuffer>(shared_from_this(), std::move(buffer), std::move(memory), size);
+		m_memoryAllocator.bindBufferMemory(memoryAllocation, *buffer);
+		return std::make_unique<VulkanBuffer>(shared_from_this(), std::move(buffer), memoryAllocation, size);
+	}
+
+	[[nodiscard]] std::unique_ptr<VulkanBuffer> VulkanContext::createCpuToGpuTransferBuffer(
+		const void* data,
+		const uint32_t size
+	)
+	{
+		auto buffer = m_device->createBufferUnique({
+			{},
+			size,
+			vk::BufferUsageFlagBits::eTransferSrc,
+			vk::SharingMode::eExclusive
+		});
+		const auto memoryAllocation = m_memoryAllocator.allocateMemoryForBuffer(*buffer, {
+			{},
+			vma::MemoryUsage::eCpuToGpu,
+			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+		});
+		m_memoryAllocator.bindBufferMemory(memoryAllocation, *buffer);
+
+		const auto memory = m_memoryAllocator.mapMemory(memoryAllocation);
+		memcpy(memory, data, size);
+		m_memoryAllocator.unmapMemory(memoryAllocation);
+		
+		return std::make_unique<VulkanBuffer>(shared_from_this(), std::move(buffer), memoryAllocation, size);
 	}
 
 	vk::UniqueShaderModule VulkanContext::createShaderModule(

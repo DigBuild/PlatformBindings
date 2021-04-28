@@ -14,12 +14,22 @@ namespace digbuild::platform::desktop::vulkan
 			static_cast<uint32_t>(data.size()),
 			vk::BufferUsageFlagBits::eVertexBuffer,
 			vk::SharingMode::eExclusive,
-			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+			{}
 		);
 		
-		auto* memory = m_buffer->mapMemory();
-		memcpy(memory, data.data(), data.size());
-		m_buffer->unmapMemory();
+		auto buf = m_context->createCpuToGpuTransferBuffer(
+			data.data(),
+			static_cast<uint32_t>(data.size())
+		);
+
+		util::copyBufferToBufferImmediate(
+			*m_context->m_device,
+			*m_context->m_commandPool,
+			m_context->m_graphicsQueue,
+			buf->buffer(),
+			m_buffer->buffer(),
+			static_cast<uint32_t>(data.size())
+		);
 		
 		m_size = static_cast<uint32_t>(data.size() / vertexSize);
 	}
@@ -48,21 +58,31 @@ namespace digbuild::platform::desktop::vulkan
 	void DynamicVertexBuffer::write(const std::vector<uint8_t>& data)
 	{
 		const auto writeIndex = getWriteIndex();
-		auto& buf = m_buffers[writeIndex];
+		auto& buffer = m_buffers[writeIndex];
 
-		if (!buf || buf->size() < data.size())
+		if (!buffer || buffer->size() < data.size())
 		{
-			buf = m_context->createBuffer(
+			buffer = m_context->createBuffer(
 				static_cast<uint32_t>(data.size()),
 				vk::BufferUsageFlagBits::eVertexBuffer,
 				vk::SharingMode::eExclusive,
-				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+				{}
 			);
 		}
 		
-		auto* memory = buf->mapMemory();
-		memcpy(memory, data.data(), data.size());
-		buf->unmapMemory();
+		auto buf = m_context->createCpuToGpuTransferBuffer(
+			data.data(),
+			static_cast<uint32_t>(data.size())
+		);
+
+		util::copyBufferToBufferImmediate(
+			*m_context->m_device,
+			*m_context->m_commandPool,
+			m_context->m_graphicsQueue,
+			buf->buffer(),
+			buffer->buffer(),
+			static_cast<uint32_t>(data.size())
+		);
 
 		m_sizes[writeIndex] = static_cast<uint32_t>(data.size() / m_vertexSize);
 

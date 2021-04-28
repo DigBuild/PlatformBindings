@@ -20,16 +20,11 @@ namespace digbuild::platform::desktop::vulkan
 			vk::MemoryPropertyFlagBits::eDeviceLocal
 		);
 		m_imageView = m_context->createImageView(m_image->get(), fmt, vk::ImageAspectFlagBits::eColor);
-
-		auto buf = m_context->createBuffer(
-			static_cast<uint32_t>(data.size()),
-			vk::BufferUsageFlagBits::eTransferSrc,
-			vk::SharingMode::eExclusive,
-			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+		
+		auto buf = m_context->createCpuToGpuTransferBuffer(
+			data.data(),
+			static_cast<uint32_t>(data.size())
 		);
-		auto* mem = buf->mapMemory();
-		memcpy(mem, data.data(), data.size());
-		buf->unmapMemory();
 
 		util::directExecuteCommands(
 			*m_context->m_device,

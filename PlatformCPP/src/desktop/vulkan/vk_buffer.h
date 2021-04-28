@@ -12,10 +12,10 @@ namespace digbuild::platform::desktop::vulkan
 		VulkanBuffer(
 			std::shared_ptr<VulkanContext> context,
 			vk::UniqueBuffer buffer,
-			vk::UniqueDeviceMemory memory,
+			vma::Allocation memoryAllocation,
 			uint32_t size
 		);
-		~VulkanBuffer() = default;
+		~VulkanBuffer();
 		VulkanBuffer(const VulkanBuffer& other) = delete;
 		VulkanBuffer(VulkanBuffer&& other) noexcept = delete;
 		VulkanBuffer& operator=(const VulkanBuffer& other) = delete;
@@ -30,14 +30,14 @@ namespace digbuild::platform::desktop::vulkan
 			return *m_buffer;
 		}
 
-		[[nodiscard]] void* mapMemory();
-		void unmapMemory();
+		// [[nodiscard]] void* mapMemory();
+		// void unmapMemory();
 	
 	private:
 		std::shared_ptr<VulkanContext> m_context;
 		vk::UniqueBuffer m_buffer;
-		vk::UniqueDeviceMemory m_memory;
+		vma::Allocation m_memoryAllocation;
 		uint32_t m_size;
-		bool m_mappedMemory;
+		// bool m_mappedMemory;
 	};
 }

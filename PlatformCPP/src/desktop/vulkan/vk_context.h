@@ -113,6 +113,11 @@ namespace digbuild::platform::desktop::vulkan
 			vk::SharingMode sharingMode,
 			vk::MemoryPropertyFlags memoryProperties
 		);
+
+		[[nodiscard]] std::unique_ptr<VulkanBuffer> VulkanContext::createCpuToGpuTransferBuffer(
+			const void* data,
+			uint32_t size
+		);
 		
 		[[nodiscard]] vk::UniqueShaderModule createShaderModule(
 			const std::vector<uint8_t>& bytes
@@ -181,6 +186,7 @@ namespace digbuild::platform::desktop::vulkan
 		vk::PhysicalDevice m_physicalDevice;
 		util::QueueFamilyIndices m_familyIndices;
 		vk::UniqueDevice m_device;
+		vma::Allocator m_memoryAllocator;
 
 		vk::Queue m_graphicsQueue;
 		vk::Queue m_presentQueue;
@@ -193,5 +199,9 @@ namespace digbuild::platform::desktop::vulkan
 		friend class FramebufferFormat;
 		friend class Framebuffer;
 		friend class StaticTexture;
+		friend class VulkanImage;
+		friend class StaticVertexBuffer;
+		friend class DynamicVertexBuffer;
+		friend class UniformBuffer;
 	};
 }

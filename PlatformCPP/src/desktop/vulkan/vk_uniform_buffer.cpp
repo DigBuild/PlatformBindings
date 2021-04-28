@@ -35,20 +35,27 @@ namespace digbuild::platform::desktop::vulkan
 			m_readIndex = writeIndex;
 			return;
 		}
+
+		if (m_uniformData.empty())
+		{
+			m_leftoverWrites--;
+			m_readIndex = writeIndex;
+			return;
+		}
 		
-		auto& buf = m_buffers[writeIndex];
+		auto& buffer = m_buffers[writeIndex];
 		const auto& binding = m_shader->getBindings()[m_binding];
 		
-		if (!buf || buf->size() < m_uniformData.size())
+		if (!buffer || buffer->size() < m_uniformData.size())
 		{
-			buf = m_context->createBuffer(
+			buffer = m_context->createBuffer(
 				static_cast<uint32_t>(m_uniformData.size()),
 				vk::BufferUsageFlagBits::eUniformBuffer,
 				vk::SharingMode::eExclusive,
-				vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
+				{}
 			);
 
-			const vk::DescriptorBufferInfo bufferInfo{ buf->buffer(), 0, binding.size };
+			const vk::DescriptorBufferInfo bufferInfo{ buffer->buffer(), 0, binding.size };
 			const vk::WriteDescriptorSet write{
 				*m_descriptorSets[writeIndex],
 				m_binding,
@@ -62,10 +69,20 @@ namespace digbuild::platform::desktop::vulkan
 
 			m_context->updateDescriptorSets({ write }, {});
 		}
+		
+		auto buf = m_context->createCpuToGpuTransferBuffer(
+			m_uniformData.data(),
+			static_cast<uint32_t>(m_uniformData.size())
+		);
 
-		void* memory = buf->mapMemory();
-		memcpy(memory, m_uniformData.data(), m_uniformData.size());
-		buf->unmapMemory();
+		util::copyBufferToBufferImmediate(
+			*m_context->m_device,
+			*m_context->m_commandPool,
+			m_context->m_graphicsQueue,
+			buf->buffer(),
+			buffer->buffer(),
+			static_cast<uint32_t>(m_uniformData.size())
+		);
 
 		m_leftoverWrites--;
 		m_readIndex = writeIndex;

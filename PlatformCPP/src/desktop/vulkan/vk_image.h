@@ -12,14 +12,9 @@ namespace digbuild::platform::desktop::vulkan
 		VulkanImage(
 			std::shared_ptr<VulkanContext> context,
 			vk::UniqueImage image,
-			vk::UniqueDeviceMemory memory
-		) :
-			m_context(std::move(context)),
-			m_image(std::move(image)),
-			m_memory(std::move(memory))
-		{
-		}
-		~VulkanImage() = default;
+			vma::Allocation memoryAllocation
+		);
+		~VulkanImage();
 		VulkanImage(const VulkanImage& other) = delete;
 		VulkanImage(VulkanImage&& other) noexcept = delete;
 		VulkanImage& operator=(const VulkanImage& other) = delete;
@@ -33,6 +28,6 @@ namespace digbuild::platform::desktop::vulkan
 	private:
 		std::shared_ptr<VulkanContext> m_context;
 		vk::UniqueImage m_image;
-		vk::UniqueDeviceMemory m_memory;
+		vma::Allocation m_memoryAllocation;
 	};
 }

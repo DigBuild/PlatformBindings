@@ -105,6 +105,22 @@ namespace digbuild::platform::desktop::vulkan::util
 		const std::vector<ImageTransitionInfo>& transitions
 	);
 
+	void copyBufferToBuffer(
+		const vk::CommandBuffer& cmd,
+		const vk::Buffer& src,
+		const vk::Buffer& dst,
+		const uint32_t size
+	);
+
+	void copyBufferToBufferImmediate(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+		const vk::Queue& graphicsQueue,
+		const vk::Buffer& src,
+		const vk::Buffer& dst,
+		const uint32_t size
+	);
+
 	void copyBufferToImage(
 		const vk::CommandBuffer& cmd,
 		const vk::Buffer& buffer,
@@ -124,4 +140,6 @@ namespace digbuild::platform::desktop::vulkan::util
 	);
 
 	[[nodiscard]] vk::Format toVulkanFormat(render::TextureFormat format);
+
+	[[nodiscard]] uint32_t findMemoryType(const vk::PhysicalDevice& device, uint32_t memoryTypeBits, vk::MemoryPropertyFlags memoryProperties);
 }

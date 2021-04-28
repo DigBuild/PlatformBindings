@@ -364,6 +364,35 @@ namespace digbuild::platform::desktop::vulkan::util
 		);
 	}
 
+	void copyBufferToBuffer(
+		const vk::CommandBuffer& cmd,
+		const vk::Buffer& src,
+		const vk::Buffer& dst,
+		const uint32_t size
+	)
+	{
+		const auto regions = {vk::BufferCopy{0, 0, size}};
+		cmd.copyBuffer(src, dst, regions);
+	}
+
+	void copyBufferToBufferImmediate(
+		const vk::Device& device,
+		const vk::CommandPool& commandPool,
+		const vk::Queue& graphicsQueue,
+		const vk::Buffer& src,
+		const vk::Buffer& dst,
+		const uint32_t size
+	)
+	{
+		directExecuteCommands(
+			device, commandPool, graphicsQueue,
+			[&](vk::CommandBuffer& cmd)
+			{
+				copyBufferToBuffer(cmd, src, dst, size);
+			}
+		);
+	}
+
 	void copyBufferToImage(
 		const vk::CommandBuffer& cmd,
 		const vk::Buffer& buffer,
@@ -411,5 +440,18 @@ namespace digbuild::platform::desktop::vulkan::util
 			return vk::Format::eD32SfloatS8Uint;
 		}
 		throw std::runtime_error("Invalid type.");
+	}
+	
+	uint32_t findMemoryType(const vk::PhysicalDevice& device, const uint32_t memoryTypeBits, const vk::MemoryPropertyFlags memoryProperties)
+	{
+		const auto properties = device.getMemoryProperties();
+		for (uint32_t i = 0; i < properties.memoryTypeCount; i++)
+		{
+			if ((memoryTypeBits & (1 << i)) && (properties.memoryTypes[i].propertyFlags & memoryProperties) == memoryProperties)
+			{
+				return i;
+			}
+		}
+		throw std::runtime_error("Failed to find suitable memory type.");
 	}
 }
