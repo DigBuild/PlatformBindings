@@ -384,16 +384,12 @@ extern "C" {
 
 	DLLEXPORT native_handle dbp_render_context_create_uniform_buffer(
 		RenderContext* instance,
-		const native_handle shader,
-		const uint32_t binding,
 		const uint8_t* data,
 		const uint32_t dataLength
 	)
 	{
 		return make_native_handle(
 			instance->createUniformBuffer(
-				handle_share<Shader>(shader),
-				binding,
 				std::vector(data, data + dataLength)
 			)
 		);
@@ -412,24 +408,6 @@ extern "C" {
 				std::vector(data, data + static_cast<uint32_t>(vertexCount * vertexSize)),
 				vertexSize,
 				writable
-			)
-		);
-	}
-
-	DLLEXPORT native_handle dbp_render_context_create_texture_binding(
-		RenderContext* instance,
-		const native_handle shader,
-		const uint32_t binding,
-		const native_handle sampler,
-		const native_handle texture
-	)
-	{
-		return make_native_handle(
-			instance->createTextureBinding(
-				handle_share<Shader>(shader),
-				binding,
-				handle_share<TextureSampler>(sampler),
-				handle_share<Texture>(texture)
 			)
 		);
 	}

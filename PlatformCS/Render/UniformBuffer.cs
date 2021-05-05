@@ -58,8 +58,6 @@ namespace DigBuild.Platform.Render
                 new NativeHandle(
                     RenderContext.Bindings.CreateUniformBuffer(
                         builder._ctx.Ptr,
-                        builder._uniform.Shader.Handle,
-                        builder._uniform.Binding,
                         builder._initialData?.Ptr ?? IntPtr.Zero,
                         (uint)((builder._initialData?.Count ?? 0) * Marshal.SizeOf<T>())
                     )

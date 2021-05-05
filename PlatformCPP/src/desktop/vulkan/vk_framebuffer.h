@@ -32,7 +32,7 @@ namespace digbuild::platform::desktop::vulkan
 			return m_height;
 		}
 
-		[[nodiscard]] vk::ImageView& get() override
+		[[nodiscard]] const vk::ImageView& get() const override
 		{
 			return *m_imageViews[m_readIndex];
 		}

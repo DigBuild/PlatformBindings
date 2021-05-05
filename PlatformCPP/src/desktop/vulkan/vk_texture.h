@@ -8,7 +8,7 @@ namespace digbuild::platform::desktop::vulkan
 	class Texture : public render::Texture
 	{
 	public:
-		virtual vk::ImageView& get() = 0;
+		virtual const vk::ImageView& get() const = 0;
 	};
 
 	class StaticTexture : public Texture
@@ -30,7 +30,7 @@ namespace digbuild::platform::desktop::vulkan
 			return m_height;
 		}
 		
-		[[nodiscard]] vk::ImageView& get() override
+		[[nodiscard]] const vk::ImageView& get() const override
 		{
 			return *m_imageView;
 		}

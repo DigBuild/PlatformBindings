@@ -7,7 +7,7 @@
 #include "resource.h"
 #include "shader.h"
 #include "texture.h"
-#include "texture_binding.h"
+#include "texture_sampler.h"
 #include "uniform_buffer.h"
 #include "vertex_buffer.h"
 #include "../util/vecmath.h"
@@ -31,11 +31,21 @@ namespace digbuild::platform::render
 		virtual void bindUniform(
 			std::shared_ptr<RenderPipeline> pipeline,
 			std::shared_ptr<UniformBuffer> uniformBuffer,
+			std::shared_ptr<Shader> shader,
 			uint32_t binding
 		) = 0;
 		virtual void bindTexture(
 			std::shared_ptr<RenderPipeline> pipeline,
-			std::shared_ptr<TextureBinding> binding
+			std::shared_ptr<TextureSampler> sampler,
+			std::shared_ptr<Texture> texture,
+			std::shared_ptr<Shader> shader,
+			uint32_t binding
+		) = 0;
+		virtual void useUniform(
+			const std::shared_ptr<RenderPipeline>& pipeline,
+			std::shared_ptr<Shader> shader,
+			uint32_t binding,
+			uint32_t index
 		) = 0;
 		virtual void draw(
 			std::shared_ptr<RenderPipeline> pipeline,

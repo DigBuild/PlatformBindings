@@ -18,31 +18,44 @@ namespace digbuild::platform::desktop::vulkan
 			const render::VertexFormatDescriptor& vertexFormat,
 			const render::VertexFormatDescriptor& instanceFormat,
 			render::RenderState state,
-			const std::vector<render::BlendOptions>& blendOptions
+			const std::vector<render::BlendOptions>& blendOptions,
+			uint32_t stages
 		);
 
-		[[nodiscard]] vk::Pipeline& get()
+		[[nodiscard]] const vk::Pipeline& get() const
 		{
 			return *m_pipeline;
 		}
 
-		[[nodiscard]] vk::PipelineLayout& getLayout()
+		[[nodiscard]] const vk::PipelineLayout& getLayout() const
 		{
 			return *m_layout;
 		}
 
-		[[nodiscard]] uint32_t getLayoutOffset(const std::shared_ptr<Shader>& shader) const
+		[[nodiscard]] uint32_t getActualUniform(const std::shared_ptr<Shader>& shader, uint32_t binding) const;
+
+		[[nodiscard]] const vk::DescriptorSet& getDescriptorSet(const std::shared_ptr<Shader>& shader, const uint32_t binding, const uint32_t stage) const
 		{
-			return m_shaderLayoutOffsets.at(shader.get());
+			return *m_descriptorSets[getActualUniform(shader, binding)][stage];
 		}
-	
+
+		[[nodiscard]] uint32_t getUniformSize(const std::shared_ptr<Shader>& shader, const uint32_t binding) const
+		{
+			return m_bindingSizes[getActualUniform(shader, binding)];
+		}
+
 	private:
 		std::shared_ptr<VulkanContext> m_context;
 		std::shared_ptr<FramebufferFormat> m_format;
 		std::vector<std::shared_ptr<Shader>> m_shaders;
-		std::unordered_map<Shader*, uint32_t> m_shaderLayoutOffsets;
-		std::vector<vk::DescriptorSetLayout> m_descriptorSetLayouts;
+
+		std::vector<uint32_t> m_shaderOffsets;
+		std::vector<vk::UniqueDescriptorSetLayout> m_descriptorSetLayouts;
+		std::vector<vk::UniqueDescriptorPool> m_descriptorPools;
+		std::vector<std::vector<vk::UniqueDescriptorSet>> m_descriptorSets;
 		vk::UniquePipelineLayout m_layout;
+		std::vector<uint32_t> m_bindingSizes;
+		
 		vk::UniquePipeline m_pipeline;
 	};
 }

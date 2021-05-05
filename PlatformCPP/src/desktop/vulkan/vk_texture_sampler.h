@@ -17,7 +17,7 @@ namespace digbuild::platform::desktop::vulkan
 			uint32_t anisotropyLevel
 		);
 
-		[[nodiscard]] vk::Sampler& get()
+		[[nodiscard]] const vk::Sampler& get() const
 		{
 			return *m_sampler;
 		}

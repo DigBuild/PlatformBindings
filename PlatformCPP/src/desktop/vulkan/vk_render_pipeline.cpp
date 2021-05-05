@@ -297,6 +297,18 @@ namespace digbuild::platform::desktop::vulkan
 		return dynamicStates;
 	}
 	
+	vk::DescriptorType toVulkan(const render::ShaderBindingType type)
+	{
+		switch (type)
+		{
+		case render::ShaderBindingType::UNIFORM:
+			return vk::DescriptorType::eUniformBufferDynamic;
+		case render::ShaderBindingType::SAMPLER:
+			return vk::DescriptorType::eCombinedImageSampler;
+		}
+		throw std::runtime_error("Invalid type.");
+	}
+	
 	RenderPipeline::RenderPipeline(
 		std::shared_ptr<VulkanContext> context,
 		std::shared_ptr<FramebufferFormat> format,
@@ -305,7 +317,8 @@ namespace digbuild::platform::desktop::vulkan
 		const render::VertexFormatDescriptor& vertexFormat,
 		const render::VertexFormatDescriptor& instanceFormat,
 		const render::RenderState state,
-		const std::vector<render::BlendOptions>& blendOptions
+		const std::vector<render::BlendOptions>& blendOptions,
+		const uint32_t stages
 	) :
 		m_context(std::move(context)),
 		m_format(std::move(format)),
@@ -380,18 +393,28 @@ namespace digbuild::platform::desktop::vulkan
 		});
 		vk::PipelineDynamicStateCreateInfo dynamicStateCreateInfo{ {}, dynamicStates };
 		
-		uint32_t descriptorOffset = 0;
+		std::vector<vk::DescriptorSetLayout> layouts;
 		for (const auto& shader : m_shaders)
 		{
-			auto& layouts = shader->getDescriptorSetLayouts();
-			m_descriptorSetLayouts.insert(m_descriptorSetLayouts.end(), layouts.begin(), layouts.end());
-			
-			m_shaderLayoutOffsets.emplace(shader.get(), descriptorOffset);
-			descriptorOffset += static_cast<uint32_t>(layouts.size());
-		}
-		m_layout = m_context->m_device->createPipelineLayoutUnique({ {}, m_descriptorSetLayouts });
+			m_shaderOffsets.push_back(static_cast<uint32_t>(layouts.size()));
+			for (const auto& shaderBinding : shader->getBindings())
+			{
+				vk::DescriptorSetLayoutBinding binding{
+					0, toVulkan(shaderBinding.type), 1, shader->getStage()
+				};
+				auto setLayout = m_context->createDescriptorSetLayout({ binding });
+				auto pool = m_context->createDescriptorPool(stages, binding.descriptorType);
+				auto sets = m_context->createDescriptorSets(*pool, *setLayout, stages);
 
-		// TODO: Other layout / uniform stuff
+				layouts.push_back(*setLayout);
+				m_descriptorSetLayouts.push_back(std::move(setLayout));
+				m_descriptorPools.push_back(std::move(pool));
+				m_descriptorSets.push_back(std::move(sets));
+				m_bindingSizes.push_back(shaderBinding.size);
+			}
+		}
+		
+		m_layout = m_context->m_device->createPipelineLayoutUnique({ {}, layouts });
 
 		std::vector<vk::PipelineShaderStageCreateInfo> pipelineShaderStageCreateInfos;
 		for (const auto& shader : m_shaders)
@@ -415,5 +438,17 @@ namespace digbuild::platform::desktop::vulkan
 			nullptr,
 			-1
 		}).value;
+	}
+
+	uint32_t RenderPipeline::getActualUniform(const std::shared_ptr<Shader>& shader, const uint32_t binding) const
+	{
+		auto i = 0;
+		for (const auto& s : m_shaders)
+		{
+			if (s == shader)
+				return m_shaderOffsets[i] + binding;
+			i++;
+		}
+		return -1;
 	}
 }

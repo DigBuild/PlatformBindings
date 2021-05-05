@@ -18,7 +18,8 @@ namespace digbuild::platform::desktop::vulkan
 		
 		virtual void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) = 0;
 	};
 
@@ -30,7 +31,8 @@ namespace digbuild::platform::desktop::vulkan
 
 		void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) override;
 	private:
 		std::shared_ptr<FramebufferFormat> m_format;
@@ -42,7 +44,8 @@ namespace digbuild::platform::desktop::vulkan
 
 		void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) override;
 	};
 	class CBCmdSetViewportScissor final : public CBCmd
@@ -53,7 +56,8 @@ namespace digbuild::platform::desktop::vulkan
 
 		void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) override;
 	private:
 		std::shared_ptr<render::IRenderTarget> m_renderTarget;
@@ -66,7 +70,8 @@ namespace digbuild::platform::desktop::vulkan
 
 		void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) override;
 	private:
 		platform::util::Extents2D m_extents;
@@ -79,7 +84,8 @@ namespace digbuild::platform::desktop::vulkan
 
 		void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) override;
 	private:
 		platform::util::Extents2D m_extents;
@@ -90,20 +96,24 @@ namespace digbuild::platform::desktop::vulkan
 		explicit CBCmdBindUniform(
 			std::shared_ptr<render::RenderPipeline> pipeline,
 			std::shared_ptr<render::UniformBuffer> uniformBuffer,
+			std::shared_ptr<render::Shader> shader,
 			const uint32_t binding
 		) :
 			m_pipeline(std::move(pipeline)),
 			m_uniformBuffer(std::move(uniformBuffer)),
+			m_shader(std::move(shader)),
 			m_binding(binding)
 		{ }
 
 		void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) override;
 	private:
 		std::shared_ptr<render::RenderPipeline> m_pipeline;
 		std::shared_ptr<render::UniformBuffer> m_uniformBuffer;
+		std::shared_ptr<render::Shader> m_shader;
 		uint32_t m_binding;
 	};
 	class CBCmdBindTexture final : public CBCmd
@@ -111,19 +121,55 @@ namespace digbuild::platform::desktop::vulkan
 	public:
 		explicit CBCmdBindTexture(
 			std::shared_ptr<render::RenderPipeline> pipeline,
-			std::shared_ptr<render::TextureBinding> binding
+			std::shared_ptr<render::TextureSampler> sampler,
+			std::shared_ptr<render::Texture> texture,
+			std::shared_ptr<render::Shader> shader,
+			const uint32_t binding
 		) :
 			m_pipeline(std::move(pipeline)),
-			m_binding(std::move(binding))
+			m_sampler(std::move(sampler)),
+			m_texture(std::move(texture)),
+			m_shader(std::move(shader)),
+			m_binding(binding)
 		{ }
 
 		void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) override;
 	private:
 		std::shared_ptr<render::RenderPipeline> m_pipeline;
-		std::shared_ptr<render::TextureBinding> m_binding;
+		std::shared_ptr<render::TextureSampler> m_sampler;
+		std::shared_ptr<render::Texture> m_texture;
+		std::shared_ptr<render::Shader> m_shader;
+		uint32_t m_binding;
+	};
+	class CBCmdUseUniform final : public CBCmd
+	{
+	public:
+		explicit CBCmdUseUniform(
+			std::shared_ptr<render::RenderPipeline> pipeline,
+			std::shared_ptr<render::Shader> shader,
+			const uint32_t binding,
+			const uint32_t index
+		) :
+			m_pipeline(std::move(pipeline)),
+			m_shader(std::move(shader)),
+			m_binding(binding),
+			m_index(index)
+		{ }
+
+		void record(
+			vk::CommandBuffer& cmd,
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
+		) override;
+	private:
+		std::shared_ptr<render::RenderPipeline> m_pipeline;
+		std::shared_ptr<render::Shader> m_shader;
+		uint32_t m_binding;
+		uint32_t m_index;
 	};
 	class CBCmdDraw final : public CBCmd
 	{
@@ -140,7 +186,8 @@ namespace digbuild::platform::desktop::vulkan
 
 		void record(
 			vk::CommandBuffer& cmd,
-			std::vector<std::shared_ptr<render::Resource>>& resources
+			std::vector<std::shared_ptr<render::Resource>>& resources,
+			uint32_t stage
 		) override;
 	private:
 		std::shared_ptr<render::RenderPipeline> m_pipeline;
@@ -167,11 +214,21 @@ namespace digbuild::platform::desktop::vulkan
 		void bindUniform(
 			std::shared_ptr<render::RenderPipeline> pipeline,
 			std::shared_ptr<render::UniformBuffer> uniformBuffer,
+			std::shared_ptr<render::Shader> shader,
 			uint32_t binding
 		) override;
 		void bindTexture(
 			std::shared_ptr<render::RenderPipeline> pipeline,
-			std::shared_ptr<render::TextureBinding> binding
+			std::shared_ptr<render::TextureSampler> sampler,
+			std::shared_ptr<render::Texture> texture,
+			std::shared_ptr<render::Shader> shader,
+			uint32_t binding
+		) override;
+		void useUniform(
+			const std::shared_ptr<render::RenderPipeline>& pipeline,
+			std::shared_ptr<render::Shader> shader,
+			uint32_t binding,
+			uint32_t index
 		) override;
 		void draw(
 			std::shared_ptr<render::RenderPipeline> pipeline,

@@ -14,6 +14,7 @@ namespace digbuild::platform::render
 		SET_SCISSOR,
 		BIND_UNIFORM,
 		BIND_TEXTURE,
+		USE_UNIFORM,
 		DRAW
 	};
 
@@ -33,12 +34,23 @@ namespace digbuild::platform::render
 	{
 		const util::native_handle pipeline;
 		const util::native_handle uniformBuffer;
+		const util::native_handle shader;
 		const uint32_t binding;
 	};
 	struct CommandBufferCmdBindTextureC
 	{
 		const util::native_handle pipeline;
-		const util::native_handle binding;
+		const util::native_handle sampler;
+		const util::native_handle texture;
+		const util::native_handle shader;
+		const uint32_t binding;
+	};
+	struct CommandBufferCmdUseUniformC
+	{
+		const util::native_handle pipeline;
+		const util::native_handle shader;
+		const uint32_t binding;
+		const uint32_t index;
 	};
 	struct CommandBufferCmdDrawC
 	{
@@ -57,6 +69,7 @@ namespace digbuild::platform::render
 			const CommandBufferCmdSetScissorC cmdSetScissor;
 			const CommandBufferCmdBindUniformC cmdBindUniform;
 			const CommandBufferCmdBindTextureC cmdBindTexture;
+			const CommandBufferCmdUseUniformC cmdUseUniform;
 			const CommandBufferCmdDrawC cmdDraw;
 		};
 	};
@@ -99,13 +112,25 @@ extern "C" {
 				commandBuffer->bindUniform(
 					handle_share<RenderPipeline>(cmd.cmdBindUniform.pipeline),
 					handle_share<UniformBuffer>(cmd.cmdBindUniform.uniformBuffer),
+					handle_share<Shader>(cmd.cmdBindUniform.shader),
 					cmd.cmdBindUniform.binding
 				);
 				break;
 			case CommandBufferCmdTypeC::BIND_TEXTURE:
 				commandBuffer->bindTexture(
 					handle_share<RenderPipeline>(cmd.cmdBindTexture.pipeline),
-					handle_share<TextureBinding>(cmd.cmdBindTexture.binding)
+					handle_share<TextureSampler>(cmd.cmdBindTexture.sampler),
+					handle_share<Texture>(cmd.cmdBindTexture.texture),
+					handle_share<Shader>(cmd.cmdBindTexture.shader),
+					cmd.cmdBindTexture.binding
+				);
+				break;
+			case CommandBufferCmdTypeC::USE_UNIFORM:
+				commandBuffer->useUniform(
+					handle_share<RenderPipeline>(cmd.cmdUseUniform.pipeline),
+					handle_share<Shader>(cmd.cmdUseUniform.shader),
+					cmd.cmdUseUniform.binding,
+					cmd.cmdUseUniform.index
 				);
 				break;
 			case CommandBufferCmdTypeC::DRAW:

@@ -4,22 +4,11 @@ namespace digbuild::platform::desktop::vulkan
 {
 	UniformBuffer::UniformBuffer(
 		std::shared_ptr<VulkanContext> context,
-		std::shared_ptr<Shader> shader,
-		const uint32_t binding,
 		const uint32_t stages,
 		const std::vector<uint8_t>& initialData
 	) :
-		m_context(std::move(context)),
-		m_shader(std::move(shader)),
-		m_binding(binding)
+		m_context(std::move(context))
 	{
-		m_descriptorPool = m_context->createDescriptorPool(stages, vk::DescriptorType::eUniformBuffer);
-		m_descriptorSets = m_context->createDescriptorSets(
-			*m_descriptorPool,
-			m_shader->getDescriptorSetLayouts()[binding],
-			stages
-		);
-		
 		m_buffers.resize(stages);
 
 		if (!initialData.empty())
@@ -44,7 +33,6 @@ namespace digbuild::platform::desktop::vulkan
 		}
 		
 		auto& buffer = m_buffers[writeIndex];
-		const auto& binding = m_shader->getBindings()[m_binding];
 		
 		if (!buffer || buffer->size() < m_uniformData.size())
 		{
@@ -54,20 +42,6 @@ namespace digbuild::platform::desktop::vulkan
 				vk::SharingMode::eExclusive,
 				{}
 			);
-
-			const vk::DescriptorBufferInfo bufferInfo{ buffer->buffer(), 0, binding.size };
-			const vk::WriteDescriptorSet write{
-				*m_descriptorSets[writeIndex],
-				m_binding,
-				0,
-				1,
-				vk::DescriptorType::eUniformBufferDynamic,
-				nullptr,
-				&bufferInfo,
-				nullptr
-			};
-
-			m_context->updateDescriptorSets({ write }, {});
 		}
 		
 		auto buf = m_context->createCpuToGpuTransferBuffer(

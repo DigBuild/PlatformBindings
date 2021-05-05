@@ -42,7 +42,6 @@ namespace DigBuild.Platform.Render
         private readonly IntPtr _contextPtr;
         private readonly PooledNativeBuffer<CommandBufferCmd> _commands;
         private readonly Dictionary<IBindingHandle, (IUniformBuffer, uint)> _uniformBindings = new();
-        private readonly Dictionary<ShaderSamplerHandle, TextureBinding> _textureBindings = new();
         private bool _committed;
 
         internal CommandBufferRecorder(
@@ -85,38 +84,49 @@ namespace DigBuild.Platform.Render
             _commands.Add(new CommandBufferCmd.SetScissor(extents));
         }
 
-        public void Using<TUniform>(
+        public void Bind<TUniform>(
             IRenderPipeline pipeline,
-            UniformBuffer<TUniform> uniformBuffer,
-            uint index
+            UniformHandle<TUniform> handle,
+            UniformBuffer<TUniform> buffer
         ) where TUniform : unmanaged, IUniform<TUniform>
         {
             if (_committed)
                 throw new RecordingAlreadyCommittedException();
 
-            if (_uniformBindings.TryGetValue(uniformBuffer.UniformHandle, out var current) && current.Item1 == uniformBuffer && current.Item2 == index)
-                return;
-            _uniformBindings[uniformBuffer.UniformHandle] = (uniformBuffer, index);
+            // if (_uniformBindings.TryGetValue(uniformBuffer.UniformHandle, out var current) && current.Item1 == uniformBuffer && current.Item2 == index)
+            //     return;
+            // _uniformBindings[uniformBuffer.UniformHandle] = (uniformBuffer, index);
 
-            _commands.Add(new CommandBufferCmd.BindUniform(pipeline.Handle, uniformBuffer.Handle, index));
+            _commands.Add(new CommandBufferCmd.BindUniform(pipeline.Handle, buffer.Handle, handle.Shader.Handle, handle.Binding));
         }
 
-        public void Using(
+        public void Bind(
             IRenderPipeline pipeline,
-            TextureBinding binding
+            ShaderSamplerHandle handle,
+            TextureSampler sampler,
+            Texture texture
         )
         {
             if (_committed)
                 throw new RecordingAlreadyCommittedException();
+            
+            // if (_textureBindings.TryGetValue(binding.SamplerHandle, out var currentBinding) && currentBinding == binding)
+            //     return;
+            // _textureBindings[binding.SamplerHandle] = binding;
 
-            if (_textureBindings.TryGetValue(binding.SamplerHandle, out var currentBinding) && currentBinding == binding)
-                return;
-            _textureBindings[binding.SamplerHandle] = binding;
+            _commands.Add(new CommandBufferCmd.BindTexture(pipeline.Handle, sampler.Handle, texture.Handle, handle.Shader.Handle, handle.Binding));
+        }
 
-            _commands.Add(new CommandBufferCmd.BindTexture(
-                pipeline.Handle,
-                binding.Handle
-            ));
+        public void Using<TUniform>(
+            IRenderPipeline pipeline,
+            UniformHandle<TUniform> handle,
+            uint index
+        ) where TUniform : unmanaged, IUniform<TUniform>
+        {
+            if (_committed)
+                throw new RecordingAlreadyCommittedException();
+            
+            _commands.Add(new CommandBufferCmd.UseUniform(pipeline.Handle, handle.Shader.Handle, handle.Binding, index));
         }
 
         public void Draw<TVertex>(
@@ -166,6 +176,7 @@ namespace DigBuild.Platform.Render
         [FieldOffset(sizeof(Type))] private readonly SetScissor _setScissor;
         [FieldOffset(sizeof(Type))] private readonly BindUniform _bindUniform;
         [FieldOffset(sizeof(Type))] private readonly BindTexture _bindTexture;
+        [FieldOffset(sizeof(Type))] private readonly UseUniform _useUniform;
         [FieldOffset(sizeof(Type))] private readonly Draw _draw;
 
         private CommandBufferCmd(SetViewportScissor setViewportScissor) : this()
@@ -198,6 +209,12 @@ namespace DigBuild.Platform.Render
             _bindTexture = bindTexture;
         }
 
+        private CommandBufferCmd(UseUniform useUniform) : this()
+        {
+            _type = Type.UseUniform;
+            _useUniform = useUniform;
+        }
+
         private CommandBufferCmd(Draw draw) : this()
         {
             _type = Type.Draw;
@@ -209,6 +226,7 @@ namespace DigBuild.Platform.Render
         public static implicit operator CommandBufferCmd(SetScissor cmd) => new(cmd);
         public static implicit operator CommandBufferCmd(BindUniform cmd) => new(cmd);
         public static implicit operator CommandBufferCmd(BindTexture cmd) => new(cmd);
+        public static implicit operator CommandBufferCmd(UseUniform cmd) => new(cmd);
         public static implicit operator CommandBufferCmd(Draw cmd) => new(cmd);
 
         internal enum Type : ulong
@@ -218,6 +236,7 @@ namespace DigBuild.Platform.Render
             SetScissor,
             BindUniform,
             BindTexture,
+            UseUniform,
             Draw
         }
 
@@ -255,12 +274,14 @@ namespace DigBuild.Platform.Render
         {
             private readonly IntPtr _pipeline;
             private readonly IntPtr _uniformBuffer;
+            private readonly IntPtr _shader;
             private readonly uint _binding;
 
-            internal BindUniform(IntPtr pipeline, IntPtr uniformBuffer, uint binding)
+            internal BindUniform(IntPtr pipeline, IntPtr uniformBuffer, IntPtr shader, uint binding)
             {
                 _pipeline = pipeline;
                 _uniformBuffer = uniformBuffer;
+                _shader = shader;
                 _binding = binding;
             }
         }
@@ -268,12 +289,34 @@ namespace DigBuild.Platform.Render
         internal readonly struct BindTexture
         {
             private readonly IntPtr _pipeline;
-            private readonly IntPtr _binding;
+            private readonly IntPtr _sampler;
+            private readonly IntPtr _texture;
+            private readonly IntPtr _shader;
+            private readonly uint _binding;
 
-            internal BindTexture(IntPtr pipeline, IntPtr binding)
+            internal BindTexture(IntPtr pipeline, IntPtr sampler, IntPtr texture, IntPtr shader, uint binding)
             {
                 _pipeline = pipeline;
+                _sampler = sampler;
+                _texture = texture;
+                _shader = shader;
                 _binding = binding;
+            }
+        }
+
+        internal readonly struct UseUniform
+        {
+            private readonly IntPtr _pipeline;
+            private readonly IntPtr _shader;
+            private readonly uint _binding;
+            private readonly uint _index;
+
+            internal UseUniform(IntPtr pipeline, IntPtr shader, uint binding, uint index)
+            {
+                _pipeline = pipeline;
+                _shader = shader;
+                _binding = binding;
+                _index = index;
             }
         }
 

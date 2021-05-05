@@ -9,7 +9,6 @@
 #include "render_pipeline.h"
 #include "render_target.h"
 #include "shader.h"
-#include "texture_binding.h"
 #include "texture_sampler.h"
 #include "uniform_buffer.h"
 #include "vertex_buffer.h"
@@ -254,8 +253,6 @@ namespace digbuild::platform::render
 		) = 0;
 
 		[[nodiscard]] virtual std::shared_ptr<UniformBuffer> createUniformBuffer(
-			const std::shared_ptr<Shader>& shader,
-			uint32_t binding,
 			const std::vector<uint8_t>& initialData
 		) = 0;
 
@@ -263,13 +260,6 @@ namespace digbuild::platform::render
 			const std::vector<uint8_t>& initialData,
 			uint32_t vertexSize,
 			bool writable
-		) = 0;
-
-		[[nodiscard]] virtual std::shared_ptr<TextureBinding> createTextureBinding(
-			const std::shared_ptr<Shader>& shader,
-			uint32_t binding,
-			const std::shared_ptr<TextureSampler>& sampler,
-			const std::shared_ptr<Texture>& texture
 		) = 0;
 
 		[[nodiscard]] virtual std::shared_ptr<TextureSampler> createTextureSampler(

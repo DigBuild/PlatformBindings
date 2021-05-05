@@ -3,7 +3,6 @@
 #include "vk_command_buffer.h"
 #include "vk_render_pipeline.h"
 #include "vk_shader.h"
-#include "vk_texture_binding.h"
 #include "vk_texture_sampler.h"
 #include "vk_uniform_buffer.h"
 #include "vk_vertex_buffer.h"
@@ -268,20 +267,17 @@ namespace digbuild::platform::desktop::vulkan
 			std::static_pointer_cast<FramebufferFormat>(format),
 			stage, vkShaders,
 			vertexFormat, instanceFormat,
-			state, blendOptions
+			state, blendOptions,
+			m_swapChainStages
 		);
 	}
 
 	std::shared_ptr<render::UniformBuffer> RenderContext::createUniformBuffer(
-		const std::shared_ptr<render::Shader>& shader,
-		uint32_t binding,
 		const std::vector<uint8_t>& initialData
 	)
 	{
 		auto ub = std::make_shared<UniformBuffer>(
 			m_context,
-			std::static_pointer_cast<Shader>(shader),
-			binding,
 			m_swapChainStages,
 			initialData
 		);
@@ -312,25 +308,6 @@ namespace digbuild::platform::desktop::vulkan
 			initialData,
 			vertexSize
 		);
-	}
-
-	std::shared_ptr<render::TextureBinding> RenderContext::createTextureBinding(
-		const std::shared_ptr<render::Shader>& shader,
-		const uint32_t binding,
-		const std::shared_ptr<render::TextureSampler>& sampler,
-		const std::shared_ptr<render::Texture>& texture
-	)
-	{
-		auto b = std::make_shared<TextureBinding>(
-			m_context,
-			std::static_pointer_cast<Shader>(shader),
-			binding,
-			m_swapChainStages,
-			sampler,
-			texture
-		);
-		addTicking(b);
-		return std::move(b);
 	}
 
 	std::shared_ptr<render::TextureSampler> RenderContext::createTextureSampler(
@@ -406,16 +383,6 @@ namespace digbuild::platform::desktop::vulkan
 		m_tickingUniformBuffers[slot] = std::move(resource);
 	}
 
-	void RenderContext::addTicking(std::weak_ptr<TextureBinding> resource)
-	{
-		if (m_availableTickingTextureBindingSlots.empty())
-			return m_tickingTextureBindings.push_back(std::move(resource));
-
-		const auto slot = m_availableTickingTextureBindingSlots.front();
-		m_availableTickingTextureBindingSlots.pop();
-		m_tickingTextureBindings[slot] = std::move(resource);
-	}
-
 	void RenderContext::addTicking(std::weak_ptr<CommandBuffer> resource)
 	{
 		if (m_availableTickingCommandBufferSlots.empty())
@@ -448,20 +415,6 @@ namespace digbuild::platform::desktop::vulkan
 			if (res.expired())
 			{
 				m_availableTickingUniformBufferSlots.emplace(i);
-				i++;
-				continue;
-			}
-
-			res.lock()->tick();
-			i++;
-		}
-
-		i = 0;
-		for (auto& res : m_tickingTextureBindings)
-		{
-			if (res.expired())
-			{
-				m_availableTickingTextureBindingSlots.emplace(i);
 				i++;
 				continue;
 			}

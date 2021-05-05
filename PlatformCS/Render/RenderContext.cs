@@ -49,8 +49,6 @@ namespace DigBuild.Platform.Render
 
         IntPtr CreateUniformBuffer(
             IntPtr instance,
-            IntPtr shader,
-            uint binding,
             IntPtr data, uint dataLength
         );
 
@@ -178,13 +176,7 @@ namespace DigBuild.Platform.Render
             TextureWrapping wrapping = TextureWrapping.Repeat,
             TextureBorderColor borderColor = TextureBorderColor.OpaqueBlack
         ) => new(this, minFiltering, maxFiltering, wrapping, borderColor);
-
-        public TextureBindingBuilder CreateTextureBinding(
-            ShaderSamplerHandle shaderSampler,
-            TextureSampler sampler,
-            Texture texture
-        ) => new(this, shaderSampler, sampler, texture);
-
+        
         public Texture CreateTexture(
             Bitmap image
         )

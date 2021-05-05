@@ -2,7 +2,8 @@
 
 #include "vk_framebuffer_format.h"
 #include "vk_render_pipeline.h"
-#include "vk_texture_binding.h"
+#include "vk_texture.h"
+#include "vk_texture_sampler.h"
 #include "vk_uniform_buffer.h"
 #include "vk_vertex_buffer.h"
 
@@ -10,7 +11,8 @@ namespace digbuild::platform::desktop::vulkan
 {
 	void CBCmdBegin::record(
 		vk::CommandBuffer& cmd,
-		std::vector<std::shared_ptr<render::Resource>>& resources
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
 	)
 	{
 		vk::CommandBufferInheritanceInfo inheritanceInfo{ m_format->getPass() };
@@ -19,7 +21,8 @@ namespace digbuild::platform::desktop::vulkan
 
 	void CBCmdEnd::record(
 		vk::CommandBuffer& cmd,
-		std::vector<std::shared_ptr<render::Resource>>& resources
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
 	)
 	{
 		cmd.end();
@@ -27,7 +30,8 @@ namespace digbuild::platform::desktop::vulkan
 
 	void CBCmdSetViewportScissor::record(
 		vk::CommandBuffer& cmd,
-		std::vector<std::shared_ptr<render::Resource>>& resources
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
 	)
 	{
 		auto& fb = m_renderTarget->getFramebuffer();
@@ -45,7 +49,8 @@ namespace digbuild::platform::desktop::vulkan
 
 	void CBCmdSetViewport::record(
 		vk::CommandBuffer& cmd,
-		std::vector<std::shared_ptr<render::Resource>>& resources
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
 	)
 	{
 		cmd.setViewport(0, vk::Viewport{
@@ -57,7 +62,8 @@ namespace digbuild::platform::desktop::vulkan
 
 	void CBCmdSetScissor::record(
 		vk::CommandBuffer& cmd,
-		std::vector<std::shared_ptr<render::Resource>>& resources
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
 	)
 	{
 		cmd.setScissor(0, vk::Rect2D{
@@ -68,18 +74,33 @@ namespace digbuild::platform::desktop::vulkan
 
 	void CBCmdBindUniform::record(
 		vk::CommandBuffer& cmd,
-		std::vector<std::shared_ptr<render::Resource>>& resources
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
 	)
 	{
-		auto pipeline = std::static_pointer_cast<RenderPipeline>(m_pipeline);
-		auto ub = std::static_pointer_cast<UniformBuffer>(m_uniformBuffer);
-		
-		cmd.bindDescriptorSets(
+		const auto pipeline = std::static_pointer_cast<RenderPipeline>(m_pipeline);
+		const auto ub = std::static_pointer_cast<UniformBuffer>(m_uniformBuffer);
+		const auto shader = std::static_pointer_cast<Shader>(m_shader);
+
+		const vk::DescriptorBufferInfo bufferInfo {
+			ub->getBuffer(),
+			0,
+			pipeline->getUniformSize(shader, m_binding)
+		};
+		const auto writes = std::vector{
+			vk::WriteDescriptorSet{
+				pipeline->getDescriptorSet(shader, m_binding, stage),
+				0, 0,
+				1,
+				vk::DescriptorType::eUniformBufferDynamic,
+				nullptr, &bufferInfo, nullptr
+			}
+		};
+		cmd.pushDescriptorSetKHR(
 			vk::PipelineBindPoint::eGraphics,
 			pipeline->getLayout(),
-			pipeline->getLayoutOffset(ub->getShader()) + ub->getBinding(),
-			{ ub->get() },
-			{ m_binding * ub->getShader()->getBindings()[ub->getBinding()].size }
+			0,
+			writes
 		);
 
 		resources.push_back(pipeline);
@@ -88,27 +109,63 @@ namespace digbuild::platform::desktop::vulkan
 
 	void CBCmdBindTexture::record(
 		vk::CommandBuffer& cmd,
-		std::vector<std::shared_ptr<render::Resource>>& resources
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
 	)
 	{
-		auto pipeline = std::static_pointer_cast<RenderPipeline>(m_pipeline);
-		auto tb = std::static_pointer_cast<TextureBinding>(m_binding);
+		const auto pipeline = std::static_pointer_cast<RenderPipeline>(m_pipeline);
+		const auto sampler = std::static_pointer_cast<TextureSampler>(m_sampler);
+		const auto texture = std::static_pointer_cast<Texture>(m_texture);
+		const auto shader = std::static_pointer_cast<Shader>(m_shader);
 
-		cmd.bindDescriptorSets(
+		const vk::DescriptorImageInfo imageInfo {
+			sampler->get(),
+			texture->get(),
+			vk::ImageLayout::eShaderReadOnlyOptimal
+		};
+		const auto writes = std::vector{
+			vk::WriteDescriptorSet{
+				pipeline->getDescriptorSet(shader, m_binding, stage),
+				0, 0,
+				1,
+				vk::DescriptorType::eCombinedImageSampler,
+				&imageInfo, nullptr, nullptr
+			}
+		};
+		cmd.pushDescriptorSetKHR(
 			vk::PipelineBindPoint::eGraphics,
 			pipeline->getLayout(),
-			pipeline->getLayoutOffset(tb->getShader()) + tb->getBinding(),
-			{ tb->get() },
-			{}
+			0,
+			writes
 		);
 
 		resources.push_back(pipeline);
-		resources.push_back(tb);
+		resources.push_back(sampler);
+		resources.push_back(texture);
+	}
+
+	void CBCmdUseUniform::record(
+		vk::CommandBuffer& cmd,
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
+	)
+	{
+		const auto pipeline = std::static_pointer_cast<RenderPipeline>(m_pipeline);
+		const auto shader = std::static_pointer_cast<Shader>(m_shader);
+		
+		cmd.bindDescriptorSets(
+			vk::PipelineBindPoint::eGraphics,
+			pipeline->getLayout(),
+			m_binding, 1,
+			&pipeline->getDescriptorSet(shader, m_binding, stage),
+			1, &m_index
+		);
 	}
 
 	void CBCmdDraw::record(
 		vk::CommandBuffer& cmd,
-		std::vector<std::shared_ptr<render::Resource>>& resources
+		std::vector<std::shared_ptr<render::Resource>>& resources,
+		const uint32_t stage
 	)
 	{
 		auto p = std::static_pointer_cast<RenderPipeline>(m_pipeline);
@@ -168,7 +225,7 @@ namespace digbuild::platform::desktop::vulkan
 		resources.clear();
 
 		for (auto& cbCmd : m_commandQueue)
-			cbCmd->record(cmd, resources);
+			cbCmd->record(cmd, resources, m_readIndex);
 
 		m_leftoverWrites--;
 		m_readIndex = writeIndex;
@@ -211,18 +268,32 @@ namespace digbuild::platform::desktop::vulkan
 	void CommandBuffer::bindUniform(
 		std::shared_ptr<render::RenderPipeline> pipeline,
 		std::shared_ptr<render::UniformBuffer> uniformBuffer,
+		std::shared_ptr<render::Shader> shader,
 		uint32_t binding
 	)
 	{
-		m_commandQueue.push_back(std::make_unique<CBCmdBindUniform>(pipeline, uniformBuffer, binding));
+		m_commandQueue.push_back(std::make_unique<CBCmdBindUniform>(pipeline, uniformBuffer, shader, binding));
 	}
-
+	
 	void CommandBuffer::bindTexture(
 		std::shared_ptr<render::RenderPipeline> pipeline,
-		std::shared_ptr<render::TextureBinding> binding
+		std::shared_ptr<render::TextureSampler> sampler,
+		std::shared_ptr<render::Texture> texture,
+		std::shared_ptr<render::Shader> shader,
+		uint32_t binding
 	)
 	{
-		m_commandQueue.push_back(std::make_unique<CBCmdBindTexture>(pipeline, binding));
+		m_commandQueue.push_back(std::make_unique<CBCmdBindTexture>(pipeline, sampler, texture, shader, binding));
+	}
+
+	void CommandBuffer::useUniform(
+		const std::shared_ptr<render::RenderPipeline>& pipeline,
+		std::shared_ptr<render::Shader> shader,
+		const uint32_t binding,
+		const uint32_t index
+	)
+	{
+		m_commandQueue.push_back(std::make_unique<CBCmdUseUniform>(pipeline, shader, binding, index));
 	}
 
 	void CommandBuffer::draw(

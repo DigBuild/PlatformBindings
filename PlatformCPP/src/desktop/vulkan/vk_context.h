@@ -124,7 +124,7 @@ namespace digbuild::platform::desktop::vulkan
 		) const;
 		
 		[[nodiscard]] vk::UniqueDescriptorSetLayout createDescriptorSetLayout(
-			const vk::DescriptorSetLayoutBinding& binding
+			const std::vector<vk::DescriptorSetLayoutBinding>& bindings
 		);
 		
 		[[nodiscard]] vk::UniqueDescriptorPool createDescriptorPool(
