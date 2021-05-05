@@ -109,7 +109,7 @@ namespace DigBuild.Platform.Test
                     Matrix = Matrix4x4.Identity
                 }
             );
-            UniformBuffer = context.CreateUniformBuffer(Uniform, UniformNativeBuffer);
+            UniformBuffer = context.CreateUniformBuffer(UniformNativeBuffer);
 
             // Composition vertex buffer, pre-filled with screen rectangle
             using var compVertexData = bufferPool.Request<Vertex2>();
@@ -127,27 +127,18 @@ namespace DigBuild.Platform.Test
 
             // Create sampler and texture binding
             TextureSampler sampler = context.CreateTextureSampler();
-            TextureBinding fbTextureBinding = context.CreateTextureBinding(
-                colorTextureHandle,
-                sampler,
-                Framebuffer.Get(colorAttachment)
-            );
 
             // Create overlay texture and binding
             IResource overlayTextureResource = resourceManager.GetResource(new ResourceName("test", "textures/overlay_thing.png"))!;
             Texture overlayTexture = context.CreateTexture(new Bitmap(overlayTextureResource.OpenStream()));
-            TextureBinding overlayTextureBinding = context.CreateTextureBinding(
-                colorTextureHandle,
-                sampler,
-                overlayTexture
-            );
 
             // Record commandBuffers
             MainCommandBuffer = context.CreateCommandBuffer();
             using (var cmd = MainCommandBuffer.Record(context, framebufferFormat, bufferPool))
             {
                 cmd.SetViewportAndScissor(Framebuffer);
-                cmd.Using(mainPipeline, UniformBuffer, 0);
+                cmd.Bind(mainPipeline, Uniform, UniformBuffer);
+                cmd.Using(mainPipeline, Uniform, 0);
                 cmd.Draw(mainPipeline, mainVertexBuffer);
             }
 
@@ -155,9 +146,9 @@ namespace DigBuild.Platform.Test
             using (var cmd = CompCommandBuffer.Record(context, surface.Format, bufferPool))
             {
                 cmd.SetViewportAndScissor(surface);
-                cmd.Using(compPipeline, fbTextureBinding); // Framebuffer
+                cmd.Bind(compPipeline, colorTextureHandle, sampler, Framebuffer.Get(colorAttachment)); // Framebuffer
                 cmd.Draw(compPipeline, compVertexBuffer);
-                cmd.Using(compPipeline, overlayTextureBinding); // Overlay
+                cmd.Bind(compPipeline, colorTextureHandle, sampler, overlayTexture); // Overlay
                 cmd.Draw(compPipeline, compVertexBuffer);
             }
         }

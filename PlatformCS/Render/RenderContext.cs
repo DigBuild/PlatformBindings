@@ -68,12 +68,6 @@ namespace DigBuild.Platform.Render
             bool enableAnisotropy,
             uint anisotropyLevel
         );
-        IntPtr CreateTextureBinding(
-            IntPtr instance,
-            IntPtr shader, uint binding,
-            IntPtr sampler,
-            IntPtr texture
-        );
         IntPtr CreateTexture(
             IntPtr instance,
             uint width, uint height,
@@ -160,15 +154,13 @@ namespace DigBuild.Platform.Render
             => new(this, initialData, out writer);
 
         public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
-            UniformHandle<TUniform> uniform
         ) where TUniform : unmanaged, IUniform<TUniform>
-            => new UniformBufferBuilder<TUniform>(this, uniform, null);
+            => new UniformBufferBuilder<TUniform>(this, null);
 
         public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
-            UniformHandle<TUniform> uniform,
             INativeBuffer<TUniform> initialData
         ) where TUniform : unmanaged, IUniform<TUniform>
-            => new UniformBufferBuilder<TUniform>(this, uniform, initialData);
+            => new UniformBufferBuilder<TUniform>(this, initialData);
 
         public TextureSamplerBuilder CreateTextureSampler(
             TextureFiltering minFiltering = TextureFiltering.Linear,

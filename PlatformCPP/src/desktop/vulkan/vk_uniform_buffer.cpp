@@ -38,7 +38,7 @@ namespace digbuild::platform::desktop::vulkan
 		{
 			buffer = m_context->createBuffer(
 				static_cast<uint32_t>(m_uniformData.size()),
-				vk::BufferUsageFlagBits::eUniformBuffer,
+				vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
 				vk::SharingMode::eExclusive,
 				{}
 			);

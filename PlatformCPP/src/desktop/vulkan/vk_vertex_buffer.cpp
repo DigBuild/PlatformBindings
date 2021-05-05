@@ -12,7 +12,7 @@ namespace digbuild::platform::desktop::vulkan
 	{
 		m_buffer = m_context->createBuffer(
 			static_cast<uint32_t>(data.size()),
-			vk::BufferUsageFlagBits::eVertexBuffer,
+			vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 			vk::SharingMode::eExclusive,
 			{}
 		);
@@ -64,7 +64,7 @@ namespace digbuild::platform::desktop::vulkan
 		{
 			buffer = m_context->createBuffer(
 				static_cast<uint32_t>(data.size()),
-				vk::BufferUsageFlagBits::eVertexBuffer,
+				vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
 				vk::SharingMode::eExclusive,
 				{}
 			);

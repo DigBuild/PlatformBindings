@@ -21,12 +21,10 @@ namespace DigBuild.Platform.Render
     public class UniformBuffer<T> : IUniformBuffer where T : unmanaged, IUniform<T>
     {
         internal readonly NativeHandle Handle;
-        internal readonly UniformHandle<T> UniformHandle;
 
-        internal UniformBuffer(NativeHandle handle, UniformHandle<T> uniformHandle)
+        internal UniformBuffer(NativeHandle handle)
         {
             Handle = handle;
-            UniformHandle = uniformHandle;
         }
 
         public void Write(INativeBuffer<T> buffer)
@@ -42,13 +40,11 @@ namespace DigBuild.Platform.Render
     public readonly ref struct UniformBufferBuilder<T> where T : unmanaged, IUniform<T>
     {
         private readonly RenderContext _ctx;
-        private readonly UniformHandle<T> _uniform;
         private readonly INativeBuffer<T>? _initialData;
 
-        internal UniformBufferBuilder(RenderContext ctx, UniformHandle<T> uniform, INativeBuffer<T>? initialData)
+        internal UniformBufferBuilder(RenderContext ctx, INativeBuffer<T>? initialData)
         {
             _ctx = ctx;
-            _uniform = uniform;
             _initialData = initialData;
         }
 
@@ -61,8 +57,7 @@ namespace DigBuild.Platform.Render
                         builder._initialData?.Ptr ?? IntPtr.Zero,
                         (uint)((builder._initialData?.Count ?? 0) * Marshal.SizeOf<T>())
                     )
-                ),
-                builder._uniform
+                )
             );
         }
     }

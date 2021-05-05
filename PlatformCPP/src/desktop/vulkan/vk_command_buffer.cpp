@@ -87,20 +87,18 @@ namespace digbuild::platform::desktop::vulkan
 			0,
 			pipeline->getUniformSize(shader, m_binding)
 		};
-		const auto writes = std::vector{
-			vk::WriteDescriptorSet{
-				pipeline->getDescriptorSet(shader, m_binding, stage),
-				0, 0,
-				1,
-				vk::DescriptorType::eUniformBufferDynamic,
-				nullptr, &bufferInfo, nullptr
-			}
+		vk::WriteDescriptorSet write{
+			pipeline->getDescriptorSet(shader, m_binding, stage),
+			0, 0,
+			1,
+			vk::DescriptorType::eUniformBufferDynamic,
+			nullptr, &bufferInfo, nullptr
 		};
 		cmd.pushDescriptorSetKHR(
 			vk::PipelineBindPoint::eGraphics,
 			pipeline->getLayout(),
-			0,
-			writes
+			pipeline->getActualUniform(shader, m_binding),
+			1, &write
 		);
 
 		resources.push_back(pipeline);
@@ -123,20 +121,18 @@ namespace digbuild::platform::desktop::vulkan
 			texture->get(),
 			vk::ImageLayout::eShaderReadOnlyOptimal
 		};
-		const auto writes = std::vector{
-			vk::WriteDescriptorSet{
-				pipeline->getDescriptorSet(shader, m_binding, stage),
-				0, 0,
-				1,
-				vk::DescriptorType::eCombinedImageSampler,
-				&imageInfo, nullptr, nullptr
-			}
+		vk::WriteDescriptorSet write{
+			pipeline->getDescriptorSet(shader, m_binding, stage),
+			0, 0,
+			1,
+			vk::DescriptorType::eCombinedImageSampler,
+			&imageInfo, nullptr, nullptr
 		};
 		cmd.pushDescriptorSetKHR(
 			vk::PipelineBindPoint::eGraphics,
 			pipeline->getLayout(),
-			0,
-			writes
+			pipeline->getActualUniform(shader, m_binding),
+			1, &write
 		);
 
 		resources.push_back(pipeline);
@@ -156,7 +152,7 @@ namespace digbuild::platform::desktop::vulkan
 		cmd.bindDescriptorSets(
 			vk::PipelineBindPoint::eGraphics,
 			pipeline->getLayout(),
-			m_binding, 1,
+			pipeline->getActualUniform(shader, m_binding), 1,
 			&pipeline->getDescriptorSet(shader, m_binding, stage),
 			1, &m_index
 		);
