@@ -12,6 +12,13 @@ namespace DigBuild.Platform.Resource
             Path = path;
         }
 
+        public ResourceName GetSibling(string name)
+        {
+            var parentDir = System.IO.Path.GetDirectoryName(Path)?.Replace('\\', '/') ?? string.Empty;
+            var newPath = parentDir.Length == 0 ? name : $"{parentDir}/{name}";
+            return new ResourceName(Domain, newPath);
+        }
+
         public bool Equals(ResourceName other)
         {
             return Domain == other.Domain && Path == other.Path;
