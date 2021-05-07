@@ -89,6 +89,8 @@ namespace DigBuild.Platform.Util
 
         public void Clear();
 
+        public void ReleaseLast(uint amount, bool clear = false);
+
         public void Reserve(uint minCapacity);
 
         public ref T this[uint i] { get; }
@@ -221,6 +223,23 @@ namespace DigBuild.Platform.Util
             if (!_valid)
                 throw new ObjectDisposedException(nameof(NativeBuffer<T>));
             _count = 0;
+        }
+
+        public void ReleaseLast(uint amount, bool clear = false)
+        {
+            if (!_valid)
+                throw new ObjectDisposedException(nameof(NativeBuffer<T>));
+            if (amount > _count)
+                throw new ArgumentException("Cannot release more elements than allocated.", nameof(amount));
+            if (amount == 0)
+                throw new ArgumentException("Must release at least one element.", nameof(amount));
+            
+            _count -= amount;
+
+            if (!clear)
+                return;
+            
+            new Span<T>(TypedPtr + _count, (int) amount).Clear();
         }
 
         public void Reserve(uint minCapacity)
@@ -377,6 +396,13 @@ namespace DigBuild.Platform.Util
             if (!_valid)
                 throw new ObjectDisposedException(nameof(PooledNativeBuffer<T>));
             _buffer.Clear();
+        }
+
+        public void ReleaseLast(uint amount, bool clear = false)
+        {
+            if (!_valid)
+                throw new ObjectDisposedException(nameof(PooledNativeBuffer<T>));
+            _buffer.ReleaseLast(amount, clear);
         }
 
         public void Reserve(uint minCapacity)
