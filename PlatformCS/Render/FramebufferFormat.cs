@@ -50,7 +50,7 @@ namespace DigBuild.Platform.Render
 
     public sealed class RenderStage
     {
-        internal FramebufferFormat Format;
+        public FramebufferFormat Format;
         internal readonly uint Id;
 
         internal RenderStage(uint id, FramebufferFormat format = null!)
