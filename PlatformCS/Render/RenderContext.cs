@@ -156,6 +156,14 @@ namespace DigBuild.Platform.Render
             => new(this, initialData);
 
         public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
+            params TVertex[] initialData
+        ) where TVertex : unmanaged
+        {
+            using var buf = new NativeBuffer<TVertex>((uint) initialData.Length) {initialData};
+            return new VertexBufferBuilder<TVertex>(this, buf);
+        }
+
+        public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
             out VertexBufferWriter<TVertex> writer,
             INativeBuffer<TVertex>? initialData = null
         ) where TVertex : unmanaged
