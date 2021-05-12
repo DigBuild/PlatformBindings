@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Numerics;
 using DigBuild.Platform.Util;
 
@@ -8,13 +9,13 @@ namespace DigBuild.Platform.Render
     public sealed class FramebufferFormat : IDisposable
     {
         internal readonly NativeHandle Handle;
-        internal readonly uint StageCount;
-        public readonly IReadOnlyList<FramebufferAttachment> Attachments;
+        public IReadOnlyList<RenderStage> Stages { get; }
+        public IReadOnlyList<FramebufferAttachment> Attachments { get; }
 
-        internal FramebufferFormat(NativeHandle handle, uint stageCount, IReadOnlyList<FramebufferAttachment> attachments)
+        internal FramebufferFormat(NativeHandle handle, IReadOnlyList<RenderStage> stages, IReadOnlyList<FramebufferAttachment> attachments)
         {
             Handle = handle;
-            StageCount = stageCount;
+            Stages = stages;
             Attachments = attachments;
         }
 
@@ -195,7 +196,7 @@ namespace DigBuild.Platform.Render
                             new IntPtr(p4)
                         )
                     ),
-                    (uint) builder._data.Stages.Count,
+                    builder._data.Stages.ToImmutableList(),
                     builder._data.Attachments
                 );
 

@@ -155,7 +155,7 @@ namespace DigBuild.Platform.Render
         ) where TVertex : unmanaged
             => new(this, initialData);
 
-        public VertexBufferBuilder<TVertex> CreateVertexBuffer<TVertex>(
+        public VertexBuffer<TVertex> CreateVertexBuffer<TVertex>(
             params TVertex[] initialData
         ) where TVertex : unmanaged
         {

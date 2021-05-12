@@ -58,7 +58,7 @@ namespace DigBuild.Platform.Render
     public readonly struct RenderSurfaceContext : IRenderTarget
     {
         private static readonly FramebufferAttachment AttachmentS = new(0, new Vector4(0, 0, 0, 1));
-        private static readonly FramebufferFormat FormatS = new(NativeHandle.Empty, 1, new[] { AttachmentS });
+        private static readonly FramebufferFormat FormatS = new(NativeHandle.Empty, new [] { default(RenderStage)! }, new[] { AttachmentS });
         private static readonly RenderStage StageS = new(0, FormatS);
 
         private readonly NativeHandle _handle;
