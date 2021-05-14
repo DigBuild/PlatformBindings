@@ -16,11 +16,16 @@ namespace digbuild::platform::desktop::vulkan
 			const std::shared_ptr<render::UniformBuffer>& uniformBuffer
 		);
 
+		~UniformBinding() override;
+
 		void tick();
 		
 		void update(
-			std::shared_ptr<render::UniformBuffer> uniformBuffer
-		) override;
+			const std::shared_ptr<render::UniformBuffer> uniformBuffer
+		) override
+		{
+			update(uniformBuffer, true);
+		}
 
 		[[nodiscard]] vk::DescriptorSet& get()
 		{
@@ -36,8 +41,15 @@ namespace digbuild::platform::desktop::vulkan
 		{
 			return m_binding;
 		}
-	
+
+		void updateNext();
+
 	private:
+		void update(
+			std::shared_ptr<render::UniformBuffer> uniformBuffer,
+			bool registerUser
+		);
+		
 		std::shared_ptr<VulkanContext> m_context;
 		std::shared_ptr<Shader> m_shader;
 		uint32_t m_binding;

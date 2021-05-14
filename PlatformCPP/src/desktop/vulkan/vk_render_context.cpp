@@ -285,6 +285,8 @@ namespace digbuild::platform::desktop::vulkan
 			m_swapChainStages,
 			uniformBuffer
 		);
+		if (uniformBuffer != nullptr)
+			std::static_pointer_cast<UniformBuffer>(uniformBuffer)->registerUser(b);
 		addTicking(b);
 		return std::move(b);
 	}

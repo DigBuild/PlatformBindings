@@ -42,6 +42,13 @@ namespace digbuild::platform::desktop::vulkan
 				vk::SharingMode::eExclusive,
 				{}
 			);
+
+			for (const auto& dependent : m_dependents)
+			{
+				const auto binding = dependent.lock();
+				if (binding)
+					binding->updateNext();
+			}
 		}
 		
 		auto buf = m_context->createCpuToGpuTransferBuffer(
@@ -72,5 +79,21 @@ namespace digbuild::platform::desktop::vulkan
 	{
 		m_uniformData.assign(data.begin(), data.end());
 		m_leftoverWrites = static_cast<uint32_t>(m_buffers.size());
+	}
+
+	void UniformBuffer::registerUser(const std::weak_ptr<UniformBinding>& binding)
+	{
+		m_dependents.insert(binding);
+	}
+
+	void UniformBuffer::unregisterUser(const UniformBinding* binding)
+	{
+		const auto iterator = std::find_if(
+			m_dependents.begin(), m_dependents.end(),
+			[&](const std::weak_ptr<UniformBinding>& ptr) {
+				return ptr.lock().get() == binding;
+			}
+		);
+		m_dependents.extract(iterator);
 	}
 }

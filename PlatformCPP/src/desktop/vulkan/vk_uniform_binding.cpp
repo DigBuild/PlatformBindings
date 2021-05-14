@@ -25,7 +25,14 @@ namespace digbuild::platform::desktop::vulkan
 		);
 
 		if (uniformBuffer != nullptr)
-			update(uniformBuffer);
+			update(uniformBuffer, false);
+	}
+
+	UniformBinding::~UniformBinding()
+	{
+		const auto& currentUniformBuffer = m_buffers[m_readIndex];
+		if (currentUniformBuffer)
+			currentUniformBuffer->unregisterUser(this);
 	}
 
 	void UniformBinding::tick()
@@ -59,12 +66,25 @@ namespace digbuild::platform::desktop::vulkan
 		m_readIndex = writeIndex;
 	}
 
+	void UniformBinding::updateNext()
+	{
+		m_leftoverWrites = std::max(1u, m_leftoverWrites);
+	}
+
 	void UniformBinding::update(
-		const std::shared_ptr<render::UniformBuffer> uniformBuffer
+		const std::shared_ptr<render::UniformBuffer> uniformBuffer,
+		const bool registerUser
 	)
 	{
+		const auto& currentUniformBuffer = m_buffers[m_readIndex];
+		if (currentUniformBuffer)
+			currentUniformBuffer->unregisterUser(this);
+		
 		const auto writeIndex = (m_readIndex + 1) % static_cast<uint32_t>(m_descriptorSets.size());
-		m_buffers[writeIndex] = std::static_pointer_cast<UniformBuffer>(uniformBuffer);
+		const auto ub = std::static_pointer_cast<UniformBuffer>(uniformBuffer);
+		m_buffers[writeIndex] = ub;
+		if (registerUser)
+			ub->registerUser(std::static_pointer_cast<UniformBinding>(this->shared_from_this()));
 
 		m_leftoverWrites = static_cast<uint32_t>(m_descriptorSets.size());
 	}
