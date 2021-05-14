@@ -46,11 +46,14 @@ namespace DigBuild.Platform.Render
             bool hasCullingMode, CullingMode cullingMode,
             bool hasFrontFace, FrontFace frontFace
         );
-
+        
+        IntPtr CreateUniformBinding(
+            IntPtr instance,
+            IntPtr shader, uint binding,
+            IntPtr uniformBuffer
+        );
         IntPtr CreateUniformBuffer(
             IntPtr instance,
-            IntPtr shader,
-            uint binding,
             IntPtr data, uint dataLength
         );
 
@@ -169,16 +172,20 @@ namespace DigBuild.Platform.Render
         ) where TVertex : unmanaged
             => new(this, initialData, out writer);
 
-        public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
-            UniformHandle<TUniform> uniform
+        public UniformBindingBuilder<TUniform> CreateTextureBinding<TUniform>(
+            UniformHandle<TUniform> uniform,
+            UniformBuffer<TUniform>? buffer = null
         ) where TUniform : unmanaged, IUniform<TUniform>
-            => new UniformBufferBuilder<TUniform>(this, uniform, null);
+            => new(this, uniform, buffer);
 
         public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
-            UniformHandle<TUniform> uniform,
+        ) where TUniform : unmanaged, IUniform<TUniform>
+            => new UniformBufferBuilder<TUniform>(this, null);
+
+        public UniformBuffer<TUniform> CreateUniformBuffer<TUniform>(
             INativeBuffer<TUniform> initialData
         ) where TUniform : unmanaged, IUniform<TUniform>
-            => new UniformBufferBuilder<TUniform>(this, uniform, initialData);
+            => new UniformBufferBuilder<TUniform>(this, initialData);
 
         public TextureSamplerBuilder CreateTextureSampler(
             TextureFiltering minFiltering = TextureFiltering.Linear,

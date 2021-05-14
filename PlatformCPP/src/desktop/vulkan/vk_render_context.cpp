@@ -5,6 +5,7 @@
 #include "vk_shader.h"
 #include "vk_texture_binding.h"
 #include "vk_texture_sampler.h"
+#include "vk_uniform_binding.h"
 #include "vk_uniform_buffer.h"
 #include "vk_vertex_buffer.h"
 #include "../dt_render_surface.h"
@@ -272,16 +273,28 @@ namespace digbuild::platform::desktop::vulkan
 		);
 	}
 
-	std::shared_ptr<render::UniformBuffer> RenderContext::createUniformBuffer(
+	std::shared_ptr<render::UniformBinding> RenderContext::createUniformBinding(
 		const std::shared_ptr<render::Shader>& shader,
-		uint32_t binding,
+		const uint32_t binding,
+		const std::shared_ptr<render::UniformBuffer>& uniformBuffer)
+	{
+		auto b = std::make_shared<UniformBinding>(
+			m_context,
+			std::static_pointer_cast<Shader>(shader),
+			binding,
+			m_swapChainStages,
+			uniformBuffer
+		);
+		addTicking(b);
+		return std::move(b);
+	}
+
+	std::shared_ptr<render::UniformBuffer> RenderContext::createUniformBuffer(
 		const std::vector<uint8_t>& initialData
 	)
 	{
 		auto ub = std::make_shared<UniformBuffer>(
 			m_context,
-			std::static_pointer_cast<Shader>(shader),
-			binding,
 			m_swapChainStages,
 			initialData
 		);
@@ -406,6 +419,16 @@ namespace digbuild::platform::desktop::vulkan
 		m_tickingUniformBuffers[slot] = std::move(resource);
 	}
 
+	void RenderContext::addTicking(std::weak_ptr<UniformBinding> resource)
+	{
+		if (m_availableTickingUniformBindingSlots.empty())
+			return m_tickingUniformBindings.push_back(std::move(resource));
+
+		const auto slot = m_availableTickingUniformBindingSlots.front();
+		m_availableTickingUniformBindingSlots.pop();
+		m_tickingUniformBindings[slot] = std::move(resource);
+	}
+
 	void RenderContext::addTicking(std::weak_ptr<TextureBinding> resource)
 	{
 		if (m_availableTickingTextureBindingSlots.empty())
@@ -448,6 +471,20 @@ namespace digbuild::platform::desktop::vulkan
 			if (res.expired())
 			{
 				m_availableTickingUniformBufferSlots.emplace(i);
+				i++;
+				continue;
+			}
+
+			res.lock()->tick();
+			i++;
+		}
+
+		i = 0;
+		for (auto& res : m_tickingUniformBindings)
+		{
+			if (res.expired())
+			{
+				m_availableTickingUniformBindingSlots.emplace(i);
 				i++;
 				continue;
 			}

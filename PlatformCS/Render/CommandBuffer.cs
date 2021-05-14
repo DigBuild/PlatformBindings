@@ -41,7 +41,7 @@ namespace DigBuild.Platform.Render
         private readonly FramebufferFormat _format;
         private readonly IntPtr _contextPtr;
         private readonly PooledNativeBuffer<CommandBufferCmd> _commands;
-        private readonly Dictionary<IBindingHandle, (IUniformBuffer, uint)> _uniformBindings = new();
+        private readonly Dictionary<IBindingHandle, (IUniformBinding, uint)> _uniformBindings = new();
         private readonly Dictionary<ShaderSamplerHandle, TextureBinding> _textureBindings = new();
         private bool _committed;
 
@@ -87,18 +87,18 @@ namespace DigBuild.Platform.Render
 
         public void Using<TUniform>(
             IRenderPipeline pipeline,
-            UniformBuffer<TUniform> uniformBuffer,
+            UniformBinding<TUniform> uniformBinding,
             uint index
         ) where TUniform : unmanaged, IUniform<TUniform>
         {
             if (_committed)
                 throw new RecordingAlreadyCommittedException();
 
-            if (_uniformBindings.TryGetValue(uniformBuffer.UniformHandle, out var current) && current.Item1 == uniformBuffer && current.Item2 == index)
+            if (_uniformBindings.TryGetValue(uniformBinding.UniformHandle, out var current) && current.Item1 == uniformBinding && current.Item2 == index)
                 return;
-            _uniformBindings[uniformBuffer.UniformHandle] = (uniformBuffer, index);
+            _uniformBindings[uniformBinding.UniformHandle] = (uniformBinding, index);
 
-            _commands.Add(new CommandBufferCmd.BindUniform(pipeline.Handle, uniformBuffer.Handle, index));
+            _commands.Add(new CommandBufferCmd.BindUniform(pipeline.Handle, uniformBinding.Handle, index));
         }
 
         public void Using(
@@ -254,13 +254,13 @@ namespace DigBuild.Platform.Render
         internal readonly struct BindUniform
         {
             private readonly IntPtr _pipeline;
-            private readonly IntPtr _uniformBuffer;
+            private readonly IntPtr _uniformBinding;
             private readonly uint _binding;
 
-            internal BindUniform(IntPtr pipeline, IntPtr uniformBuffer, uint binding)
+            internal BindUniform(IntPtr pipeline, IntPtr uniformBinding, uint binding)
             {
                 _pipeline = pipeline;
-                _uniformBuffer = uniformBuffer;
+                _uniformBinding = uniformBinding;
                 _binding = binding;
             }
         }

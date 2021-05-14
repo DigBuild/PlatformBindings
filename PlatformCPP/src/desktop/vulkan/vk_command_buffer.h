@@ -2,7 +2,6 @@
 #include "vk_context.h"
 #include "vk_framebuffer_format.h"
 #include "../../render/command_buffer.h"
-#include "../../render/uniform_buffer.h"
 
 namespace digbuild::platform::desktop::vulkan
 {
@@ -89,11 +88,11 @@ namespace digbuild::platform::desktop::vulkan
 	public:
 		explicit CBCmdBindUniform(
 			std::shared_ptr<render::RenderPipeline> pipeline,
-			std::shared_ptr<render::UniformBuffer> uniformBuffer,
+			std::shared_ptr<render::UniformBinding> uniformBinding,
 			const uint32_t binding
 		) :
 			m_pipeline(std::move(pipeline)),
-			m_uniformBuffer(std::move(uniformBuffer)),
+			m_uniformBinding(std::move(uniformBinding)),
 			m_binding(binding)
 		{ }
 
@@ -103,7 +102,7 @@ namespace digbuild::platform::desktop::vulkan
 		) override;
 	private:
 		std::shared_ptr<render::RenderPipeline> m_pipeline;
-		std::shared_ptr<render::UniformBuffer> m_uniformBuffer;
+		std::shared_ptr<render::UniformBinding> m_uniformBinding;
 		uint32_t m_binding;
 	};
 	class CBCmdBindTexture final : public CBCmd
@@ -166,7 +165,7 @@ namespace digbuild::platform::desktop::vulkan
 		void setScissor(platform::util::Extents2D extents) override;
 		void bindUniform(
 			std::shared_ptr<render::RenderPipeline> pipeline,
-			std::shared_ptr<render::UniformBuffer> uniformBuffer,
+			std::shared_ptr<render::UniformBinding> uniformBinding,
 			uint32_t binding
 		) override;
 		void bindTexture(

@@ -32,7 +32,7 @@ namespace digbuild::platform::render
 	struct CommandBufferCmdBindUniformC
 	{
 		const util::native_handle pipeline;
-		const util::native_handle uniformBuffer;
+		const util::native_handle uniformBinding;
 		const uint32_t binding;
 	};
 	struct CommandBufferCmdBindTextureC
@@ -98,7 +98,7 @@ extern "C" {
 			case CommandBufferCmdTypeC::BIND_UNIFORM:
 				commandBuffer->bindUniform(
 					handle_share<RenderPipeline>(cmd.cmdBindUniform.pipeline),
-					handle_share<UniformBuffer>(cmd.cmdBindUniform.uniformBuffer),
+					handle_share<UniformBinding>(cmd.cmdBindUniform.uniformBinding),
 					cmd.cmdBindUniform.binding
 				);
 				break;

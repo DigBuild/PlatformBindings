@@ -11,6 +11,7 @@
 #include "shader.h"
 #include "texture_binding.h"
 #include "texture_sampler.h"
+#include "uniform_binding.h"
 #include "uniform_buffer.h"
 #include "vertex_buffer.h"
 
@@ -253,9 +254,13 @@ namespace digbuild::platform::render
 			const std::vector<BlendOptions>& blendOptions
 		) = 0;
 
-		[[nodiscard]] virtual std::shared_ptr<UniformBuffer> createUniformBuffer(
+		[[nodiscard]] virtual std::shared_ptr<UniformBinding> createUniformBinding(
 			const std::shared_ptr<Shader>& shader,
 			uint32_t binding,
+			const std::shared_ptr<UniformBuffer>& uniformBuffer
+		) = 0;
+
+		[[nodiscard]] virtual std::shared_ptr<UniformBuffer> createUniformBuffer(
 			const std::vector<uint8_t>& initialData
 		) = 0;
 

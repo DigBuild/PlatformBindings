@@ -5,10 +5,8 @@
 #include "render_pipeline.h"
 #include "render_target.h"
 #include "resource.h"
-#include "shader.h"
-#include "texture.h"
 #include "texture_binding.h"
-#include "uniform_buffer.h"
+#include "uniform_binding.h"
 #include "vertex_buffer.h"
 #include "../util/vecmath.h"
 
@@ -30,7 +28,7 @@ namespace digbuild::platform::render
 		virtual void setScissor(util::Extents2D extents) = 0;
 		virtual void bindUniform(
 			std::shared_ptr<RenderPipeline> pipeline,
-			std::shared_ptr<UniformBuffer> uniformBuffer,
+			std::shared_ptr<UniformBinding> uniformBinding,
 			uint32_t binding
 		) = 0;
 		virtual void bindTexture(

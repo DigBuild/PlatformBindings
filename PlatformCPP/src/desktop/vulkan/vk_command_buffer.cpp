@@ -3,7 +3,7 @@
 #include "vk_framebuffer_format.h"
 #include "vk_render_pipeline.h"
 #include "vk_texture_binding.h"
-#include "vk_uniform_buffer.h"
+#include "vk_uniform_binding.h"
 #include "vk_vertex_buffer.h"
 
 namespace digbuild::platform::desktop::vulkan
@@ -72,7 +72,7 @@ namespace digbuild::platform::desktop::vulkan
 	)
 	{
 		auto pipeline = std::static_pointer_cast<RenderPipeline>(m_pipeline);
-		auto ub = std::static_pointer_cast<UniformBuffer>(m_uniformBuffer);
+		auto ub = std::static_pointer_cast<UniformBinding>(m_uniformBinding);
 		
 		cmd.bindDescriptorSets(
 			vk::PipelineBindPoint::eGraphics,
@@ -210,11 +210,11 @@ namespace digbuild::platform::desktop::vulkan
 
 	void CommandBuffer::bindUniform(
 		std::shared_ptr<render::RenderPipeline> pipeline,
-		std::shared_ptr<render::UniformBuffer> uniformBuffer,
+			std::shared_ptr<render::UniformBinding> uniformBinding,
 		uint32_t binding
 	)
 	{
-		m_commandQueue.push_back(std::make_unique<CBCmdBindUniform>(pipeline, uniformBuffer, binding));
+		m_commandQueue.push_back(std::make_unique<CBCmdBindUniform>(pipeline, uniformBinding, binding));
 	}
 
 	void CommandBuffer::bindTexture(
