@@ -47,6 +47,7 @@ namespace DigBuild.Platform.Test
 
         public readonly UniformHandle<VertexUniform> Uniform;
         public readonly UniformBuffer<VertexUniform> UniformBuffer;
+        public readonly UniformBinding<VertexUniform> UniformBinding;
         public readonly PooledNativeBuffer<VertexUniform> UniformNativeBuffer;
 
         public readonly VertexBufferWriter<Vertex> MainVertexBuffer;
@@ -109,7 +110,8 @@ namespace DigBuild.Platform.Test
                     Matrix = Matrix4x4.Identity
                 }
             );
-            UniformBuffer = context.CreateUniformBuffer(Uniform, UniformNativeBuffer);
+            UniformBuffer = context.CreateUniformBuffer(UniformNativeBuffer);
+            UniformBinding = context.CreateUniformBinding(Uniform, UniformBuffer);
 
             // Composition vertex buffer, pre-filled with screen rectangle
             using var compVertexData = bufferPool.Request<Vertex2>();
@@ -147,7 +149,7 @@ namespace DigBuild.Platform.Test
             using (var cmd = MainCommandBuffer.Record(context, framebufferFormat, bufferPool))
             {
                 cmd.SetViewportAndScissor(Framebuffer);
-                cmd.Using(mainPipeline, UniformBuffer, 0);
+                cmd.Using(mainPipeline, UniformBinding, 0);
                 cmd.Draw(mainPipeline, mainVertexBuffer);
             }
 
