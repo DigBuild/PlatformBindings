@@ -172,7 +172,7 @@ namespace DigBuild.Platform.Render
         ) where TVertex : unmanaged
             => new(this, initialData, out writer);
 
-        public UniformBindingBuilder<TUniform> CreateTextureBinding<TUniform>(
+        public UniformBindingBuilder<TUniform> CreateUniformBinding<TUniform>(
             UniformHandle<TUniform> uniform,
             UniformBuffer<TUniform>? buffer = null
         ) where TUniform : unmanaged, IUniform<TUniform>
