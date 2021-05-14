@@ -33,14 +33,14 @@ namespace DigBuild.Platform.Render
     {
         private readonly RenderContext _context;
         private readonly ShaderSamplerHandle _shaderSampler;
-        private readonly TextureSampler _sampler;
-        private readonly Texture _texture;
+        private readonly TextureSampler? _sampler;
+        private readonly Texture? _texture;
 
         internal TextureBindingBuilder(
             RenderContext context,
             ShaderSamplerHandle shaderSampler,
-            TextureSampler sampler,
-            Texture texture
+            TextureSampler? sampler,
+            Texture? texture
         )
         {
             _context = context;
@@ -57,8 +57,8 @@ namespace DigBuild.Platform.Render
                         builder._context.Ptr,
                         builder._shaderSampler.Shader.Handle,
                         builder._shaderSampler.Binding,
-                        builder._sampler.Handle,
-                        builder._texture.Handle
+                        builder._sampler?.Handle ?? IntPtr.Zero, 
+                        builder._texture?.Handle ?? IntPtr.Zero
                     )
                 ),
                 builder._shaderSampler

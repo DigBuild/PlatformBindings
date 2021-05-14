@@ -193,7 +193,10 @@ namespace DigBuild.Platform.Render
             TextureWrapping wrapping = TextureWrapping.Repeat,
             TextureBorderColor borderColor = TextureBorderColor.OpaqueBlack
         ) => new(this, minFiltering, maxFiltering, wrapping, borderColor);
-
+        
+        public TextureBindingBuilder CreateTextureBinding(
+            ShaderSamplerHandle shaderSampler
+        ) => new(this, shaderSampler, null, null);
         public TextureBindingBuilder CreateTextureBinding(
             ShaderSamplerHandle shaderSampler,
             TextureSampler sampler,

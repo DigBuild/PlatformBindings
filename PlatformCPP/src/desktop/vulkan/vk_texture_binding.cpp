@@ -24,7 +24,8 @@ namespace digbuild::platform::desktop::vulkan
 			stages
 		);
 
-		update(sampler, texture);
+		if (texture != nullptr)
+			update(sampler, texture);
 	}
 
 	void TextureBinding::tick()
