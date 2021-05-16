@@ -79,7 +79,7 @@ namespace digbuild::platform::desktop::vulkan
 			pipeline->getLayout(),
 			pipeline->getLayoutOffset(ub->getShader()) + ub->getBinding(),
 			{ ub->get() },
-			{ m_binding * ub->getShader()->getBindings()[ub->getBinding()].size }
+			{ m_binding * ub->getBindingSize() }
 		);
 
 		resources.push_back(pipeline);

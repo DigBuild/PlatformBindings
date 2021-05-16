@@ -159,14 +159,9 @@ namespace DigBuild.Platform.Util
 
         public void Add(params T[] values)
         {
-            if (!_valid)
-                throw new ObjectDisposedException(nameof(NativeBuffer<T>));
-            if (_count + values.Length >= _capacity)
-                Reserve(_capacity + (uint)values.Length);
-
-            for (var i = 0; i < values.Length; i++)
-                TypedPtr[_count + i] = values[i];
-            _count += (uint) values.Length;
+            var dstSpan = Add((uint) values.Length);
+            var srcSpan = new Span<T>(values);
+            srcSpan.CopyTo(dstSpan);
         }
 
         public void Add(IEnumerable<T> values)

@@ -94,6 +94,8 @@ namespace digbuild::platform::desktop::vulkan
 				return ptr.lock().get() == binding;
 			}
 		);
+		if (iterator == m_dependents.end())
+			return;
 		m_dependents.extract(iterator);
 	}
 }

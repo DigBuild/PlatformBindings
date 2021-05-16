@@ -42,6 +42,11 @@ namespace digbuild::platform::desktop::vulkan
 			return m_binding;
 		}
 
+		[[nodiscard]] uint32_t getBindingSize() const
+		{
+			return m_bindingSize;
+		}
+
 		void updateNext();
 
 	private:
