@@ -123,6 +123,12 @@ namespace DigBuild.Platform.Audio
             GC.SuppressFinalize(this);
         }
 
+        public void Play(AudioClip clip, bool looping = false)
+        {
+            Clip = clip;
+            Play(looping);
+        }
+
         public void Play(bool looping = false)
         {
             Al.Sourcei(_source, Al.Looping, looping ? 1 : 0);
