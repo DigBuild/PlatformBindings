@@ -14,8 +14,16 @@ project "DigBuild.Platform"
 
     nuget {
         "AdvancedDLSupport:3.2.0",
-        "System.Drawing.Common:5.0.1"
+        "System.Drawing.Common:5.0.1",
+		"OpenAL.NETCore:1.0.3"
     }
+	
+    filter "system:windows"
+		copylib { "Lib/OpenAL/Windows/OpenAL.dll:OpenAL.dll" }
+    filter "system:linux"
+		copylib { "Lib/OpenAL/Linux/libopenal.so:libopenal.so" }
+    filter "system:macosx"
+		copylib { "Lib/OpenAL/MacOSX/libopenal.dylib:libopenal.dylib" }
 
     filter "configurations:Debug"
         defines { "DB_DEBUG" }
