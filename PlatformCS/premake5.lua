@@ -15,7 +15,8 @@ project "DigBuild.Platform"
     nuget {
         "AdvancedDLSupport:3.2.0",
         "System.Drawing.Common:5.0.1",
-		"OpenAL.NETCore:1.0.3"
+		"OpenAL.NETCore:1.0.3",
+        "NVorbis:0.10.3"
     }
 	
     filter "system:windows"

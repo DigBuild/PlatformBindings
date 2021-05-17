@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AdvancedDLSupport;
+using DigBuild.Platform.Audio;
 using DigBuild.Platform.Input;
 using DigBuild.Platform.Render;
 using DigBuild.Platform.Util;
@@ -26,7 +27,11 @@ namespace DigBuild.Platform
     {
         internal static readonly IPlatformBindings Bindings = NativeLib.Get<IPlatformBindings>();
 
+        private static readonly Lazy<AudioSystem> LazyAudioSystem = new();
+
         public static GlobalInputContext InputContext { get; } = new(Bindings.GetGlobalInputContext());
+
+        public static AudioSystem AudioSystem => LazyAudioSystem.Value;
 
         public static bool SupportsMultipleRenderSurfaces => Bindings.SupportsMultipleRenderSurfaces();
 
