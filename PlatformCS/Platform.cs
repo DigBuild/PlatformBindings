@@ -27,7 +27,7 @@ namespace DigBuild.Platform
     {
         internal static readonly IPlatformBindings Bindings = NativeLib.Get<IPlatformBindings>();
 
-        private static readonly Lazy<AudioSystem> LazyAudioSystem = new();
+        private static readonly Lazy<AudioSystem> LazyAudioSystem = new(() => new AudioSystem());
 
         public static GlobalInputContext InputContext { get; } = new(Bindings.GetGlobalInputContext());
 
