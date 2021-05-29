@@ -95,7 +95,7 @@ namespace DigBuild.Platform.Render
                     clearColor
                 )
             );
-            _data.AttachmentDescriptors.Add(new AttachmentDescriptor(AttachmentType.Color, format.Id));
+            _data.AttachmentDescriptors.Add(new AttachmentDescriptor(AttachmentType.Color, (byte) format));
             return this;
         }
 

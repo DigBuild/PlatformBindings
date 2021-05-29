@@ -436,6 +436,8 @@ namespace digbuild::platform::desktop::vulkan::util
 			return vk::Format::eR8G8B8A8Srgb;
 		case render::TextureFormat::B8G8R8A8_SRGB:
 			return vk::Format::eB8G8R8A8Srgb;
+		case render::TextureFormat::R32G32B32A32S:
+			return vk::Format::eR32G32B32A32Sfloat;
 		case render::TextureFormat::D32SFLOAT_S8UINT:
 			return vk::Format::eD32SfloatS8Uint;
 		}

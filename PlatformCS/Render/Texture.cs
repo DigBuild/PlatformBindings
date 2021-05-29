@@ -28,16 +28,10 @@ namespace DigBuild.Platform.Render
         public uint Height => Bindings.GetHeight(Handle);
     }
 
-    public sealed class TextureFormat
+    public enum TextureFormat : byte
     {
-        public static readonly TextureFormat R8G8B8A8SRGB = new(0);
-        public static readonly TextureFormat B8G8R8A8SRGB = new(1);
-
-        internal readonly byte Id;
-
-        private TextureFormat(byte id)
-        {
-            Id = id;
-        }
+        R8G8B8A8SRGB,
+        B8G8R8A8SRGB,
+        R32G32B32A32SFloat
     }
 }
