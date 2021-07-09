@@ -28,7 +28,7 @@ namespace digbuild::platform::desktop::vulkan
 	{
 		return std::vector<const char*>{
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-			VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME
+			//VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME,
 		};
 	}
 	
