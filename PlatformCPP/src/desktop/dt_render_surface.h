@@ -21,6 +21,11 @@ namespace digbuild::platform::desktop
 		const uint32_t button;
 		const input::MouseAction action;
 	};
+	struct ScrollEvent
+	{
+		const double xOffset;
+		const double yOffset;
+	};
 	struct CursorEvent
 	{
 		const uint32_t x, y;
@@ -37,6 +42,7 @@ namespace digbuild::platform::desktop
 		
 		void consumeKeyboardEvents(input::KeyboardEventConsumer consumer) override;
 		void consumeMouseEvents(input::MouseEventConsumer consumer) override;
+		void consumeScrollEvents(input::ScrollEventConsumer consumer) override;
 		void consumeCursorEvents(input::CursorEventConsumer consumer) override;
 
 		
@@ -51,6 +57,7 @@ namespace digbuild::platform::desktop
 		RenderSurface* m_surface;
 		std::deque<KeyboardEvent> m_keyboardEvents;
 		std::deque<MouseEvent> m_mouseEvents;
+		std::deque<ScrollEvent> m_scrollEvents;
 		std::deque<CursorEvent> m_cursorEvents;
 		input::CursorMode m_cursorMode = input::NORMAL;
 

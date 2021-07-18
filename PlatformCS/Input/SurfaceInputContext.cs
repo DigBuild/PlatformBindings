@@ -6,6 +6,7 @@ namespace DigBuild.Platform.Input
 {
     public delegate void KeyboardEventConsumerDelegate(uint code, KeyboardAction action);
     public delegate void MouseEventConsumerDelegate(uint button, MouseAction action);
+    public delegate void ScrollEventConsumerDelegate(double xOffset, double yOffset);
     public delegate void CursorEventConsumerDelegate(uint x, uint y, CursorAction action);
 
     [NativeSymbols("dbp_surface_input_context_", SymbolTransformationMethod.Underscore)]
@@ -13,6 +14,7 @@ namespace DigBuild.Platform.Input
     {
         public void ConsumeKeyboardEvents(IntPtr ptr, KeyboardEventConsumerDelegate del);
         public void ConsumeMouseEvents(IntPtr ptr, MouseEventConsumerDelegate del);
+        public void ConsumeScrollEvents(IntPtr ptr, ScrollEventConsumerDelegate del);
         public void ConsumeCursorEvents(IntPtr ptr, CursorEventConsumerDelegate del);
 
         CursorMode GetCursorMode(IntPtr ptr);
@@ -40,6 +42,11 @@ namespace DigBuild.Platform.Input
         public void ConsumeMouseEvents(MouseEventConsumerDelegate del)
         {
             Bindings.ConsumeMouseEvents(_ptr, del);
+        }
+
+        public void ConsumeScrollEvents(ScrollEventConsumerDelegate del)
+        {
+            Bindings.ConsumeScrollEvents(_ptr, del);
         }
 
         public void ConsumeCursorEvents(CursorEventConsumerDelegate del)

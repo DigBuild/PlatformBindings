@@ -28,6 +28,7 @@ namespace digbuild::platform::input
 	
 	using KeyboardEventConsumer = std::function<void(uint32_t code, KeyboardAction action)>;
 	using MouseEventConsumer = std::function<void(uint32_t button, MouseAction action)>;
+	using ScrollEventConsumer = std::function<void(double xOffset, double yOffset)>;
 	using CursorEventConsumer = std::function<void(uint32_t x, uint32_t y, CursorAction action)>;
 	
 	class SurfaceInputContext
@@ -42,6 +43,7 @@ namespace digbuild::platform::input
 
 		virtual void consumeKeyboardEvents(KeyboardEventConsumer consumer) = 0;
 		virtual void consumeMouseEvents(MouseEventConsumer consumer) = 0;
+		virtual void consumeScrollEvents(ScrollEventConsumer consumer) = 0;
 		virtual void consumeCursorEvents(CursorEventConsumer consumer) = 0;
 		
 		[[nodiscard]] virtual CursorMode getCursorMode() const = 0;

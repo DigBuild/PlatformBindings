@@ -23,6 +23,17 @@ namespace digbuild::platform::desktop
 		}
 	}
 
+	void InputContext::consumeScrollEvents(const input::ScrollEventConsumer consumer)
+	{
+		while (!m_scrollEvents.empty())
+		{
+			auto& evt = m_scrollEvents.front();
+			consumer(evt.xOffset, evt.yOffset);
+			m_scrollEvents.pop_front();
+		}
+	}
+
+
 	void InputContext::consumeCursorEvents(const input::CursorEventConsumer consumer)
 	{
 		while (!m_cursorEvents.empty())
@@ -141,6 +152,16 @@ namespace digbuild::platform::desktop
 							static_cast<uint32_t>(button),
 							static_cast<input::MouseAction>(action)
 						});
+					}
+				);
+
+				glfwSetScrollCallback(
+					m_window,
+					[](GLFWwindow* win, const double xOff, const double yOff)
+					{
+						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+						window->m_inputContext.m_scrollEvents.push_back({ xOff, yOff });
 					}
 				);
 

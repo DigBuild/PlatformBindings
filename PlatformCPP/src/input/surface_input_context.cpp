@@ -20,6 +20,14 @@ extern "C" {
 		instance->consumeMouseEvents(callback);
 	}
 	
+	DLLEXPORT void dbp_surface_input_context_consume_scroll_events(
+		SurfaceInputContext* instance,
+		void(*callback)(double xOffset, double yOffset)
+	)
+	{
+		instance->consumeScrollEvents(callback);
+	}
+	
 	DLLEXPORT void dbp_surface_input_context_consume_cursor_events(
 		SurfaceInputContext* instance,
 		void(*callback)(uint32_t x, uint32_t y, CursorAction action)
