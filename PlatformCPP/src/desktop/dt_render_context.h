@@ -15,7 +15,8 @@ namespace digbuild::platform::desktop
 		RenderContext& operator=(const RenderContext& other) = delete;
 		RenderContext& operator=(RenderContext&& other) noexcept = delete;
 
-		virtual void update() = 0;
+		virtual void updateFirst() = 0;
+		virtual void updateLast() = 0;
 
 		virtual render::Framebuffer& getFramebuffer() = 0;
 	};

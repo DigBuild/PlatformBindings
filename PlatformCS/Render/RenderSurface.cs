@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using AdvancedDLSupport;
 using DigBuild.Platform.Input;
@@ -26,8 +27,10 @@ namespace DigBuild.Platform.Render
         void SetTitle(IntPtr handle, string title);
         void SetFullscreen(IntPtr handle, bool fullscreen);
 
-        void Close(IntPtr handle);
-        void WaitClosed(IntPtr handle);
+        bool IsActive(IntPtr handle);
+        IntPtr UpdateFirst(IntPtr handle);
+        void UpdateLast(IntPtr handle);
+        void Terminate(IntPtr handle, bool force);
     }
 
     public sealed class RenderSurface : IDisposable
@@ -36,23 +39,53 @@ namespace DigBuild.Platform.Render
 
         public delegate void UpdateDelegate(RenderSurfaceContext surface, RenderContext context);
 
+        private readonly Thread _renderThread;
+        private readonly TaskCompletionSource _closedCompletionSource = new();
+        private readonly Action _forceStop;
+
         internal readonly NativeHandle Handle;
 
-        internal RenderSurface(NativeHandle handle)
+        internal RenderSurface(NativeHandle handle, Action forceStop)
         {
             Handle = handle;
-            Closed = Task.Run(() => Bindings.WaitClosed(handle));
+            _forceStop = forceStop;
+            _renderThread = Thread.CurrentThread;
         }
 
-        public void Dispose() => Handle.Dispose();
+        public void Dispose()
+        {
+            _forceStop();
+            _renderThread.Join();
+            Handle.Dispose();
+        }
 
         public Task Close()
         {
-            Bindings.Close(Handle);
+            _forceStop();
             return Closed;
         }
 
-        public Task Closed { get; }
+        public Task Closed => _closedCompletionSource.Task;
+
+        internal bool Active => Bindings.IsActive(Handle);
+
+        internal RenderContext UpdateFirst(out bool skip)
+        {
+            var ctxPtr = Bindings.UpdateFirst(Handle);
+            skip = ctxPtr == IntPtr.Zero;
+            return new RenderContext(ctxPtr);
+        }
+
+        internal void UpdateLast()
+        {
+            Bindings.UpdateLast(Handle);
+        }
+
+        internal void Terminate(bool forced)
+        {
+            Bindings.Terminate(Handle, forced);
+            _closedCompletionSource.SetResult();
+        }
     }
 
     public readonly struct RenderSurfaceContext : IRenderTarget

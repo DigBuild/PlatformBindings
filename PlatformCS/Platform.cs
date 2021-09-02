@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using AdvancedDLSupport;
 using DigBuild.Platform.Audio;
@@ -17,7 +18,6 @@ namespace DigBuild.Platform
         bool SupportsMultipleRenderSurfaces();
 
         IntPtr RequestRenderSurface(
-            NativeRenderSurfaceUpdateDelegate update,
             RenderSurfaceCreationHints hints,
             IntPtr parent
         );
@@ -45,7 +45,7 @@ namespace DigBuild.Platform
             bool fullscreenHint = false
         )
         {
-            return new(
+            return new RenderSurfaceRequestBuilder(
                 parent,
                 update,
                 new RenderSurfaceCreationHints
@@ -78,31 +78,41 @@ namespace DigBuild.Platform
             var hints = _hints;
             var updateFunc = _update;
             var parent = _parent;
-            return Task.Run(() =>
+
+            var task = new TaskCompletionSource<RenderSurface>();
+
+            new Thread(() =>
             {
-                return new RenderSurface(
-                    new NativeHandle(
-                        Platform.Bindings.RequestRenderSurface(
-                            (renderSurfaceContextPtr, renderContextPtr) =>
-                            {
-                                var handle = new NativeHandle(renderSurfaceContextPtr);
-                                updateFunc(
-                                    new RenderSurfaceContext(handle),
-                                    new RenderContext(renderContextPtr)
-                                );
-                                handle.Dispose();
-                            },
-                            hints,
-                            parent?.Handle ?? NativeHandle.Empty
-                        )
+                var forceStop = false;
+
+                var handle = new NativeHandle(
+                    Platform.Bindings.RequestRenderSurface(
+                        hints,
+                        parent?.Handle ?? NativeHandle.Empty
                     )
                 );
-            }).GetAwaiter();
+
+                var surface = new RenderSurface(handle, () => forceStop = true);
+                task.SetResult(surface);
+
+                var surfaceContext = new RenderSurfaceContext(handle);
+
+                while (!forceStop && surface.Active)
+                {
+                    var context = surface.UpdateFirst(out var skip);
+                    if (skip) continue;
+                    updateFunc(surfaceContext, context);
+                    surface.UpdateLast();
+                }
+
+                surface.Terminate(forceStop);
+
+            }) { Name = "Render" }.Start();
+
+            return task.Task.GetAwaiter();
         }
     }
-
-    internal delegate void NativeRenderSurfaceUpdateDelegate(IntPtr renderSurfaceContext, IntPtr renderContext);
-
+    
     internal struct RenderSurfaceCreationHints
     {
         public uint Width, Height;

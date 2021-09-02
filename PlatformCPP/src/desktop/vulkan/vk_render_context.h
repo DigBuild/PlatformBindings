@@ -32,8 +32,7 @@ namespace digbuild::platform::desktop::vulkan
 		explicit RenderContext(
 			RenderSurface& surface,
 			std::shared_ptr<VulkanContext>&& context,
-			vk::UniqueSurfaceKHR&& vkSurface,
-			render::RenderSurfaceUpdateFunction update
+			vk::UniqueSurfaceKHR&& vkSurface
 		);
 		~RenderContext() override;
 		RenderContext(const RenderContext& other) = delete;
@@ -43,7 +42,8 @@ namespace digbuild::platform::desktop::vulkan
 
 		void createSwapchain();
 		
-		void update() override;
+		void updateFirst() override;
+		void updateLast() override;
 
 		[[nodiscard]] std::shared_ptr<render::FramebufferFormat> getSurfaceFormat() override
 		{
@@ -139,7 +139,6 @@ namespace digbuild::platform::desktop::vulkan
 		RenderSurface& m_surface;
 		const std::shared_ptr<VulkanContext> m_context;
 		const vk::UniqueSurfaceKHR m_vkSurface;
-		const render::RenderSurfaceUpdateFunction m_update;
 		
 		vk::UniqueSwapchainKHR m_swapChain;
 		uint32_t m_swapChainStages;

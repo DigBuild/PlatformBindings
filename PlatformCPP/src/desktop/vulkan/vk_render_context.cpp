@@ -74,13 +74,11 @@ namespace digbuild::platform::desktop::vulkan
 	RenderContext::RenderContext(
 		RenderSurface& surface, 
 		std::shared_ptr<VulkanContext>&& context,
-		vk::UniqueSurfaceKHR&& vkSurface,
-		render::RenderSurfaceUpdateFunction update
+		vk::UniqueSurfaceKHR&& vkSurface
 	) :
 		m_surface(surface),
 		m_context(std::move(context)),
 		m_vkSurface(std::move(vkSurface)),
-		m_update(std::move(update)),
 		m_swapChainStages(0),
 		m_maxFramesInFlight(0)
 	{
@@ -167,7 +165,7 @@ namespace digbuild::platform::desktop::vulkan
 		// }
 	}
 
-	void RenderContext::update()
+	void RenderContext::updateFirst()
 	{
 		m_context->wait(m_inFlightFence[m_currentFrame]);
 
@@ -182,10 +180,10 @@ namespace digbuild::platform::desktop::vulkan
 
 		auto& queue = m_renderQueues[m_imageIndex];
 		queue.clear();
+	}
 
-		// Call user-provided update function
-		m_update(m_surface, *this);
-		
+	void RenderContext::updateLast()
+	{
 		visitTicking();
 		m_surface.resetResized();
 
@@ -195,6 +193,7 @@ namespace digbuild::platform::desktop::vulkan
 		m_context->reset(inFlight);
 
 		auto& cb = m_commandBuffer[m_imageIndex];
+		auto& queue = m_renderQueues[m_imageIndex];
 		queue.write(cb);
 
 		m_context->submit(
@@ -217,7 +216,7 @@ namespace digbuild::platform::desktop::vulkan
 
 		m_currentFrame = (m_currentFrame + 1) % m_maxFramesInFlight;
 	}
-
+	
 	std::shared_ptr<render::FramebufferFormat> RenderContext::createFramebufferFormat(
 		const std::vector<render::FramebufferAttachmentDescriptor>& attachments,
 		const std::vector<render::FramebufferRenderStageDescriptor>& renderStages

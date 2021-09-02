@@ -78,144 +78,146 @@ namespace digbuild::platform::desktop
 		m_title(title),
 		m_fullscreen(fullscreen)
 	{
-		std::atomic_bool ready = false;
-		
-		m_updateThread = std::thread(
-			[&]()
+		GLFWmonitor* monitor = nullptr;
+		if (fullscreen)
+			monitor = glfwGetPrimaryMonitor();
+
+		GLFWwindow* share = nullptr;
+		if (m_parent != nullptr)
+			share = m_parent->m_window;
+
+		m_window = glfwCreateWindow(width, height, title.c_str(), monitor, share);
+		glfwSetWindowUserPointer(m_window, this);
+
+		// Create the context once we have a window
+		m_context = contextFactory(*this, m_parent.get());
+
+		if (glfwRawMouseMotionSupported())
+			glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+
+		glfwSetFramebufferSizeCallback(
+			m_window,
+			[](GLFWwindow* win, const int width, const int height)
 			{
-				GLFWmonitor* monitor = nullptr;
-				if (fullscreen)
-					monitor = glfwGetPrimaryMonitor();
+				auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
 
-				GLFWwindow* share = nullptr;
-				if (m_parent != nullptr)
-					share = m_parent->m_window;
+				// [[maybe_unused]] std::scoped_lock<std::mutex> lock(window->m_renderLock);
 
-				m_window = glfwCreateWindow(width, height, title.c_str(), monitor, share);
-				glfwSetWindowUserPointer(m_window, this);
-
-				// Create the context once we have a window
-				m_context = contextFactory(*this, m_parent.get());
-
-				if (glfwRawMouseMotionSupported())
-					glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-
-				glfwSetFramebufferSizeCallback(
-					m_window,
-					[](GLFWwindow* win, const int width, const int height)
-					{
-						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
-
-						// [[maybe_unused]] std::scoped_lock<std::mutex> lock(window->m_renderLock);
-
-						window->m_width = width;
-						window->m_height = height;
-						window->m_visible = width != 0 && height != 0;
-						window->m_justResized = true;
-						window->m_resized = true;
-					}
-				);
-
-				glfwSetKeyCallback(
-					m_window,
-					[](GLFWwindow* win, int, const int scancode, const int action, int)
-					{
-						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
-
-						window->m_inputContext.m_keyboardEvents.push_back({
-							static_cast<uint32_t>(scancode),
-							static_cast<input::KeyboardAction>(action)
-						});
-					}
-				);
-				
-				glfwSetCharCallback(
-					m_window,
-					[](GLFWwindow* win, const unsigned int c)
-					{
-						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
-
-						window->m_inputContext.m_keyboardEvents.push_back({
-							c,
-							input::KeyboardAction::CHARACTER
-						});
-					}
-				);
-				
-				glfwSetMouseButtonCallback(
-					m_window,
-					[](GLFWwindow* win, const int button, const int action, int)
-					{
-						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
-
-						window->m_inputContext.m_mouseEvents.push_back({
-							static_cast<uint32_t>(button),
-							static_cast<input::MouseAction>(action)
-						});
-					}
-				);
-
-				glfwSetScrollCallback(
-					m_window,
-					[](GLFWwindow* win, const double xOff, const double yOff)
-					{
-						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
-
-						window->m_inputContext.m_scrollEvents.push_back({ xOff, yOff });
-					}
-				);
-
-				glfwSetCursorPosCallback(
-					m_window,
-					[](GLFWwindow* win, const double x, const double y)
-					{
-						auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
-
-						window->m_inputContext.m_cursorEvents.push_back({
-							static_cast<uint32_t>(x),
-							static_cast<uint32_t>(y),
-							input::CursorAction::MOVE
-						});
-					}
-				);
-
-				// TODO: Support IME and alternative input methods
-				// glfwSetCharCallback(
-				// 	m_window,
-				// 	[](GLFWwindow* win, unsigned int character)
-				// 	{
-				// 	}
-				// );
-
-				ready = true;
-				
-				while (!m_close && !glfwWindowShouldClose(m_window))
-				{
-					// [[maybe_unused]] std::scoped_lock<std::mutex> lock(m_renderLock);
-
-					if (m_width == 0 || m_height == 0)
-						glfwWaitEvents();
-					else
-						glfwPollEvents();
-					
-					if (m_width == 0 || m_height == 0)
-						continue;
-					
-					m_context->update();
-
-					m_justResized = false;
-				}
-
-				// Manually terminate the context before the window closes
-				m_context = nullptr;
-
-				glfwDestroyWindow(m_window);
+				window->m_width = width;
+				window->m_height = height;
+				window->m_visible = width != 0 && height != 0;
+				window->m_justResized = true;
+				window->m_resized = true;
 			}
 		);
 
-		while (!ready);
+		glfwSetKeyCallback(
+			m_window,
+			[](GLFWwindow* win, int, const int scancode, const int action, int)
+			{
+				auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+				window->m_inputContext.m_keyboardEvents.push_back({
+					static_cast<uint32_t>(scancode),
+					static_cast<input::KeyboardAction>(action)
+				});
+			}
+		);
+		
+		glfwSetCharCallback(
+			m_window,
+			[](GLFWwindow* win, const unsigned int c)
+			{
+				auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+				window->m_inputContext.m_keyboardEvents.push_back({
+					c,
+					input::KeyboardAction::CHARACTER
+				});
+			}
+		);
+		
+		glfwSetMouseButtonCallback(
+			m_window,
+			[](GLFWwindow* win, const int button, const int action, int)
+			{
+				auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+				window->m_inputContext.m_mouseEvents.push_back({
+					static_cast<uint32_t>(button),
+					static_cast<input::MouseAction>(action)
+				});
+			}
+		);
+
+		glfwSetScrollCallback(
+			m_window,
+			[](GLFWwindow* win, const double xOff, const double yOff)
+			{
+				auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+				window->m_inputContext.m_scrollEvents.push_back({ xOff, yOff });
+			}
+		);
+
+		glfwSetCursorPosCallback(
+			m_window,
+			[](GLFWwindow* win, const double x, const double y)
+			{
+				auto* window = static_cast<RenderSurface*>(glfwGetWindowUserPointer(win));
+
+				window->m_inputContext.m_cursorEvents.push_back({
+					static_cast<uint32_t>(x),
+					static_cast<uint32_t>(y),
+					input::CursorAction::MOVE
+				});
+			}
+		);
+
+		// TODO: Support IME and alternative input methods
+		// glfwSetCharCallback(
+		// 	m_window,
+		// 	[](GLFWwindow* win, unsigned int character)
+		// 	{
+		// 	}
+		// );
 	}
 
+	bool RenderSurface::isActive() const
+	{
+		return !m_close && !glfwWindowShouldClose(m_window);
+	}
+
+	render::RenderContext* RenderSurface::updateFirst()
+	{
+		if (m_width == 0 || m_height == 0)
+			glfwWaitEvents();
+		else
+			glfwPollEvents();
+		
+		if (m_width == 0 || m_height == 0)
+			return nullptr;
+
+		m_context->updateFirst();
+		
+		return m_context.get();
+	}
+	
+	void RenderSurface::updateLast()
+	{
+		m_context->updateLast();
+
+		m_justResized = false;
+	}
+
+	void RenderSurface::terminate(bool force)
+	{
+		// Manually terminate the context before the window closes
+		m_context = nullptr;
+
+		glfwDestroyWindow(m_window);
+	}
+	
 	void RenderSurface::setWidth(const uint32_t width)
 	{
 		m_width = width;
@@ -237,17 +239,6 @@ namespace digbuild::platform::desktop
 	void RenderSurface::setFullscreen(const bool fullscreen)
 	{
 		// TODO: Implement fullscreen support
-	}
-
-	void RenderSurface::close()
-	{
-		m_close = true;
-	}
-
-	void RenderSurface::waitClosed()
-	{
-		if (m_updateThread.joinable())
-			m_updateThread.join();
 	}
 
 	vk::UniqueSurfaceKHR RenderSurface::createVulkanSurface(const vk::Instance& instance) const

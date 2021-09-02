@@ -120,8 +120,10 @@ namespace digbuild::platform::desktop
 		void setTitle(const std::string& title) override;
 		void setFullscreen(bool fullscreen) override;
 		
-		void close() override;
-		void waitClosed() override;
+		bool isActive() const override;
+		render::RenderContext* updateFirst() override;
+		void updateLast() override;
+		void terminate(bool force) override;
 
 		const RenderContext& getContext() const
 		{
@@ -148,7 +150,6 @@ namespace digbuild::platform::desktop
 		bool m_close = false;
 
 		GLFWwindow* m_window;
-		std::thread m_updateThread;
 
 		std::mutex m_renderLock;
 

@@ -62,13 +62,23 @@ extern "C" {
 		handle_cast<RenderSurface>(instance)->setFullscreen(fullscreen);
 	}
 
-	DLLEXPORT void dbp_render_surface_close(const native_handle instance)
+	DLLEXPORT bool dbp_render_surface_is_active(const native_handle instance)
 	{
-		handle_cast<RenderSurface>(instance)->close();
+		return handle_cast<RenderSurface>(instance)->isActive();
 	}
 
-	DLLEXPORT void dbp_render_surface_wait_closed(const native_handle instance)
+	DLLEXPORT void* dbp_render_surface_update_first(const native_handle instance)
 	{
-		handle_cast<RenderSurface>(instance)->waitClosed();
+		return handle_cast<RenderSurface>(instance)->updateFirst();
+	}
+
+	DLLEXPORT void dbp_render_surface_update_last(const native_handle instance)
+	{
+		handle_cast<RenderSurface>(instance)->updateLast();
+	}
+
+	DLLEXPORT void dbp_render_surface_terminate(const native_handle instance, const bool force)
+	{
+		handle_cast<RenderSurface>(instance)->terminate(force);
 	}
 }

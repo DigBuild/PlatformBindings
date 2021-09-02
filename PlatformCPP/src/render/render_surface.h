@@ -8,8 +8,6 @@ namespace digbuild::platform::render
 {
 	class RenderSurface;
 	
-	using RenderSurfaceUpdateFunction = std::function<void(const RenderSurface&, const RenderContext&)>;
-	
 	class RenderSurface : public IRenderTarget, public std::enable_shared_from_this<RenderSurface>
 	{
 	public:
@@ -34,7 +32,9 @@ namespace digbuild::platform::render
 		virtual void setTitle(const std::string& title) { }
 		virtual void setFullscreen(bool fullscreen) { }
 
-		virtual void close() = 0;
-		virtual void waitClosed() = 0;
+		[[nodiscard]] virtual bool isActive() const = 0;
+		virtual RenderContext* updateFirst() = 0;
+		virtual void updateLast() = 0;
+		virtual void terminate(bool force) = 0;
 	};
 }

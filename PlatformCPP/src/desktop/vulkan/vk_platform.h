@@ -17,7 +17,6 @@ namespace digbuild::platform::desktop::vulkan
 		}
 		
 		[[nodiscard]] std::shared_ptr<render::RenderSurface> requestRenderSurface(
-			const render::RenderSurfaceUpdateFunction& update,
 			RenderSurfaceCreationHints hints
 		) override;
 	
