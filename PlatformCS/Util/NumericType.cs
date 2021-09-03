@@ -3,6 +3,9 @@ using System.Numerics;
 
 namespace DigBuild.Platform.Util
 {
+    /// <summary>
+    /// A numeric type.
+    /// </summary>
     public enum NumericType : byte
     {
         Byte, UByte,
@@ -14,10 +17,23 @@ namespace DigBuild.Platform.Util
         Float4x4
     }
 
+    /// <summary>
+    /// Helper to convert C# types into numeric types.
+    /// </summary>
     public static class NumericTypeHelper
     {
+        /// <summary>
+        /// Gets the numeric type of the type argument.
+        /// </summary>
+        /// <typeparam name="T">The type</typeparam>
+        /// <returns>The numeric type</returns>
         public static NumericType GetType<T>() where T : unmanaged => GetType(typeof(T));
 
+        /// <summary>
+        /// Gets the numeric type of the C# type.
+        /// </summary>
+        /// <param name="type">The type</param>
+        /// <returns>The numeric type</returns>
         public static NumericType GetType(Type type)
         {
             if (type == typeof(sbyte))

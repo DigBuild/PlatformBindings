@@ -2,6 +2,9 @@
 
 namespace DigBuild.Platform.Util
 {
+    /// <summary>
+    /// A base class for all platform exceptions.
+    /// </summary>
     public class PlatformException : Exception
     {
         internal PlatformException(string? message, Exception? innerException = null) : base(message, innerException)
@@ -9,6 +12,9 @@ namespace DigBuild.Platform.Util
         }
     }
 
+    /// <summary>
+    /// Fired when a handle to a native resource is invalid.
+    /// </summary>
     public sealed class InvalidHandleException : PlatformException
     {
         internal InvalidHandleException() : base("Invalid handle.")
@@ -16,6 +22,9 @@ namespace DigBuild.Platform.Util
         }
     }
 
+    /// <summary>
+    /// Fired when a custom resource type has no loader.
+    /// </summary>
     public sealed class ResourceLoaderMissingException : PlatformException
     {
         internal ResourceLoaderMissingException(Type type) :
@@ -24,6 +33,9 @@ namespace DigBuild.Platform.Util
         }
     }
 
+    /// <summary>
+    /// Fired when a draw command begins recording while it is already recording.
+    /// </summary>
     public sealed class AlreadyRecordingException : PlatformException
     {
         internal AlreadyRecordingException() :
@@ -32,6 +44,9 @@ namespace DigBuild.Platform.Util
         }
     }
 
+    /// <summary>
+    /// Fired when an action is recorded to a committed draw command.
+    /// </summary>
     public sealed class RecordingAlreadyCommittedException : PlatformException
     {
         internal RecordingAlreadyCommittedException() :
@@ -40,6 +55,9 @@ namespace DigBuild.Platform.Util
         }
     }
 
+    /// <summary>
+    /// Fired when a shader binding is added multiple times.
+    /// </summary>
     public sealed class ShaderBindingAlreadyInUseException : PlatformException
     {
         internal ShaderBindingAlreadyInUseException(uint binding) :

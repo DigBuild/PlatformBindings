@@ -16,6 +16,10 @@ namespace DigBuild.Platform.Render
         internal static readonly IUniformBufferBindings Bindings = NativeLib.Get<IUniformBufferBindings>();
     }
     
+    /// <summary>
+    /// A uniform buffer.
+    /// </summary>
+    /// <typeparam name="T">The uniform type</typeparam>
     public class UniformBuffer<T> where T : unmanaged, IUniform<T>
     {
         internal readonly NativeHandle Handle;
@@ -25,6 +29,10 @@ namespace DigBuild.Platform.Render
             Handle = handle;
         }
 
+        /// <summary>
+        /// Writes new data to the uniform buffer.
+        /// </summary>
+        /// <param name="buffer">The data</param>
         public void Write(INativeBuffer<T> buffer)
         {
             UniformBuffer.Bindings.Write(
@@ -35,6 +43,10 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A uniform buffer builder.
+    /// </summary>
+    /// <typeparam name="T">The uniform type</typeparam>
     public readonly ref struct UniformBufferBuilder<T> where T : unmanaged, IUniform<T>
     {
         private readonly RenderContext _ctx;

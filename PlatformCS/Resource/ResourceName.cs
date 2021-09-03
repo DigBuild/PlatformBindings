@@ -2,26 +2,38 @@
 
 namespace DigBuild.Platform.Resource
 {
+    /// <summary>
+    /// A resource name.
+    /// </summary>
     public readonly struct ResourceName : IEquatable<ResourceName>
     {
-        public readonly string Domain, Path;
+        private readonly string _domain, _path;
+
+        /// <summary>
+        /// The domain.
+        /// </summary>
+        public string Domain => _domain;
+        /// <summary>
+        /// The path.
+        /// </summary>
+        public string Path => _path;
 
         public ResourceName(string domain, string path)
         {
-            Domain = domain;
-            Path = path;
+            _domain = domain;
+            _path = path;
         }
 
         public ResourceName GetSibling(string name)
         {
-            var parentDir = System.IO.Path.GetDirectoryName(Path)?.Replace('\\', '/') ?? string.Empty;
+            var parentDir = System.IO.Path.GetDirectoryName(_path)?.Replace('\\', '/') ?? string.Empty;
             var newPath = parentDir.Length == 0 ? name : $"{parentDir}/{name}";
-            return new ResourceName(Domain, newPath);
+            return new ResourceName(_domain, newPath);
         }
 
         public bool Equals(ResourceName other)
         {
-            return Domain == other.Domain && Path == other.Path;
+            return _domain == other._domain && _path == other._path;
         }
 
         public override bool Equals(object? obj)
@@ -31,7 +43,7 @@ namespace DigBuild.Platform.Resource
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Domain, Path);
+            return HashCode.Combine(_domain, _path);
         }
 
         public static bool operator ==(ResourceName left, ResourceName right)
@@ -46,9 +58,14 @@ namespace DigBuild.Platform.Resource
 
         public override string ToString()
         {
-            return $"{Domain}:{Path}";
+            return $"{_domain}:{_path}";
         }
 
+        /// <summary>
+        /// Parses a string representation of the resource name, or null if invalid.
+        /// </summary>
+        /// <param name="str">The string</param>
+        /// <returns>The resource name, or null</returns>
         public static ResourceName? Parse(string str)
         {
             var firstColon = str.IndexOf(':');

@@ -4,8 +4,15 @@ using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Resource
 {
+    /// <summary>
+    /// A custom resource. Implementing types <strong>MUST</strong> contain a public static
+    /// method with the signature <c>Load(<see cref="ResourceManager"/>, <see cref="ResourceName"/>)</c>.
+    /// </summary>
     public interface ICustomResource
     {
+        /// <summary>
+        /// The name of the resource.
+        /// </summary>
         public ResourceName Name { get; }
     }
 

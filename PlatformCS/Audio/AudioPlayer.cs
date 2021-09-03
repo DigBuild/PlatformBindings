@@ -4,6 +4,9 @@ using OpenAL;
 
 namespace DigBuild.Platform.Audio
 {
+    /// <summary>
+    /// An audio player.
+    /// </summary>
     public sealed class AudioPlayer : IDisposable
     {
         private readonly uint _source;
@@ -16,6 +19,9 @@ namespace DigBuild.Platform.Audio
         private Vector3 _velocity;
         private AudioClip? _clip;
 
+        /// <summary>
+        /// The gain (or volume) of the sound being played.
+        /// </summary>
         public float Gain
         {
             get => _gain;
@@ -26,6 +32,9 @@ namespace DigBuild.Platform.Audio
             }
         }
 
+        /// <summary>
+        /// The pitch of the sound being played.
+        /// </summary>
         public float Pitch
         {
             get => _pitch;
@@ -36,6 +45,9 @@ namespace DigBuild.Platform.Audio
             }
         }
 
+        /// <summary>
+        /// The maximum distance at which the sound will be audible.
+        /// </summary>
         public float MaxDistance
         {
             get => _maxDistance;
@@ -46,6 +58,10 @@ namespace DigBuild.Platform.Audio
             }
         }
 
+        /// <summary>
+        /// Whether the player's position is relative to the listener or to the world.
+        /// </summary>
+        /// <see cref="Position"/>
         public bool ListenerRelative
         {
             get => _listenerRelative;
@@ -56,6 +72,10 @@ namespace DigBuild.Platform.Audio
             }
         }
 
+        /// <summary>
+        /// The position of the player.
+        /// </summary>
+        /// <see cref="ListenerRelative"/>
         public Vector3 Position
         {
             get => _position;
@@ -66,6 +86,9 @@ namespace DigBuild.Platform.Audio
             }
         }
 
+        /// <summary>
+        /// The velocity of the player.
+        /// </summary>
         public Vector3 Velocity
         {
             get => _velocity;
@@ -76,6 +99,9 @@ namespace DigBuild.Platform.Audio
             }
         }
 
+        /// <summary>
+        /// The current playback status.
+        /// </summary>
         public PlayStatus Status
         {
             get
@@ -90,6 +116,9 @@ namespace DigBuild.Platform.Audio
             }
         }
 
+        /// <summary>
+        /// The current audio clip.
+        /// </summary>
         public AudioClip? Clip
         {
             get => _clip;
@@ -123,28 +152,46 @@ namespace DigBuild.Platform.Audio
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Begins playback of an audio clip.
+        /// </summary>
+        /// <param name="clip">The clip to play</param>
+        /// <param name="looping">Whether it should loop when it ends</param>
         public void Play(AudioClip clip, bool looping = false)
         {
             Clip = clip;
             Play(looping);
         }
 
+        /// <summary>
+        /// Begins playback of the currently loaded audio clip.
+        /// </summary>
+        /// <param name="looping">Whether it should loop when it ends</param>
         public void Play(bool looping = false)
         {
             Al.Sourcei(_source, Al.Looping, looping ? 1 : 0);
             Al.SourcePlay(_source);
         }
 
+        /// <summary>
+        /// Pauses playback.
+        /// </summary>
         public void Pause()
         {
             Al.SourcePause(_source);
         }
 
+        /// <summary>
+        /// Stops playback.
+        /// </summary>
         public void Stop()
         {
             Al.SourceStop(_source);
         }
 
+        /// <summary>
+        /// Playback status.
+        /// </summary>
         public enum PlayStatus
         {
             Stopped,

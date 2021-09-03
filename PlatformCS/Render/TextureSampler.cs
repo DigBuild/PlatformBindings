@@ -2,6 +2,9 @@
 
 namespace DigBuild.Platform.Render
 {
+    /// <summary>
+    /// A texture sampler.
+    /// </summary>
     public sealed class TextureSampler
     {
         internal readonly NativeHandle Handle;
@@ -12,12 +15,18 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A texture filtering method.
+    /// </summary>
     public enum TextureFiltering : byte
     {
         Linear,
         Nearest
     }
 
+    /// <summary>
+    /// A texture wrapping method.
+    /// </summary>
     public enum TextureWrapping : byte
     {
         Repeat, MirroredRepeat,
@@ -25,6 +34,9 @@ namespace DigBuild.Platform.Render
         ClampToBorder
     }
 
+    /// <summary>
+    /// A texture border color.
+    /// </summary>
     public enum TextureBorderColor : byte
     {
         TransparentBlack,
@@ -32,6 +44,9 @@ namespace DigBuild.Platform.Render
         OpaqueWhite
     }
 
+    /// <summary>
+    /// A texture sampler builder.
+    /// </summary>
     public readonly ref struct TextureSamplerBuilder
     {
         private readonly RenderContext _context;
@@ -61,6 +76,11 @@ namespace DigBuild.Platform.Render
             _anisotropyLevel = anisotropyLevel;
         }
 
+        /// <summary>
+        /// Enables anisotropic filtering.
+        /// </summary>
+        /// <param name="level">The level of filtering</param>
+        /// <returns>The builder</returns>
         public TextureSamplerBuilder WithAnisotropicFiltering(uint level)
         {
             return new(

@@ -23,18 +23,41 @@ namespace DigBuild.Platform
         );
     }
 
+    /// <summary>
+    /// Represents the target platform instance.
+    /// </summary>
     public static class Platform
     {
         internal static readonly IPlatformBindings Bindings = NativeLib.Get<IPlatformBindings>();
-
+        
         private static readonly Lazy<AudioSystem> LazyAudioSystem = new(() => new AudioSystem());
 
+        /// <summary>
+        /// The current platform's global input context.
+        /// </summary>
         public static GlobalInputContext InputContext { get; } = new(Bindings.GetGlobalInputContext());
 
+        /// <summary>
+        /// The current platform's audio subsystem.
+        /// </summary>
         public static AudioSystem AudioSystem => LazyAudioSystem.Value;
 
+        /// <summary>
+        /// Whether multiple render surfaces are supported on the current platform or not.
+        /// </summary>
         public static bool SupportsMultipleRenderSurfaces => Bindings.SupportsMultipleRenderSurfaces();
 
+        /// <summary>
+        /// Asynchronously requests a new render surface.
+        /// </summary>
+        /// <param name="update">The update function that will be called every frame</param>
+        /// <param name="parent">An optional surface to inherit the render context from</param>
+        /// <param name="fallbackOnIncompatibleParentHint">Whether an incompatible parent should be treated as an error or ignored</param>
+        /// <param name="widthHint">A suggested width</param>
+        /// <param name="heightHint">A suggested height</param>
+        /// <param name="titleHint">A suggested title</param>
+        /// <param name="fullscreenHint">A suggested fullscreen state</param>
+        /// <returns></returns>
         public static RenderSurfaceRequestBuilder RequestRenderSurface(
             RenderSurface.UpdateDelegate update,
             RenderSurface? parent = null,
@@ -60,6 +83,9 @@ namespace DigBuild.Platform
         }
     }
 
+    /// <summary>
+    /// Render surface instance builder.
+    /// </summary>
     public readonly ref struct RenderSurfaceRequestBuilder
     {
         private readonly RenderSurface? _parent;
@@ -113,6 +139,9 @@ namespace DigBuild.Platform
         }
     }
     
+    /// <summary>
+    /// Hints for the creation of a render surface.
+    /// </summary>
     internal struct RenderSurfaceCreationHints
     {
         public uint Width, Height;

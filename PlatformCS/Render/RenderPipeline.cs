@@ -3,6 +3,10 @@ using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Render
 {
+    /// <summary>
+    /// A render pipeline.
+    /// </summary>
+    /// <typeparam name="TVertex">The vertex type</typeparam>
     public sealed class RenderPipeline<TVertex> : IRenderPipeline
         where TVertex : unmanaged
     {
@@ -15,6 +19,11 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A render pipeline.
+    /// </summary>
+    /// <typeparam name="TVertex">The vertex type</typeparam>
+    /// <typeparam name="TInstance">The instance type</typeparam>
     public sealed class RenderPipeline<TVertex, TInstance> : IRenderPipeline
         where TVertex : unmanaged
         where TInstance : unmanaged
@@ -28,10 +37,17 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A render pipeline.
+    /// </summary>
     public interface IRenderPipeline {
         internal NativeHandle Handle { get; }
     }
 
+    /// <summary>
+    /// A pipeline builder.
+    /// </summary>
+    /// <typeparam name="TPipeline">The pipeline type</typeparam>
     public readonly ref struct RenderPipelineBuilder<TPipeline> where TPipeline : IRenderPipeline
     {
         private class Data
@@ -108,90 +124,168 @@ namespace DigBuild.Platform.Render
             );
         }
 
+        /// <summary>
+        /// Sets the line width.
+        /// </summary>
+        /// <param name="lineWidth">The line width</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithLineWidth(float lineWidth)
         {
             _data.LineWidth = lineWidth;
             return this;
         }
+        /// <summary>
+        /// Sets the line width to be dynamic.
+        /// </summary>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithDynamicLineWidth()
         {
             _data.LineWidth = MaybeDynamic<float>.Dynamic;
             return this;
         }
 
+        /// <summary>
+        /// Sets the depth bias.
+        /// </summary>
+        /// <param name="constant">The constant factor</param>
+        /// <param name="clamp">The clamp factor</param>
+        /// <param name="slope">The slope factor</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithDepthBias(float constant, float clamp, float slope)
         {
             _data.DepthBias = new DepthBias(true, constant, clamp, slope);
             return this;
         }
+        /// <summary>
+        /// Sets the depth bias to be dynamic.
+        /// </summary>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithDynamicDepthBias()
         {
             _data.DepthBias = MaybeDynamic<DepthBias>.Dynamic;
             return this;
         }
 
+        /// <summary>
+        /// Sets the depth test options.
+        /// </summary>
+        /// <param name="comparison">The comparison operation</param>
+        /// <param name="write">Whether to write the output or not</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithDepthTest(CompareOperation comparison, bool write)
         {
             _data.DepthTest = new DepthTest(true, comparison, write);
             return this;
         }
+        /// <summary>
+        /// Sets the depth test to be dynamic.
+        /// </summary>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithDynamicDepthTest()
         {
             _data.DepthTest = MaybeDynamic<DepthTest>.Dynamic;
             return this;
         }
         
+        /// <summary>
+        /// Sets the stencil test options.
+        /// </summary>
+        /// <param name="operation">The operation</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithStencilTest(StencilFaceOperation operation)
         {
             return WithStencilTest(operation, operation);
         }
+        /// <summary>
+        /// Sets the stencil test options.
+        /// </summary>
+        /// <param name="front">The front face operation</param>
+        /// <param name="back">The back face operation</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithStencilTest(StencilFaceOperation front, StencilFaceOperation back)
         {
             _data.StencilTest = new StencilTest(true, front, back);
             return this;
         }
+        /// <summary>
+        /// Sets the stencil test to be dynamic.
+        /// </summary>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithDynamicStencilTest()
         {
             _data.StencilTest = MaybeDynamic<StencilTest>.Dynamic;
             return this;
         }
 
+        /// <summary>
+        /// Sets the culling mode.
+        /// </summary>
+        /// <param name="cullingMode">The culling mode</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithCullingMode(CullingMode cullingMode)
         {
             _data.CullingMode = cullingMode;
             return this;
         }
+        /// <summary>
+        /// Sets the culling mode to be dynamic.
+        /// </summary>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithDynamicCullingMode()
         {
             _data.CullingMode = MaybeDynamic<CullingMode>.Dynamic;
             return this;
         }
 
+        /// <summary>
+        /// Sets the front face vertex ordering.
+        /// </summary>
+        /// <param name="frontFace">The vertex ordering</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithFrontFace(FrontFace frontFace)
         {
             _data.FrontFace = frontFace;
             return this;
         }
+        /// <summary>
+        /// Sets the front face vertex ordering to be dynamic.
+        /// </summary>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithDynamicFrontFace()
         {
             _data.FrontFace = MaybeDynamic<FrontFace>.Dynamic;
             return this;
         }
 
+        /// <summary>
+        /// Sets the blending for an attachment to standard.
+        /// </summary>
+        /// <param name="attachment">The attachment</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithStandardBlending(
             FramebufferAttachment attachment
         ) => WithBlending(
             attachment,
             BlendFactor.SrcAlpha, BlendFactor.OneMinusSrcAlpha, BlendOperation.Add
         );
-
+        
+        /// <summary>
+        /// Sets the blending for an attachment to pre-multiplied.
+        /// </summary>
+        /// <param name="attachment">The attachment</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithPreMultipliedBlending(
             FramebufferAttachment attachment
         ) => WithBlending(
             attachment,
             BlendFactor.One, BlendFactor.OneMinusSrcAlpha, BlendOperation.Add
         );
-
+        
+        /// <summary>
+        /// Sets the blending for an attachment to pre-multiplied inverse.
+        /// </summary>
+        /// <param name="attachment">The attachment</param>
+        /// <returns>The builder</returns>
         public RenderPipelineBuilder<TPipeline> WithPreMultipliedInverseBlending(
             FramebufferAttachment attachment
         ) => WithBlending(
@@ -199,6 +293,15 @@ namespace DigBuild.Platform.Render
             BlendFactor.One, BlendFactor.SrcAlpha, BlendOperation.Add
         );
 
+        /// <summary>
+        /// Sets the blending for an attachment.
+        /// </summary>
+        /// <param name="attachment">The attachment</param>
+        /// <param name="src">The source blend factor</param>
+        /// <param name="dst">The destination blend factor</param>
+        /// <param name="operation">The blend operation</param>
+        /// <param name="components">The component mask</param>
+        /// <returns></returns>
         public RenderPipelineBuilder<TPipeline> WithBlending(
             FramebufferAttachment attachment,
             BlendFactor src, BlendFactor dst, BlendOperation operation,
@@ -210,7 +313,19 @@ namespace DigBuild.Platform.Render
             src, dst, operation,
             components
         );
-
+        
+        /// <summary>
+        /// Sets the blending for an attachment.
+        /// </summary>
+        /// <param name="attachment">The attachment</param>
+        /// <param name="srcColor">The source color blend factor</param>
+        /// <param name="dstColor">The destination color blend factor</param>
+        /// <param name="colorOperation">The color blend operation</param>
+        /// <param name="srcAlpha">The source alpha blend factor</param>
+        /// <param name="dstAlpha">The destination alpha blend factor</param>
+        /// <param name="alphaOperation">The alpha blend operation</param>
+        /// <param name="components">The component mask</param>
+        /// <returns></returns>
         public RenderPipelineBuilder<TPipeline> WithBlending(
             FramebufferAttachment attachment,
             BlendFactor srcColor, BlendFactor dstColor, BlendOperation colorOperation,

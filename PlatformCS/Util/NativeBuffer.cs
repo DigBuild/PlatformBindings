@@ -71,31 +71,90 @@ namespace DigBuild.Platform.Util
         }
     }
 
+    /// <summary>
+    /// A buffer in unmanaged memory.
+    /// </summary>
+    /// <typeparam name="T">The type of the buffer</typeparam>
     public interface INativeBuffer<T> : IEnumerable<T> where T : unmanaged
     {
         internal IntPtr Ptr { get; }
 
+        /// <summary>
+        /// The current buffer capacity.
+        /// </summary>
         public uint Capacity { get; }
+        /// <summary>
+        /// The current amount of elements in the buffer.
+        /// </summary>
         public uint Count { get; }
 
+        /// <summary>
+        /// Adds an element by value.
+        /// </summary>
+        /// <param name="value">The element</param>
         public void Add(T value);
+        /// <summary>
+        /// Adds an array of elements by value.
+        /// </summary>
+        /// <param name="values">The elements</param>
         public void Add(params T[] values);
+        /// <summary>
+        /// Adds an enumeration of elements by value.
+        /// </summary>
+        /// <param name="values">The elements</param>
         public void Add(IEnumerable<T> values);
 
+        /// <summary>
+        /// Adds the specified amount of elements and returns them as a span.
+        /// </summary>
+        /// <param name="amount">The amount of elements</param>
+        /// <returns>The span</returns>
         public Span<T> Add(uint amount);
 
+        /// <summary>
+        /// Sets the element a specified index by value.
+        /// </summary>
+        /// <param name="index">The index</param>
+        /// <param name="value">The value</param>
         public void Set(uint index, T value);
+        /// <summary>
+        /// Sets the elements starting at a specified index by value.
+        /// </summary>
+        /// <param name="index">The index</param>
+        /// <param name="values">The values</param>
         public void Set(uint index, params T[] values);
 
+        /// <summary>
+        /// Clears the buffer.
+        /// </summary>
         public void Clear();
 
+        /// <summary>
+        /// Releases a number of elements from the end of the buffer and optionally clears them.
+        /// </summary>
+        /// <param name="amount">The amount of elements</param>
+        /// <param name="clear">Whether to clear them or not</param>
         public void ReleaseLast(uint amount, bool clear = false);
 
+        /// <summary>
+        /// Ensures the buffer has a minimum capacity.
+        /// </summary>
+        /// <param name="minCapacity">The capacity</param>
         public void Reserve(uint minCapacity);
 
+        /// <summary>
+        /// An element of the buffer.
+        /// </summary>
+        /// <param name="i">The index</param>
+        /// <returns>A reference to the element</returns>
         public ref T this[uint i] { get; }
     }
     
+    /// <summary>
+    /// A manually managed buffer in native memory.
+    /// On disposed, memory is released.
+    /// </summary>
+    /// <typeparam name="T">The type of the buffer</typeparam>
     public sealed unsafe class NativeBuffer<T> : INativeBuffer<T>, IDisposable where T : unmanaged
     {
         private readonly NativeBuffer _buf;
@@ -277,6 +336,9 @@ namespace DigBuild.Platform.Util
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
+    /// <summary>
+    /// A pool of native buffers.
+    /// </summary>
     public sealed class NativeBufferPool
     {
         private readonly ConcurrentQueue<NativeBuffer> _buffers = new();
@@ -288,7 +350,13 @@ namespace DigBuild.Platform.Util
             return new PooledNativeBuffer<T>(backingBuffer, _buffers);
         }
     }
-
+    
+    /// <summary>
+    /// An automatically managed buffer in native memory.
+    /// Only obtainable through <see cref="NativeBufferPool"/>.
+    /// On disposed, returns to the pool.
+    /// </summary>
+    /// <typeparam name="T">The type of the buffer</typeparam>
     public sealed class PooledNativeBuffer<T> : INativeBuffer<T>, IDisposable where T : unmanaged
     {
         private readonly NativeBuffer _backingBuffer;

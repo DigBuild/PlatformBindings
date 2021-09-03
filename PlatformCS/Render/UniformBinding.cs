@@ -17,6 +17,10 @@ namespace DigBuild.Platform.Render
 
     internal interface IUniformBinding { }
 
+    /// <summary>
+    /// A uniform binding.
+    /// </summary>
+    /// <typeparam name="TUniform">The uniform type</typeparam>
     public sealed class UniformBinding<TUniform> : IUniformBinding where TUniform : unmanaged, IUniform<TUniform>
     {
         internal readonly NativeHandle Handle;
@@ -28,12 +32,20 @@ namespace DigBuild.Platform.Render
             UniformHandle = uniformHandle;
         }
 
+        /// <summary>
+        /// Updates the bound buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer</param>
         public void Update(UniformBuffer<TUniform> buffer)
         {
             UniformBinding.Bindings.Update(Handle, buffer.Handle);
         }
     }
 
+    /// <summary>
+    /// A uniform binding builder.
+    /// </summary>
+    /// <typeparam name="TUniform">The uniform type</typeparam>
     public readonly ref struct UniformBindingBuilder<TUniform> where TUniform : unmanaged, IUniform<TUniform>
     {
         private readonly RenderContext _context;

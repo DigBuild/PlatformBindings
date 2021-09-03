@@ -14,6 +14,9 @@ namespace DigBuild.Platform.Render
         IntPtr GetTexture(IntPtr handle, uint attachment);
     }
 
+    /// <summary>
+    /// A framebuffer.
+    /// </summary>
     public sealed class Framebuffer : IDisposable, IRenderTarget
     {
         internal static readonly IFramebufferBindings Bindings = NativeLib.Get<IFramebufferBindings>();
@@ -31,14 +34,31 @@ namespace DigBuild.Platform.Render
 
         NativeHandle IRenderTarget.Handle => _handle;
 
+        /// <summary>
+        /// The format.
+        /// </summary>
         public FramebufferFormat Format { get; }
 
+        /// <summary>
+        /// The width.
+        /// </summary>
         public uint Width => Bindings.GetWidth(_handle);
+        /// <summary>
+        /// The height.
+        /// </summary>
         public uint Height => Bindings.GetHeight(_handle);
 
+        /// <summary>
+        /// Gets the texture for the specified attachment.
+        /// </summary>
+        /// <param name="attachment">The attachment</param>
+        /// <returns>The texture</returns>
         public Texture Get(FramebufferAttachment attachment) => _textures[(int) attachment.Id];
     }
 
+    /// <summary>
+    /// A framebuffer builder.
+    /// </summary>
     public readonly ref struct FramebufferBuilder
     {
         private readonly RenderContext _context;

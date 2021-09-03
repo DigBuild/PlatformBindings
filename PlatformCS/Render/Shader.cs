@@ -8,6 +8,9 @@ using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Render
 {
+    /// <summary>
+    /// A shader.
+    /// </summary>
     public abstract class ShaderBase
     {
         internal readonly NativeHandle Handle;
@@ -20,6 +23,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A vertex shader.
+    /// </summary>
     public sealed class VertexShader : ShaderBase
     {
         internal VertexShader(NativeHandle handle) : base(handle, ShaderType.Vertex)
@@ -27,6 +33,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A fragment shader.
+    /// </summary>
     public sealed class FragmentShader : ShaderBase
     {
         internal FragmentShader(NativeHandle handle) : base(handle, ShaderType.Fragment)
@@ -34,6 +43,10 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A shader uniform.
+    /// </summary>
+    /// <typeparam name="TUniform">The uniform type</typeparam>
     public interface IUniform<TUniform> where TUniform : unmanaged, IUniform<TUniform>
     {
     }
@@ -43,6 +56,10 @@ namespace DigBuild.Platform.Render
         internal ShaderBase Shader { set; }
     }
 
+    /// <summary>
+    /// A uniform handle.
+    /// </summary>
+    /// <typeparam name="T">The uniform type</typeparam>
     public sealed class UniformHandle<T> : IBindingHandle where T : unmanaged, IUniform<T>
     {
         internal ShaderBase Shader { get; private set; } = null!;
@@ -118,6 +135,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A shader sampler handle.
+    /// </summary>
     public sealed class ShaderSamplerHandle : IBindingHandle
     {
         internal ShaderBase Shader { get; private set; } = null!;
@@ -139,6 +159,10 @@ namespace DigBuild.Platform.Render
         Vertex, Fragment
     }
 
+    /// <summary>
+    /// A shader builder.
+    /// </summary>
+    /// <typeparam name="TShader">The shader type</typeparam>
     public readonly ref struct ShaderBuilder<TShader> where TShader : ShaderBase
     {
         private sealed class Data
@@ -168,6 +192,12 @@ namespace DigBuild.Platform.Render
             _data = new Data(resource, type, factory);
         }
 
+        /// <summary>
+        /// Adds a new uniform to the shader.
+        /// </summary>
+        /// <typeparam name="TUniform">The uniform type</typeparam>
+        /// <param name="handle">The handle</param>
+        /// <returns>The builder</returns>
         public ShaderBuilder<TShader> WithUniform<TUniform>(
             out UniformHandle<TUniform> handle
         ) where TUniform : unmanaged, IUniform<TUniform>
@@ -186,6 +216,11 @@ namespace DigBuild.Platform.Render
             return this;
         }
 
+        /// <summary>
+        /// Adds a new sampler to the shader.
+        /// </summary>
+        /// <param name="handle">The handle</param>
+        /// <returns>The builder</returns>
         public ShaderBuilder<TShader> WithSampler(
             out ShaderSamplerHandle handle
         )

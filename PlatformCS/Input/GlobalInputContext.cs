@@ -31,6 +31,9 @@ namespace DigBuild.Platform.Input
         void GetControllerState(IntPtr controller, ControllerStateCallback callback);
     }
 
+    /// <summary>
+    /// A global cross-platform input context.
+    /// </summary>
     public sealed class GlobalInputContext
     {
         internal static readonly IGlobalInputContextBindings Bindings = NativeLib.Get<IGlobalInputContextBindings>();
@@ -44,8 +47,14 @@ namespace DigBuild.Platform.Input
             _ptr = ptr;
         }
 
+        /// <summary>
+        /// The set of active game controllers.
+        /// </summary>
         public ISet<Controller> Controllers => _controllers;
 
+        /// <summary>
+        /// Polls the state of all the active controllers.
+        /// </summary>
         public unsafe void Update()
         {
             if (!_initialized)

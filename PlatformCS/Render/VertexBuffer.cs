@@ -16,6 +16,10 @@ namespace DigBuild.Platform.Render
         internal static readonly IVertexBufferBindings Bindings = NativeLib.Get<IVertexBufferBindings>();
     }
 
+    /// <summary>
+    /// A vertex buffer.
+    /// </summary>
+    /// <typeparam name="TVertex">The vertex type</typeparam>
     public sealed class VertexBuffer<TVertex> where TVertex : unmanaged
     {
         internal readonly NativeHandle Handle;
@@ -26,10 +30,18 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A vertex buffer writer.
+    /// </summary>
+    /// <typeparam name="TVertex">The vertex type</typeparam>
     public sealed class VertexBufferWriter<TVertex> where TVertex : unmanaged
     {
         internal NativeHandle Handle = null!;
 
+        /// <summary>
+        /// Writes new data to the vertex buffer.
+        /// </summary>
+        /// <param name="buffer">The data</param>
         public void Write(INativeBuffer<TVertex> buffer)
         {
             VertexBuffer.Bindings.Write(
@@ -40,6 +52,10 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A vertex buffer builder.
+    /// </summary>
+    /// <typeparam name="TVertex">The vertex type</typeparam>
     public readonly ref struct VertexBufferBuilder<TVertex> where TVertex : unmanaged
     {
         private readonly RenderContext _ctx;

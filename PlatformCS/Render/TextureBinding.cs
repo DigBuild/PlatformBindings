@@ -10,6 +10,9 @@ namespace DigBuild.Platform.Render
         void Update(IntPtr instance, IntPtr sampler, IntPtr texture);
     }
 
+    /// <summary>
+    /// A texture binding.
+    /// </summary>
     public sealed class TextureBinding
     {
         internal static readonly ITextureBindingBindings Bindings = NativeLib.Get<ITextureBindingBindings>();
@@ -23,12 +26,20 @@ namespace DigBuild.Platform.Render
             SamplerHandle = samplerHandle;
         }
 
+        /// <summary>
+        /// Updates the bound sampler and texture.
+        /// </summary>
+        /// <param name="sampler">The sampler</param>
+        /// <param name="texture">The texture</param>
         public void Update(TextureSampler sampler, Texture texture)
         {
             Bindings.Update(Handle, sampler.Handle, texture.Handle);
         }
     }
 
+    /// <summary>
+    /// A texture binding builder.
+    /// </summary>
     public readonly ref struct TextureBindingBuilder
     {
         private readonly RenderContext _context;

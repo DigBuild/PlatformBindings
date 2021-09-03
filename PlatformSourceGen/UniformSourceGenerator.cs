@@ -6,6 +6,12 @@ using System.Text;
 
 namespace DigBuild.Platform.SourceGen
 {
+
+    /// <summary>
+    /// Processes interfaces that extend the IUniform interface defined in the
+    /// Platform Bindings Project to generate a new struct that implements them
+    /// and has correct member alignments for GPU usage.
+    /// </summary>
     [Generator]
     public class UniformSourceGenerator : ISourceGenerator
     {

@@ -5,6 +5,9 @@ using System.IO;
 
 namespace DigBuild.Platform.Resource
 {
+    /// <summary>
+    /// <see cref="IResourceProvider"/> implementation for local filesystem content roots. Supports file modification monitoring.
+    /// </summary>
     public sealed class FileSystemResourceProvider : IResourceProvider, IDisposable
     {
         private readonly IReadOnlyDictionary<string, string> _contentRoots;

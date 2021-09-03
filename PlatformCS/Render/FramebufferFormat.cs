@@ -6,10 +6,19 @@ using DigBuild.Platform.Util;
 
 namespace DigBuild.Platform.Render
 {
+    /// <summary>
+    /// A framebuffer format.
+    /// </summary>
     public sealed class FramebufferFormat : IDisposable
     {
         internal readonly NativeHandle Handle;
+        /// <summary>
+        /// The render stages in the format.
+        /// </summary>
         public IReadOnlyList<RenderStage> Stages { get; }
+        /// <summary>
+        /// The attachments in the format.
+        /// </summary>
         public IReadOnlyList<FramebufferAttachment> Attachments { get; }
 
         internal FramebufferFormat(NativeHandle handle, IReadOnlyList<RenderStage> stages, IReadOnlyList<FramebufferAttachment> attachments)
@@ -22,6 +31,9 @@ namespace DigBuild.Platform.Render
         public void Dispose() => Handle.Dispose();
     }
 
+    /// <summary>
+    /// A framebuffer attachment.
+    /// </summary>
     public class FramebufferAttachment
     {
         internal FramebufferFormat Format = null!;
@@ -35,6 +47,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A framebuffer color attachment.
+    /// </summary>
     public sealed class FramebufferColorAttachment : FramebufferAttachment
     {
         internal FramebufferColorAttachment(uint id, Vector4 clearColor) : base(id, clearColor)
@@ -42,6 +57,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A framebuffer depth and stencil attachment.
+    /// </summary>
     public sealed class FramebufferDepthStencilAttachment : FramebufferAttachment
     {
         internal FramebufferDepthStencilAttachment(uint id) : base(id, Vector4.Zero)
@@ -49,8 +67,14 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A render stage.
+    /// </summary>
     public sealed class RenderStage
     {
+        /// <summary>
+        /// The format it belongs to.
+        /// </summary>
         public FramebufferFormat Format;
         internal readonly uint Id;
 
@@ -61,6 +85,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A framebuffer format builder.
+    /// </summary>
     public readonly ref struct FramebufferFormatBuilder
     {
         private sealed class Data
@@ -83,6 +110,13 @@ namespace DigBuild.Platform.Render
             _data = new Data();
         }
 
+        /// <summary>
+        /// Adds a new color attachment.
+        /// </summary>
+        /// <param name="attachment">The attachment</param>
+        /// <param name="format">The texture format</param>
+        /// <param name="clearColor">The clear color</param>
+        /// <returns>The builder</returns>
         public FramebufferFormatBuilder WithColorAttachment(
             out FramebufferColorAttachment attachment,
             TextureFormat format,
@@ -99,6 +133,11 @@ namespace DigBuild.Platform.Render
             return this;
         }
 
+        /// <summary>
+        /// Adds a new depth and stencil attachment.
+        /// </summary>
+        /// <param name="attachment">The attachment</param>
+        /// <returns>The builder</returns>
         public FramebufferFormatBuilder WithDepthStencilAttachment(
             out FramebufferDepthStencilAttachment attachment
         )
@@ -112,6 +151,12 @@ namespace DigBuild.Platform.Render
             return this;
         }
 
+        /// <summary>
+        /// Adds a new render stage using certain attachments.
+        /// </summary>
+        /// <param name="stage">The stage</param>
+        /// <param name="attachments">The attachments</param>
+        /// <returns>The builder</returns>
         public FramebufferFormatBuilder WithStage(
             out RenderStage stage,
             params FramebufferColorAttachment[] attachments
@@ -132,7 +177,14 @@ namespace DigBuild.Platform.Render
 
             return this;
         }
-
+        
+        /// <summary>
+        /// Adds a new render stage using certain attachments.
+        /// </summary>
+        /// <param name="stage">The stage</param>
+        /// <param name="depthStencil">The depth and stencil attachment</param>
+        /// <param name="attachments">The attachments</param>
+        /// <returns>The builder</returns>
         public FramebufferFormatBuilder WithStage(
             out RenderStage stage,
             FramebufferDepthStencilAttachment depthStencil,
@@ -155,6 +207,12 @@ namespace DigBuild.Platform.Render
             return this;
         }
 
+        /// <summary>
+        /// Defines a render stage dependency.
+        /// </summary>
+        /// <param name="stage">The dependent</param>
+        /// <param name="dependencies">The dependencies</param>
+        /// <returns>The builder</returns>
         public FramebufferFormatBuilder WithDependency(
             RenderStage stage,
             params RenderStage[] dependencies

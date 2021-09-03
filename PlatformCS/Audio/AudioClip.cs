@@ -5,6 +5,9 @@ using OpenAL;
 
 namespace DigBuild.Platform.Audio
 {
+    /// <summary>
+    /// An audio clip.
+    /// </summary>
     public sealed class AudioClip : IDisposable
     {
         internal readonly uint Buffer;

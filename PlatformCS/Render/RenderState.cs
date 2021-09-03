@@ -18,6 +18,9 @@ namespace DigBuild.Platform.Render
         public static implicit operator MaybeDynamic<T>(T value) => new(value);
     }
 
+    /// <summary>
+    /// A geometry topology.
+    /// </summary>
     public enum Topology : byte
     {
         Points,
@@ -25,6 +28,9 @@ namespace DigBuild.Platform.Render
         Triangles, TriangleStrips, TriangleFans
     }
 
+    /// <summary>
+    /// A raster mode.
+    /// </summary>
     public enum RasterMode : byte
     {
         Fill,
@@ -32,17 +38,26 @@ namespace DigBuild.Platform.Render
         Point
     }
 
+    /// <summary>
+    /// A geometry culling mode.
+    /// </summary>
     public enum CullingMode : byte
     {
         Front, Back, FrontAndBack, None
     }
 
+    /// <summary>
+    /// A geometry front face vertex ordering.
+    /// </summary>
     public enum FrontFace : byte
     {
         Clockwise,
         CounterClockwise
     }
 
+    /// <summary>
+    /// A set of 2D extents.
+    /// </summary>
     public readonly struct Extents2D
     {
         public readonly uint X, Y;
@@ -91,6 +106,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A comparison operation.
+    /// </summary>
     public enum CompareOperation : byte
     {
         Never,
@@ -121,6 +139,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A stencil face operation.
+    /// </summary>
     public readonly struct StencilFaceOperation
     {
         public static readonly StencilFaceOperation Default = new(
@@ -131,12 +152,33 @@ namespace DigBuild.Platform.Render
             0, 0, 0
         );
 
+        /// <summary>
+        /// The fail operation.
+        /// </summary>
         public readonly StencilOperation StencilFailOperation;
+        /// <summary>
+        /// The depth fail operation.
+        /// </summary>
         public readonly StencilOperation DepthFailOperation;
+        /// <summary>
+        /// The success operation.
+        /// </summary>
         public readonly StencilOperation SuccessOperation;
+        /// <summary>
+        /// The comparison.
+        /// </summary>
         public readonly CompareOperation CompareOperation;
+        /// <summary>
+        /// The comparison mask.
+        /// </summary>
         public readonly uint CompareMask;
+        /// <summary>
+        /// The write mask.
+        /// </summary>
         public readonly uint WriteMask;
+        /// <summary>
+        /// The value.
+        /// </summary>
         public readonly uint Value;
 
         public StencilFaceOperation(
@@ -159,6 +201,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A stencil operation.
+    /// </summary>
     public enum StencilOperation : byte
     {
         Zero,
@@ -171,6 +216,9 @@ namespace DigBuild.Platform.Render
         DecrementAndWrap
     }
     
+    /// <summary>
+    /// A blend factor.
+    /// </summary>
     public enum BlendFactor : byte
     {
         Zero, One,
@@ -182,6 +230,9 @@ namespace DigBuild.Platform.Render
         CstAlpha, OneMinusCstAlpha,
     }
 
+    /// <summary>
+    /// A blend operation.
+    /// </summary>
     public enum BlendOperation : byte
     {
         Add,
@@ -191,6 +242,9 @@ namespace DigBuild.Platform.Render
         Max,
     }
 
+    /// <summary>
+    /// A color component.
+    /// </summary>
     [Flags]
     public enum ColorComponent : byte
     {

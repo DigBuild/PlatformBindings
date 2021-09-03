@@ -11,6 +11,9 @@ namespace DigBuild.Platform.Render
         uint GetHeight(IntPtr instance);
     }
 
+    /// <summary>
+    /// A texture.
+    /// </summary>
     public sealed class Texture
     {
         internal static readonly ITextureBindings Bindings = NativeLib.Get<ITextureBindings>();
@@ -24,10 +27,19 @@ namespace DigBuild.Platform.Render
 
         public void Dispose() => Handle.Dispose();
 
+        /// <summary>
+        /// The width.
+        /// </summary>
         public uint Width => Bindings.GetWidth(Handle);
+        /// <summary>
+        /// The height.
+        /// </summary>
         public uint Height => Bindings.GetHeight(Handle);
     }
 
+    /// <summary>
+    /// A texture format.
+    /// </summary>
     public enum TextureFormat : byte
     {
         R8G8B8A8SRGB,

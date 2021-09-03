@@ -5,6 +5,9 @@ using OpenAL;
 
 namespace DigBuild.Platform.Audio
 {
+    /// <summary>
+    /// A cross-platform audio system.
+    /// </summary>
     public sealed class AudioSystem : IDisposable
     {
         private readonly IntPtr _device;
@@ -13,6 +16,9 @@ namespace DigBuild.Platform.Audio
         private Vector3 _listenerPosition;
         private Vector3 _listenerVelocity;
         
+        /// <summary>
+        /// The listener's position in 3D space.
+        /// </summary>
         public Vector3 ListenerPosition
         {
             get => _listenerPosition;
@@ -23,6 +29,9 @@ namespace DigBuild.Platform.Audio
             }
         }
 
+        /// <summary>
+        /// The listener's velocity in 3D space.
+        /// </summary>
         public Vector3 ListenerVelocity
         {
             get => _listenerVelocity;
@@ -56,8 +65,17 @@ namespace DigBuild.Platform.Audio
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Loads a resource as an audio clip.
+        /// </summary>
+        /// <param name="resource">The resource to be loaded</param>
+        /// <returns>The audio clip</returns>
         public AudioClip Load(IResource resource) => new(resource);
 
+        /// <summary>
+        /// Creates a new audio player.
+        /// </summary>
+        /// <returns>The audio player</returns>
         public AudioPlayer CreatePlayer() => new();
     }
 }

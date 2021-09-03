@@ -33,6 +33,9 @@ namespace DigBuild.Platform.Render
         void Terminate(IntPtr handle, bool force);
     }
 
+    /// <summary>
+    /// A render surface.
+    /// </summary>
     public sealed class RenderSurface : IDisposable
     {
         internal static readonly IRenderSurfaceBindings Bindings = NativeLib.Get<IRenderSurfaceBindings>();
@@ -59,12 +62,19 @@ namespace DigBuild.Platform.Render
             Handle.Dispose();
         }
 
+        /// <summary>
+        /// Notifies the surface that it should close, and returns a task that is completed when the surface is closed.
+        /// </summary>
+        /// <returns>The closed task</returns>
         public Task Close()
         {
             _forceStop();
             return Closed;
         }
 
+        /// <summary>
+        /// A task that is completed when the surface is closed.
+        /// </summary>
         public Task Closed => _closedCompletionSource.Task;
 
         internal bool Active => Bindings.IsActive(Handle);
@@ -88,6 +98,9 @@ namespace DigBuild.Platform.Render
         }
     }
 
+    /// <summary>
+    /// A render surface context.
+    /// </summary>
     public readonly struct RenderSurfaceContext : IRenderTarget
     {
         private static readonly FramebufferAttachment AttachmentS = new(0, new Vector4(0, 0, 0, 1));
@@ -103,24 +116,46 @@ namespace DigBuild.Platform.Render
 
         NativeHandle IRenderTarget.Handle => _handle;
 
+        /// <summary>
+        /// The surface's input context.
+        /// </summary>
         public SurfaceInputContext InputContext => new(RenderSurface.Bindings.GetInputContext(_handle));
 
+        /// <summary>
+        /// The surface's format.
+        /// </summary>
         public FramebufferFormat Format => FormatS;
+        /// <summary>
+        /// The surface's color attachment.
+        /// </summary>
         public FramebufferAttachment ColorAttachment => AttachmentS;
+
+        /// <summary>
+        /// The render stage.
+        /// </summary>
         public RenderStage RenderStage => StageS;
 
+        /// <summary>
+        /// The width.
+        /// </summary>
         public uint Width
         {
             get => RenderSurface.Bindings.GetWidth(_handle);
             set => RenderSurface.Bindings.SetWidth(_handle, value);
         }
 
+        /// <summary>
+        /// The height.
+        /// </summary>
         public uint Height
         {
             get => RenderSurface.Bindings.GetHeight(_handle);
             set => RenderSurface.Bindings.SetHeight(_handle, value);
         }
 
+        /// <summary>
+        /// The title.
+        /// </summary>
         public string Title
         {
             get
@@ -132,13 +167,22 @@ namespace DigBuild.Platform.Render
             set => RenderSurface.Bindings.SetTitle(_handle, value);
         }
 
+        /// <summary>
+        /// Whether the surface is full screen or not.
+        /// </summary>
         public bool Fullscreen
         {
             get => RenderSurface.Bindings.IsFullscreen(_handle);
             set => RenderSurface.Bindings.SetFullscreen(_handle, value);
         }
 
+        /// <summary>
+        /// Whether the surface is visible or not.
+        /// </summary>
         public bool Visible => RenderSurface.Bindings.IsVisible(_handle);
+        /// <summary>
+        /// Whether the surface has just been resized or not.
+        /// </summary>
         public bool Resized => RenderSurface.Bindings.IsResized(_handle);
     }
 }
